@@ -1888,37 +1888,40 @@
     });
   }
 
-  function initRouter() {
-    window.addEventListener(
-      "pageLoad",
-      function (event) {
-        const route =
-          event.detail &&
-          event.detail.route
-            ? event.detail.route
-            : window.location.hash;
+  ```javascript
+function initRouter() {
 
-        renderPage(route);
-      }
-    );
+  window.addEventListener("pageLoad", function (event) {
 
-    const initialRoute =
-      window.location.hash
-        ? window.location.hash.substring(1)
-        : "home";
+    const route =
+      event.detail && event.detail.page
+        ? event.detail.page
+        : (
+            window.location.hash
+              ? window.location.hash.substring(1)
+              : "home"
+          );
 
-    if (
-      window.ApostolicRouter
-    ) {
-      window.ApostolicRouter.init();
+    renderPage(route);
 
-      window.ApostolicRouter.navigate(
-        "#" + initialRoute
-      );
-    } else {
-      renderPage(initialRoute);
-    }
+  });
+
+  const initialRoute =
+    window.location.hash
+      ? window.location.hash.substring(1)
+      : "home";
+
+  if (window.ApostolicRouter) {
+
+    window.ApostolicRouter.start();
+
+  } else {
+
+    renderPage(initialRoute);
+
   }
+}
+```
 
   function init() {
     theme.init();
