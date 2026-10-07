@@ -1,74 +1,397 @@
-\<!doctype html>
-\<html lang="en">
-\<head>
-\<meta charset="utf-8">
-\<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-\<meta name="theme-color" content="#0b1020">
-\<meta name="description" content="A modern Apostolic Christian digital platform for Bible, worship, teachings, sermons, community and learning.">
-\<meta name="application-name" content="የኢየሱስ ልጆች Apostolic Media">
-\<link rel="manifest" href="manifest.json">
-\<link rel="icon" href="assets/logo/icon.svg" type="image/svg+xml">
-\<link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
-\<link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
-\<link href="[https://fonts.googleapis.com/css2?family=Inter\:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic\:wght@400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter\:wght@400;500;600;700;800\&family=Noto+Sans+Ethiopic\:wght@400;500;600;700;800\&display=swap)" rel="stylesheet">
-\<link rel="stylesheet" href="css/style.css">
-\<link rel="stylesheet" href="css/themes.css">
-\<link rel="stylesheet" href="css/responsive.css">
-\<title>Apostolic Media\</title>
-\</head>
-\<body>
-\<div id="app" class="app-shell">
-  \<header class="topbar">
-    \<button class="icon-btn mobile-only" data-action="toggle-sidebar" aria-label="Menu">☰\</button>
-    \<a class="brand" href="#home" aria-label="Apostolic Media home">
-      \<span class="brand-mark">🕎\</span>\<span>\<strong>የኢየሱስ ልጆች\</strong>\<small>Apostolic Media\</small>\</span>
-    \</a>
-    \<div class="global-search">\<span>⌕\</span>\<input id="globalSearch" placeholder="Search songs, Bible, teachings, people…" autocomplete="off">\<kbd>⌘ K\</kbd>\</div>
-    \<div class="top-actions">
-      \<button class="icon-btn" data-action="toggle-theme" title="Theme">◐\</button>
-      \<button class="icon-btn" data-action="language" title="Language">文\</button>
-      \<button class="icon-btn notification-btn" data-route="notifications" title="Notifications">♧\<i>\</i>\</button>
-      \<button class="avatar" data-route="profile">G\</button>
-    \</div>
-  \</header>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
 
-  \<aside class="sidebar" id="sidebar">
-    \<div class="sidebar-scroll">
-      \<div class="nav-group">\<span class="nav-label">MAIN\</span>
-        \<a href="#home" data-nav="home">⌂ \<span>Home\</span>\</a>
-        \<a href="#bible" data-nav="bible">▤ \<span>Bible\</span>\</a>
-        \<a href="#teachings" data-nav="teachings">▣ \<span>Teachings\</span>\</a>
-        \<a href="#sermons" data-nav="sermons">◉ \<span>Sermons\</span>\</a>
-        \<a href="#songs" data-nav="songs">♫ \<span>Songs\</span>\</a>
-        \<a href="#videos" data-nav="videos">▷ \<span>Videos\</span>\</a>
-        \<a href="#lyrics" data-nav="lyrics">≡ \<span>Lyrics\</span>\</a>
-      \</div>
-      \<div class="nav-group">\<span class="nav-label">CONNECT\</span>
-        \<a href="#live" data-nav="live">\<b class="live-dot">\</b>\<span>Live\</span>\</a>
-        \<a href="#community" data-nav="community">♧ \<span>Community\</span>\</a>
-        \<a href="#qa" data-nav="qa">? \<span>Bible Q&amp;A\</span>\</a>
-        \<a href="#events" data-nav="events">□ \<span>Events\</span>\</a>
-      \</div>
-      \<div class="nav-group">\<span class="nav-label">LIBRARY\</span>
-        \<a href="#downloads" data-nav="downloads">⇩ \<span>Downloads\</span>\</a>
-        \<a href="#saved" data-nav="saved">♡ \<span>Saved\</span>\</a>
-        \<a href="#playlists" data-nav="playlists">☷ \<span>Playlists\</span>\</a>
-      \</div>
-      \<div class="nav-group">\<span class="nav-label">YOUR SPACE\</span>
-        \<a href="#creator" data-nav="creator">◈ \<span>Creator Studio\</span>\</a>
-        \<a href="#wallet" data-nav="wallet">◇ \<span>Wallet\</span>\</a>
-        \<a href="#admin" data-nav="admin">⚙ \<span>Admin\</span>\</a>
-      \</div>
-      \<div class="sidebar-card">\<span>✦\</span>\<strong>Grow in the Word\</strong>\<p>Continue your Bible study journey today.\</p>\<a href="#bible-study">Open Bible Study →\</a>\</div>
-    \</div>
-    \<div class="sidebar-footer">\<a href="#settings">Settings\</a>\<a href="#about">About\</a>\<span>v1.0.0\</span>\</div>
-  \</aside>
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
 
-  \<main class="main" id="mainContent">\</main>
-  \<nav class="mobile-nav">\<a href="#home">⌂\<span>Home\</span>\</a>\<a href="#bible">▤\<span>Bible\</span>\</a>\<a href="#songs">♫\<span>Songs\</span>\</a>\<a href="#community">♧\<span>Community\</span>\</a>\<a href="#profile">G\<span>Profile\</span>\</a>\</nav>
-  \<section class="media-player" id="mediaPlayer" hidden>\</section>
-\</div>
-\<div id="modalRoot">\</div>\<div id="toastRoot" class="toast-root">\</div>
-\<script type="module" src="js/app.js">\</script>
-\</body>
-\</html>
+  <meta name="theme-color" content="#0b1020">
+
+  <meta
+    name="description"
+    content="A modern Apostolic Christian digital platform for Bible, worship, teachings, sermons, community and learning."
+  >
+
+  <meta
+    name="application-name"
+    content="የኢየሱስ ልጆች Apostolic Media"
+  >
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- App Icon -->
+  <link
+    rel="icon"
+    href="assets/icon.svg"
+    type="image/svg+xml"
+  >
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/responsive.css">
+
+  <title>የኢየሱስ ልጆች Apostolic Media</title>
+</head>
+
+<body>
+
+  <div id="app" class="app-shell">
+
+    <!-- =========================
+         TOP BAR
+         ========================= -->
+    <header class="topbar">
+
+      <button
+        class="icon-btn mobile-only"
+        data-action="toggle-sidebar"
+        aria-label="Menu"
+      >
+        ☰
+      </button>
+
+      <a
+        class="brand"
+        href="#home"
+        data-nav="home"
+        aria-label="Apostolic Media home"
+      >
+        <span class="brand-mark">🕎</span>
+
+        <span>
+          <strong>የኢየሱስ ልጆች</strong>
+          <small>Apostolic Media</small>
+        </span>
+      </a>
+
+      <!-- Global Search -->
+      <div class="global-search">
+        <span>⌕</span>
+
+        <input
+          id="globalSearch"
+          type="search"
+          placeholder="Search songs, Bible, teachings, people…"
+          autocomplete="off"
+        >
+
+        <kbd>⌘ K</kbd>
+      </div>
+
+      <!-- Top Actions -->
+      <div class="top-actions">
+
+        <button
+          class="icon-btn"
+          data-action="toggle-theme"
+          title="Theme"
+          aria-label="Change theme"
+        >
+          ◐
+        </button>
+
+        <button
+          class="icon-btn"
+          data-action="language"
+          title="Language"
+          aria-label="Change language"
+        >
+          文
+        </button>
+
+        <button
+          class="icon-btn notification-btn"
+          data-route="notifications"
+          title="Notifications"
+          aria-label="Notifications"
+        >
+          ♧
+          <i></i>
+        </button>
+
+        <button
+          class="avatar"
+          data-route="profile"
+          aria-label="Profile"
+        >
+          G
+        </button>
+
+      </div>
+    </header>
+
+
+    <!-- =========================
+         SIDEBAR
+         ========================= -->
+    <aside class="sidebar" id="sidebar">
+
+      <div class="sidebar-scroll">
+
+        <!-- MAIN -->
+        <div class="nav-group">
+
+          <span class="nav-label">MAIN</span>
+
+          <a href="#home" data-nav="home">
+            ⌂
+            <span>Home</span>
+          </a>
+
+          <a href="#bible" data-nav="bible">
+            ▤
+            <span>Bible</span>
+          </a>
+
+          <a href="#teachings" data-nav="teachings">
+            ▣
+            <span>Teachings</span>
+          </a>
+
+          <a href="#sermons" data-nav="sermons">
+            ◉
+            <span>Sermons</span>
+          </a>
+
+          <a href="#songs" data-nav="songs">
+            ♫
+            <span>Songs</span>
+          </a>
+
+          <a href="#videos" data-nav="videos">
+            ▷
+            <span>Videos</span>
+          </a>
+
+          <a href="#lyrics" data-nav="lyrics">
+            ≡
+            <span>Lyrics</span>
+          </a>
+
+        </div>
+
+
+        <!-- CONNECT -->
+        <div class="nav-group">
+
+          <span class="nav-label">CONNECT</span>
+
+          <a href="#live" data-nav="live">
+            <b class="live-dot"></b>
+            <span>Live</span>
+          </a>
+
+          <a href="#community" data-nav="community">
+            ♧
+            <span>Community</span>
+          </a>
+
+          <a href="#qa" data-nav="qa">
+            ?
+            <span>Bible Q&amp;A</span>
+          </a>
+
+          <a href="#events" data-nav="events">
+            □
+            <span>Events</span>
+          </a>
+
+        </div>
+
+
+        <!-- LIBRARY -->
+        <div class="nav-group">
+
+          <span class="nav-label">LIBRARY</span>
+
+          <a href="#downloads" data-nav="downloads">
+            ⇩
+            <span>Downloads</span>
+          </a>
+
+          <a href="#saved" data-nav="saved">
+            ♡
+            <span>Saved</span>
+          </a>
+
+          <a href="#playlists" data-nav="playlists">
+            ☷
+            <span>Playlists</span>
+          </a>
+
+        </div>
+
+
+        <!-- YOUR SPACE -->
+        <div class="nav-group">
+
+          <span class="nav-label">YOUR SPACE</span>
+
+          <a href="#creator" data-nav="creator">
+            ◈
+            <span>Creator Studio</span>
+          </a>
+
+          <a href="#wallet" data-nav="wallet">
+            ◇
+            <span>Wallet</span>
+          </a>
+
+          <a href="#admin" data-nav="admin">
+            ⚙
+            <span>Admin</span>
+          </a>
+
+        </div>
+
+
+        <!-- SIDEBAR CARD -->
+        <div class="sidebar-card">
+
+          <span>✦</span>
+
+          <strong>Grow in the Word</strong>
+
+          <p>
+            Continue your Bible study journey today.
+          </p>
+
+          <a
+            href="#bible-study"
+            data-nav="bible-study"
+          >
+            Open Bible Study →
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- SIDEBAR FOOTER -->
+      <div class="sidebar-footer">
+
+        <a href="#settings" data-nav="settings">
+          Settings
+        </a>
+
+        <a href="#about" data-nav="about">
+          About
+        </a>
+
+        <span>v1.0.0</span>
+
+      </div>
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN CONTENT
+         ========================= -->
+    <main
+      class="main"
+      id="mainContent"
+      aria-live="polite"
+    >
+    </main>
+
+
+    <!-- =========================
+         MOBILE NAVIGATION
+         ========================= -->
+    <nav class="mobile-nav">
+
+      <a href="#home" data-nav="home">
+        ⌂
+        <span>Home</span>
+      </a>
+
+      <a href="#bible" data-nav="bible">
+        ▤
+        <span>Bible</span>
+      </a>
+
+      <a href="#songs" data-nav="songs">
+        ♫
+        <span>Songs</span>
+      </a>
+
+      <a href="#community" data-nav="community">
+        ♧
+        <span>Community</span>
+      </a>
+
+      <a href="#profile" data-nav="profile">
+        G
+        <span>Profile</span>
+      </a>
+
+    </nav>
+
+
+    <!-- =========================
+         MEDIA PLAYER
+         ========================= -->
+    <section
+      class="media-player"
+      id="mediaPlayer"
+      hidden
+      aria-label="Media player"
+    >
+    </section>
+
+  </div>
+
+
+  <!-- =========================
+       MODAL
+       ========================= -->
+  <div id="modalRoot"></div>
+
+
+  <!-- =========================
+       TOAST
+       ========================= -->
+  <div
+    id="toastRoot"
+    class="toast-root"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  <!-- =========================
+       ROUTER
+       ========================= -->
+  <script src="js/router.js"></script>
+
+
+  <!-- =========================
+       MAIN APPLICATION
+       ========================= -->
+  <script
+    type="module"
+    src="js/app.js"
+  ></script>
+
+</body>
+</html>
