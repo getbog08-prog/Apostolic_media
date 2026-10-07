@@ -8,7 +8,7 @@
 
   const APP = {
     name: "የኢየሱስ ልጆች Apostolic Media",
-    version: "1.3.1",
+    version: "1.3.0",
     defaultTheme: "system",
     defaultLanguage: "en"
   };
@@ -553,40 +553,14 @@
     );
   }
 
-  function bindUploadForm(modal) {
-    if (!modal) return;
-
-    const form = modal.querySelector("[data-upload-form]");
-    const button = modal.querySelector("[data-upload-submit]");
-
-    if (!form || !button || button.dataset.bound === "true") {
-      return;
-    }
-
-    button.dataset.bound = "true";
-
-    button.addEventListener("click", function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const status = form.querySelector(".upload-status");
-      if (status) {
-        status.hidden = false;
-        status.textContent = "Upload button is working. Preparing...";
-        status.dataset.status = "info";
-      }
-
-      handleUploadSubmit(form);
-    });
-  }
-
   function showUploadForm(
     title,
     type
   ) {
-    const modal = createModal(
+    return createModal(
       title,
-      `  <form
+      `
+        <form
           class="dynamic-form"
           data-upload-form="${escapeHTML(type)}"
         >
@@ -649,8 +623,8 @@
         </form>
       `
     );
-    bindUploadForm(modal);
-    return modal;
+  }
+
   /* =========================================================
      PAGE ACTIONS
      ========================================================= */
@@ -961,7 +935,7 @@
 
     const submitButton =
       form.querySelector(
-        "[data-upload-submit]"
+        'button[type="submit"]'
       );
 
     if (submitButton) {
