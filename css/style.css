@@ -131,3 +131,23 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   FIX: HIDDEN MEDIA PLAYER MUST STAY HIDDEN
+   ========================================================= */
+
+.media-player[hidden] {
+  display: none !important;
+}
+
+/* Keep page content above fixed UI */
+.main {
+  position: relative;
+  z-index: 1;
+}
+
+#mainContent,
+.page-container {
+  position: relative;
+  z-index: 2;
+}
