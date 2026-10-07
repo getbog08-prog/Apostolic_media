@@ -1095,6 +1095,8 @@
         "success"
       );
 
+      refreshCurrentMediaPage();
+
     } catch (error) {
       console.error(
         "Supabase upload failed:",
@@ -1183,16 +1185,18 @@
             title,
             description,
             type,
-            file_name: null,
-            file_path: null,
-            file_url: null,
-            file_size: null,
-            file_type: null
+            file_name: "",
+            file_path: "",
+            file_url: "",
+            file_size: 0,
+            file_type: "created"
           }
         );
 
         if (result && !result.error) {
           savedOnline = true;
+        } else if (result && result.error) {
+          console.error("Online create failed:", result.error);
         }
       }
     } catch (error) {
@@ -1224,9 +1228,13 @@
     toast(
       savedOnline
         ? `"${title}" created and saved to Media.`
-        : `"${title}" created successfully on this device.`,
-      "success"
+        : `"${title}" created locally because online saving failed.`,
+      savedOnline ? "success" : "error"
     );
+
+    if (savedOnline) {
+      refreshCurrentMediaPage();
+    }
   }
      /* =========================================================
      BACK TO TOP
@@ -2423,18 +2431,21 @@
      ========================================================= */
 
   const mediaRouteTypes = {
-    teachings: "teaching",
-    sermons: "sermon",
-    songs: "song",
-    videos: "video",
-    lyrics: "lyric",
-    "bible-study": "bible",
-    courses: "course"
+    teachings: ["teaching"],
+    sermons: ["sermon"],
+    songs: ["song"],
+    videos: ["video"],
+    lyrics: ["lyric"],
+    "bible-study": ["bible"],
+    courses: ["course"],
+    events: ["event"],
+    playlists: ["playlist"],
+    creator: ["document", "teaching", "sermon", "song", "video", "lyric", "bible", "course"]
   };
 
   async function loadMediaForPage(route) {
-    const type = mediaRouteTypes[route];
-    if (!type) return;
+    const types = mediaRouteTypes[route];
+    if (!Array.isArray(types) || !types.length) return;
 
     const container = $(".page-container");
     if (!container) return;
@@ -2460,7 +2471,6 @@
           "media_uploads",
           "*",
           {
-            eq: { type },
             order: {
               column: "created_at",
               ascending: false
@@ -2469,7 +2479,9 @@
           }
         );
         uploaded = result && Array.isArray(result.data)
-          ? result.data
+          ? result.data.filter(function (item) {
+              return item && types.includes(item.type);
+            })
           : [];
         uploadError = result && result.error
           ? result.error
@@ -2483,7 +2495,7 @@
       "apostolic_created_items",
       []
     ).filter(function (item) {
-      if (!item || item.type !== type) {
+      if (!item || !types.includes(item.type)) {
         return false;
       }
 
@@ -2544,6 +2556,15 @@
     }
 
     section.innerHTML = cards.join("");
+  }
+
+  function refreshCurrentMediaPage() {
+    const route = window.location.hash
+      ? window.location.hash.substring(1)
+      : "";
+    if (route && mediaRouteTypes[route]) {
+      renderPage(route);
+    }
   }
 
   /* =========================================================
