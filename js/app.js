@@ -683,7 +683,7 @@
         if (uploadForm) {
           event.preventDefault();
 
-          await handleUploadSubmit(
+          handleUploadSubmit(
             uploadForm
           );
 
@@ -835,199 +835,81 @@
      UPLOAD
      ========================================================= */
 
-  async function handleUploadSubmit(
+  function handleUploadSubmit(
     form
   ) {
-    const formData = new FormData(form);
+    const formData =
+      new FormData(form);
 
-    const title = String(
-      formData.get("title") || ""
-    ).trim();
+    const title =
+      String(
+        formData.get("title") || ""
+      ).trim();
 
-    const description = String(
-      formData.get("description") || ""
-    ).trim();
+    const description =
+      String(
+        formData.get("description") || ""
+      ).trim();
 
-    const file = formData.get("file");
+    const file =
+      formData.get("file");
 
     const type =
-      form.dataset.uploadForm || "document";
+      form.dataset.uploadForm ||
+      "document";
 
     if (!title) {
-      toast("Please enter a title.", "error");
-      return;
-    }
-
-    if (!file || !file.name) {
-      toast("Please select a file.", "error");
-      return;
-    }
-
-    const maxMB =
-      Number(
-        window.ApostolicConfig?.UPLOADS?.MAX_FILE_SIZE_MB
-      ) || 100;
-
-    if (file.size > maxMB * 1024 * 1024) {
       toast(
-        `File is too large. Maximum size is ${maxMB} MB.`,
+        "Please enter a title.",
         "error"
       );
       return;
     }
 
-    const submitButton =
-      form.querySelector("button[type='submit']");
-
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = "Uploading...";
+    if (
+      !file ||
+      !file.name
+    ) {
+      toast(
+        "Please select a file.",
+        "error"
+      );
+      return;
     }
 
-    try {
-      const supabaseAPI =
-        window.ApostolicSupabase;
-
-      if (
-        supabaseAPI &&
-        supabaseAPI.isConfigured()
-      ) {
-        const safeName =
-          file.name
-            .replace(/[^a-zA-Z0-9._-]+/g, "-")
-            .replace(/-+/g, "-");
-
-        const uniqueId =
-          `${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2, 10)}`;
-
-        const path =
-          `${type}/${uniqueId}-${safeName}`;
-
-        const bucket =
-          window.ApostolicConfig?.UPLOADS?.BUCKET ||
-          "apostolic-media";
-
-        const uploadResult =
-          await supabaseAPI.uploadFile(
-            bucket,
-            path,
-            file,
-            {
-              upsert: false,
-              contentType:
-                file.type || "application/octet-stream"
-            }
-          );
-
-        if (uploadResult.error) {
-          throw uploadResult.error;
-        }
-
-        const publicUrl =
-          supabaseAPI.getPublicUrl(
-            bucket,
-            path
-          );
-
-        const insertResult =
-          await supabaseAPI.insert(
-            "media_uploads",
-            {
-              title,
-              description,
-              type,
-              file_name: file.name,
-              file_size: file.size,
-              file_type:
-                file.type || null,
-              storage_path: path,
-              public_url: publicUrl,
-              created_at:
-                new Date().toISOString()
-            }
-          );
-
-        if (insertResult.error) {
-          throw insertResult.error;
-        }
-
-        closeDynamicModal(
-          form.closest(".apostolic-modal")
-        );
-
-        toast(
-          `"${title}" uploaded successfully.`,
-          "success"
-        );
-
-        window.dispatchEvent(
-          new CustomEvent("apostolic:upload", {
-            detail: {
-              title,
-              type,
-              publicUrl,
-              fileName: file.name
-            }
-          })
-        );
-
-        return;
-      }
-
-      // Local fallback for development/offline use.
-      const uploads =
-        storage.get(
-          "apostolic_uploads",
-          []
-        );
-
-      uploads.push({
-        id: Date.now().toString(),
-        title,
-        description,
-        type,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        createdAt:
-          new Date().toISOString(),
-        localOnly: true
-      });
-
-      storage.set(
+    const uploads =
+      storage.get(
         "apostolic_uploads",
-        uploads
+        []
       );
 
-      closeDynamicModal(
-        form.closest(".apostolic-modal")
-      );
+    uploads.push({
+      id: Date.now().toString(),
+      title,
+      description,
+      type,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      createdAt:
+        new Date().toISOString()
+    });
 
-      toast(
-        `"${title}" saved locally. Connect Supabase to publish it online.`,
-        "info"
-      );
+    storage.set(
+      "apostolic_uploads",
+      uploads
+    );
 
-    } catch (error) {
-      console.error(
-        "Upload failed:",
-        error
-      );
+    closeDynamicModal(
+      form.closest(
+        ".apostolic-modal"
+      )
+    );
 
-      toast(
-        error?.message ||
-          "Upload failed. Please try again.",
-        "error"
-      );
-
-    } finally {
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = "Upload";
-      }
-    }
+    toast(
+      `"${title}" uploaded successfully.`,
+      "success"
+    );
   }
 
   /* =========================================================
