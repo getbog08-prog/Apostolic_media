@@ -25,9 +25,9 @@
     DEFAULT_THEME: "system",
 
     SUPPORTED_LANGUAGES: [
-      "am", // Amharic
-      "en", // English
-      "om"  // Afaan Oromoo
+      "am",
+      "en",
+      "om"
     ],
 
     SUPPORTED_THEMES: [
@@ -141,15 +141,11 @@
     // -------------------------------------------------------
     // Supabase
     // -------------------------------------------------------
-    //
-    // IMPORTANT:
-    // Keep these empty until you create your Supabase project.
-    // Later you will put your Supabase URL and anon/public key
-    // here or load them from a secure configuration.
-    //
+    // Browser-safe publishable key. Do NOT put a secret/service
+    // role key in this file.
     SUPABASE: {
-      URL: "",
-      ANON_KEY: ""
+      URL: "https://fzhtzvvpnrwxqoherdrg.supabase.co",
+      ANON_KEY: "sb_publishable_RXuHDQ6eQfQp0I_-eZgR_Q_DQbuXDDZ"
     },
 
     // -------------------------------------------------------
@@ -165,9 +161,6 @@
     // -------------------------------------------------------
     // Payment providers
     // -------------------------------------------------------
-    //
-    // These are placeholders for future official integrations.
-    //
     PAYMENTS: {
       CBE: {
         ENABLED: false,
@@ -187,10 +180,6 @@
 
     DEBUG: true
   };
-
-  // ---------------------------------------------------------
-  // Helper functions
-  // ---------------------------------------------------------
 
   CONFIG.isProduction = function () {
     return CONFIG.ENVIRONMENT === "production";
@@ -256,10 +245,6 @@
     return true;
   };
 
-  // ---------------------------------------------------------
-  // Freeze important configuration objects
-  // ---------------------------------------------------------
-
   Object.freeze(CONFIG.ROUTES);
   Object.freeze(CONFIG.STORAGE_KEYS);
   Object.freeze(CONFIG.FEATURES);
@@ -270,13 +255,7 @@
   Object.freeze(CONFIG.SEARCH);
   Object.freeze(CONFIG.NOTIFICATIONS);
 
-  // ---------------------------------------------------------
-  // Public global object
-  // ---------------------------------------------------------
-
   window.ApostolicConfig = CONFIG;
-
-  // Compatibility alias
   window.APP_CONFIG = CONFIG;
 
   if (CONFIG.DEBUG) {
