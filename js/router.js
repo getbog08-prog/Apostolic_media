@@ -139,7 +139,6 @@
           if (!target) return;
 
           const normalized = this.normalize(target);
-
           const active = normalized === route;
 
           element.classList.toggle("active", active);
@@ -157,11 +156,8 @@
       if (!main) return;
 
       main.innerHTML = `
-        <section class="empty-state">
-          <div class="empty-state-icon">🔎</div>
-
-          <h2>Page not found</h2>
-
+        <section class="empty">
+          <strong>Page not found</strong>
           <p>
             The page
             <strong>${this.escapeHTML(route)}</strong>
@@ -183,10 +179,8 @@
       if (!main) return;
 
       main.innerHTML = `
-        <section class="empty-state">
-          <div class="empty-state-icon">⚠️</div>
-
-          <h2>Something went wrong</h2>
+        <section class="empty">
+          <strong>Something went wrong</strong>
 
           <p>
             We could not load this section.
@@ -196,9 +190,10 @@
             <a href="#home" class="btn primary">
               ← Home
             </a>
+
             <button
               type="button"
-              class="btn secondary"
+              class="btn"
               onclick="location.reload()">
               Reload
             </button>
@@ -263,6 +258,11 @@
       });
 
       this.handle();
+    },
+
+    /* Compatibility with app.js */
+    init() {
+      this.start();
     }
   };
 
@@ -276,8 +276,11 @@
       window.dispatchEvent(
         new CustomEvent("pageLoad", {
           detail: {
+            route: name,
             page: name,
-            params: routeInfo ? routeInfo.params : {}
+            params: routeInfo
+              ? routeInfo.params
+              : {}
           }
         })
       );
@@ -367,7 +370,9 @@
 
   Router.register("*", function (routeInfo) {
     Router.showNotFound(
-      routeInfo ? routeInfo.name : "unknown"
+      routeInfo
+        ? routeInfo.name
+        : "unknown"
     );
   });
 
