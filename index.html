@@ -82,7 +82,6 @@
         </span>
       </a>
 
-      <!-- Global Search -->
       <div class="global-search">
         <span>⌕</span>
 
@@ -96,7 +95,6 @@
         <kbd>⌘ K</kbd>
       </div>
 
-      <!-- Top Actions -->
       <div class="top-actions">
 
         <button
@@ -138,15 +136,10 @@
       </div>
     </header>
 
-
-    <!-- =========================
-         SIDEBAR
-         ========================= -->
     <aside class="sidebar" id="sidebar">
 
       <div class="sidebar-scroll">
 
-        <!-- MAIN -->
         <div class="nav-group">
 
           <span class="nav-label">MAIN</span>
@@ -188,8 +181,6 @@
 
         </div>
 
-
-        <!-- CONNECT -->
         <div class="nav-group">
 
           <span class="nav-label">CONNECT</span>
@@ -216,8 +207,6 @@
 
         </div>
 
-
-        <!-- LIBRARY -->
         <div class="nav-group">
 
           <span class="nav-label">LIBRARY</span>
@@ -239,8 +228,6 @@
 
         </div>
 
-
-        <!-- YOUR SPACE -->
         <div class="nav-group">
 
           <span class="nav-label">YOUR SPACE</span>
@@ -262,8 +249,6 @@
 
         </div>
 
-
-        <!-- SIDEBAR CARD -->
         <div class="sidebar-card">
 
           <span>✦</span>
@@ -285,8 +270,6 @@
 
       </div>
 
-
-      <!-- SIDEBAR FOOTER -->
       <div class="sidebar-footer">
 
         <a href="#settings" data-nav="settings">
@@ -303,10 +286,6 @@
 
     </aside>
 
-
-    <!-- =========================
-         MAIN CONTENT
-         ========================= -->
     <main
       class="main"
       id="mainContent"
@@ -314,10 +293,6 @@
     >
     </main>
 
-
-    <!-- =========================
-         MOBILE NAVIGATION
-         ========================= -->
     <nav class="mobile-nav">
 
       <a href="#home" data-nav="home">
@@ -347,10 +322,6 @@
 
     </nav>
 
-
-    <!-- =========================
-         MEDIA PLAYER
-         ========================= -->
     <section
       class="media-player"
       id="mediaPlayer"
@@ -361,16 +332,8 @@
 
   </div>
 
-
-  <!-- =========================
-       MODAL
-       ========================= -->
   <div id="modalRoot"></div>
 
-
-  <!-- =========================
-       TOAST
-       ========================= -->
   <div
     id="toastRoot"
     class="toast-root"
@@ -378,16 +341,19 @@
     aria-atomic="true"
   ></div>
 
+  <!-- Configuration must load before Supabase and app -->
+  <script src="js/config.js"></script>
 
-  <!-- =========================
-       ROUTER
-       ========================= -->
+  <!-- Supabase JavaScript client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Apostolic Media Supabase wrapper -->
+  <script src="js/supabase.js"></script>
+
+  <!-- Router -->
   <script src="js/router.js"></script>
 
-
-  <!-- =========================
-       MAIN APPLICATION
-       ========================= -->
+  <!-- Main application -->
   <script
     type="module"
     src="js/app.js"
