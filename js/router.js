@@ -9,182 +9,176 @@
 
   const Router = {
 
-    // =======================================================
-    // Configuration
-    // =======================================================
     routes: {},
     currentRoute: null,
     started: false,
 
-    // =======================================================
-    // Register a route
-    // =======================================================
-    register: function (path, handler) {
-      if (!path || typeof handler !== "function") {
-        return false;
-      }
-
-      this.routes[path] = handler;
-      return true;
+    register(path, handler) {
+      const route = this.normalize(path);
+      this.routes[route] = handler;
+      return this;
     },
 
-    // =======================================================
-    // Register multiple routes
-    // =======================================================
-    registerMany: function (routes) {
-      if (!routes || typeof routes !== "object") {
-        return;
-      }
-
-      Object.keys(routes).forEach((path) => {
+    registerMany(routes) {
+      Object.keys(routes).forEach(path => {
         this.register(path, routes[path]);
       });
+
+      return this;
     },
 
-    // =======================================================
-    // Get current hash
-    // =======================================================
-    getHash: function () {
-      let hash = window.location.hash || "#home";
-
-      if (!hash.startsWith("#")) {
-        hash = "#" + hash;
-      }
-
-      return hash;
+    getHash() {
+      return window.location.hash || "#home";
     },
 
-    // =======================================================
-    // Normalize route
-    // =======================================================
-    normalize: function (route) {
+    normalize(route) {
+
       if (!route) {
         return "#home";
       }
 
-      let normalized = String(route).trim();
+      let value = String(route).trim();
 
-      if (!normalized.startsWith("#")) {
-        normalized = "#" + normalized;
+      if (!value.startsWith("#")) {
+        value = "#" + value;
       }
 
-      // Remove trailing slash
-      normalized = normalized.replace(/\/+$/, "");
+      value = value.replace(/^#+/, "#");
 
-      if (normalized === "#") {
-        normalized = "#home";
-      }
-
-      return normalized;
+      return value.toLowerCase();
     },
 
-    // =======================================================
-    // Get route parameters
-    // =======================================================
-    getParams: function (route) {
+    getParams(route) {
+
       const normalized = this.normalize(route);
-      const parts = normalized.substring(1).split("/");
+
+      const clean = normalized
+        .replace(/^#/, "")
+        .split("?")[0];
+
+      const queryString =
+        normalized.includes("?")
+          ? normalized.split("?")[1]
+          : "";
+
+      const params = {};
+
+      if (queryString) {
+        const searchParams =
+          new URLSearchParams(queryString);
+
+        searchParams.forEach((value, key) => {
+          params[key] = value;
+        });
+      }
 
       return {
-        path: normalized,
-        name: parts[0] || "home",
-        params: parts.slice(1)
+        name: clean || "home",
+        params
       };
     },
 
-    // =======================================================
-    // Navigate
-    // =======================================================
-    navigate: function (route, replace) {
+    navigate(route, replace = false) {
+
       const normalized = this.normalize(route);
 
       if (replace) {
-        const url =
-          window.location.pathname +
-          window.location.search +
-          normalized;
-
         window.history.replaceState(
           {},
           "",
-          url
+          normalized
         );
 
         this.handle();
         return;
       }
 
-      if (window.location.hash !== normalized) {
-        window.location.hash = normalized;
-      } else {
+      if (window.location.hash === normalized) {
         this.handle();
+        return;
       }
+
+      window.location.hash =
+        normalized.substring(1);
     },
 
-    // =======================================================
-    // Go back
-    // =======================================================
-    back: function () {
+    back() {
       window.history.back();
     },
 
-    // =======================================================
-    // Handle current route
-    // =======================================================
-    handle: function () {
-      const route = this.normalize(this.getHash());
-      const routeInfo = this.getParams(route);
+    handle() {
+
+      const route =
+        this.normalize(this.getHash());
+
+      const routeInfo =
+        this.getParams(route);
 
       this.currentRoute = route;
 
       const handler =
         this.routes[route] ||
-        this.routes["#" + routeInfo.name] ||
-        this.routes["*"];
+        this.routes["#*"];
 
       if (typeof handler === "function") {
+
         try {
+
           handler(routeInfo);
+
         } catch (error) {
+
           console.error(
-            "Router handler error:",
+            "Route error:",
             error
           );
 
-          this.showRouteError(error);
+          this.showRouteError(
+            error
+          );
         }
+
       } else {
-        this.showNotFound();
+
+        this.showNotFound(
+          routeInfo.name
+        );
       }
 
-      // Update active navigation
-      this.updateActiveNavigation(route);
+      this.updateActiveNavigation(
+        route
+      );
 
-      // Notify application
       window.dispatchEvent(
-        new CustomEvent("routeChanged", {
-          detail: {
-            route: route,
-            name: routeInfo.name,
-            params: routeInfo.params
+        new CustomEvent(
+          "routeChanged",
+          {
+            detail: {
+              route: route,
+              name: routeInfo.name,
+              params: routeInfo.params
+            }
           }
-        })
+        )
       );
     },
 
-    // =======================================================
-    // Update active navigation
-    // =======================================================
-    updateActiveNavigation: function (route) {
+    updateActiveNavigation(route) {
+
       document
         .querySelectorAll(
           "[data-route], [data-nav], a[href^='#']"
         )
-        .forEach((element) => {
+        .forEach(element => {
+
           const target =
             element.getAttribute("data-route") ||
             element.getAttribute("data-nav") ||
             element.getAttribute("href");
+
+          if (!target) {
+            return;
+          }
 
           const normalized =
             this.normalize(target);
@@ -197,107 +191,146 @@
             active
           );
 
-          element.setAttribute(
-            "aria-current",
-            active ? "page" : "false"
-          );
+          if (active) {
+            element.setAttribute(
+              "aria-current",
+              "page"
+            );
+          } else {
+            element.removeAttribute(
+              "aria-current"
+            );
+          }
         });
     },
 
-    // =======================================================
-    // 404 page
-    // =======================================================
-    showNotFound: function () {
-      const container =
-        document.querySelector(
-          "[data-router-view]"
-        ) ||
-        document.querySelector(
-          "main"
+    showNotFound(routeName) {
+
+      const main =
+        document.getElementById(
+          "mainContent"
         );
 
-      if (!container) {
+      if (!main) {
         return;
       }
 
-      container.innerHTML = `
-        <section class="empty-state route-not-found">
-          <div class="empty-state-icon">🔎</div>
-          <h2>Page not found</h2>
-          <p>The page you are looking for does not exist.</p>
-          <button
-            type="button"
-            class="btn primary"
-            data-route="#home"
-          >
-            Back to Home
-          </button>
+      main.innerHTML = `
+        <section class="page-shell page-not-found">
+
+          <div class="page-header">
+            <span class="eyebrow">404</span>
+
+            <h1>Page Not Found</h1>
+
+            <p>
+              The page
+              <strong>#${this.escape(routeName || "")}</strong>
+              is not available yet.
+            </p>
+          </div>
+
+          <div class="page-card">
+
+            <div class="page-card-icon">🕎</div>
+
+            <h2>Apostolic Media</h2>
+
+            <p>
+              This section is being prepared.
+              Please return to the home page.
+            </p>
+
+            <button
+              class="btn primary"
+              data-route="#home"
+            >
+              ← Back to Home
+            </button>
+
+          </div>
+
         </section>
       `;
     },
 
-    // =======================================================
-    // Route error
-    // =======================================================
-    showRouteError: function () {
-      const container =
-        document.querySelector(
-          "[data-router-view]"
-        ) ||
-        document.querySelector(
-          "main"
+    showRouteError(error) {
+
+      const main =
+        document.getElementById(
+          "mainContent"
         );
 
-      if (!container) {
+      if (!main) {
         return;
       }
 
-      container.innerHTML = `
-        <section class="empty-state route-error">
-          <div class="empty-state-icon">⚠️</div>
-          <h2>Something went wrong</h2>
-          <p>We could not load this page.</p>
-          <button
-            type="button"
-            class="btn primary"
-            data-route="#home"
-          >
-            Back to Home
-          </button>
+      main.innerHTML = `
+        <section class="page-shell">
+
+          <div class="page-header">
+            <span class="eyebrow">ERROR</span>
+
+            <h1>Something went wrong</h1>
+
+            <p>
+              This page could not be loaded.
+            </p>
+          </div>
+
+          <div class="page-card">
+
+            <p>
+              Please try again.
+            </p>
+
+            <button
+              class="btn primary"
+              data-route="#home"
+            >
+              ← Back to Home
+            </button>
+
+          </div>
+
         </section>
       `;
+
+      console.error(error);
     },
 
-    // =======================================================
-    // Start router
-    // =======================================================
-    start: function () {
+    escape(value) {
+
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    },
+
+    start() {
+
       if (this.started) {
         return;
       }
 
       this.started = true;
 
-      // Hash changes
       window.addEventListener(
         "hashchange",
-        () => {
-          this.handle();
-        }
+        () => this.handle()
       );
 
-      // Browser back/forward
       window.addEventListener(
         "popstate",
-        () => {
-          this.handle();
-        }
+        () => this.handle()
       );
 
-      // Navigation links
       document.addEventListener(
         "click",
-        (event) => {
+        event => {
+
           const link =
             event.target.closest(
               "[data-route], [data-nav], a[href^='#']"
@@ -316,7 +349,6 @@
             return;
           }
 
-          // Allow modifier-clicks to work normally
           if (
             event.ctrlKey ||
             event.metaKey ||
@@ -332,162 +364,88 @@
         }
       );
 
-      // Initial route
       this.handle();
     }
   };
 
-  // =========================================================
-  // Default routes
-  // =========================================================
 
-  Router.register("#home", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "home"
-        }
-      })
+  /* =========================================================
+     ROUTE REGISTRATION
+     ========================================================= */
+
+  const pages = [
+    "home",
+    "bible",
+    "teachings",
+    "sermons",
+    "songs",
+    "videos",
+    "lyrics",
+    "live",
+    "community",
+    "qa",
+    "events",
+    "downloads",
+    "saved",
+    "playlists",
+    "creator",
+    "wallet",
+    "admin",
+    "settings",
+    "about",
+    "profile",
+    "notifications",
+    "bible-study",
+    "courses",
+    "artists"
+  ];
+
+
+  pages.forEach(page => {
+
+    Router.register(
+      "#" + page,
+      function (routeInfo) {
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "pageLoad",
+            {
+              detail: {
+                page: page,
+                params: routeInfo.params
+              }
+            }
+          )
+        );
+
+      }
     );
+
   });
 
-  Router.register("#songs", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "songs"
-        }
-      })
-    );
-  });
 
-  Router.register("#lyrics", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "lyrics"
-        }
-      })
-    );
-  });
+  /* =========================================================
+     FALLBACK
+     ========================================================= */
 
-  Router.register("#artists", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "artists"
-        }
-      })
-    );
-  });
+  Router.register(
+    "#*",
+    function (routeInfo) {
 
-  Router.register("#teachings", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "teachings"
-        }
-      })
-    );
-  });
+      Router.showNotFound(
+        routeInfo.name
+      );
 
-  Router.register("#sermons", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "sermons"
-        }
-      })
-    );
-  });
+    }
+  );
 
-  Router.register("#bible", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "bible"
-        }
-      })
-    );
-  });
 
-  Router.register("#bible-study", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "bible-study"
-        }
-      })
-    );
-  });
-
-  Router.register("#courses", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "courses"
-        }
-      })
-    );
-  });
-
-  Router.register("#videos", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "videos"
-        }
-      })
-    );
-  });
-
-  Router.register("#live", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "live"
-        }
-      })
-    );
-  });
-
-  Router.register("#community", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "community"
-        }
-      })
-    );
-  });
-
-  Router.register("#events", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "events"
-        }
-      })
-    );
-  });
-
-  Router.register("#playlists", function () {
-    window.dispatchEvent(
-      new CustomEvent("pageLoad", {
-        detail: {
-          page: "playlists"
-        }
-      })
-    );
-  });
-
-  // =========================================================
-  // Public global object
-  // =========================================================
+  /* =========================================================
+     GLOBAL EXPORT
+     ========================================================= */
 
   window.ApostolicRouter = Router;
-
-  // Compatibility alias
   window.Router = Router;
 
 })(window);
