@@ -835,7 +835,7 @@
      UPLOAD
      ========================================================= */
 
-  function handleUploadSubmit(
+  async function handleUploadSubmit(
     form
   ) {
     const formData =
@@ -877,39 +877,109 @@
       return;
     }
 
-    const uploads =
-      storage.get(
-        "apostolic_uploads",
-        []
+    const submitButton =
+      form.querySelector('button[type="submit"]');
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Uploading...";
+    }
+
+    try {
+      const api =
+        window.ApostolicSupabase;
+
+      const config =
+        window.ApostolicConfig ||
+        window.APP_CONFIG || {};
+
+      const bucketName =
+        (config.UPLOADS && config.UPLOADS.BUCKET) ||
+        "Apostolic_Media";
+
+      if (!api || !api.isConfigured()) {
+        throw new Error(
+          "Supabase is not configured."
+        );
+      }
+
+      const safeName =
+        file.name
+          .replace(/[^a-zA-Z0-9._-]/g, "_")
+          .replace(/_+/g, "_");
+
+      const path =
+        `${type}/${Date.now()}-${safeName}`;
+
+      const uploadResult =
+        await api.uploadFile(
+          bucketName,
+          path,
+          file,
+          {
+            upsert: false,
+            contentType: file.type || undefined
+          }
+        );
+
+      if (uploadResult.error) {
+        throw uploadResult.error;
+      }
+
+      const fileUrl =
+        api.getPublicUrl(
+          bucketName,
+          path
+        );
+
+      const dbResult =
+        await api.insert(
+          "media_uploads",
+          {
+            title,
+            description,
+            type,
+            file_name: file.name,
+            file_path: path,
+            file_url: fileUrl,
+            file_size: file.size,
+            file_type: file.type || null
+          }
+        );
+
+      if (dbResult.error) {
+        throw dbResult.error;
+      }
+
+      closeDynamicModal(
+        form.closest(
+          ".apostolic-modal"
+        )
       );
 
-    uploads.push({
-      id: Date.now().toString(),
-      title,
-      description,
-      type,
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      createdAt:
-        new Date().toISOString()
-    });
+      toast(
+        `"${title}" uploaded successfully to Apostolic Media.`,
+        "success"
+      );
 
-    storage.set(
-      "apostolic_uploads",
-      uploads
-    );
+    } catch (error) {
+      console.error(
+        "Supabase upload failed:",
+        error
+      );
 
-    closeDynamicModal(
-      form.closest(
-        ".apostolic-modal"
-      )
-    );
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Upload";
+      }
 
-    toast(
-      `"${title}" uploaded successfully.`,
-      "success"
-    );
+      toast(
+        error && error.message
+          ? `Upload failed: ${error.message}`
+          : "Upload failed. Please try again.",
+        "error"
+      );
+    }
   }
 
   /* =========================================================
