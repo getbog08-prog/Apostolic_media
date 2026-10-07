@@ -876,6 +876,7 @@
     initMobileMenu();
     initNavigation();
     initSearch();
+    initRouter();
 
     initThemeControls();
     initLanguageControls();
