@@ -359,14 +359,28 @@
     type = "info"
   ) {
     let container =
+      $("#toastRoot") ||
       $(".toast-container");
 
     if (!container) {
       container =
         document.createElement("div");
 
+      container.id =
+        "toastRoot";
+
       container.className =
-        "toast-container";
+        "toast-root";
+
+      container.setAttribute(
+        "aria-live",
+        "polite"
+      );
+
+      container.setAttribute(
+        "aria-atomic",
+        "true"
+      );
 
       document.body.appendChild(
         container
@@ -665,28 +679,6 @@
           return;
         }
 
-        const uploadSubmit =
-          event.target.closest(
-            "[data-upload-submit]"
-          );
-
-        if (uploadSubmit) {
-          event.preventDefault();
-
-          const uploadForm =
-            uploadSubmit.closest(
-              "[data-upload-form]"
-            );
-
-          if (uploadForm) {
-            handleUploadSubmit(
-              uploadForm
-            );
-          }
-
-          return;
-        }
-
         const modalClose =
           event.target.closest(
             "[data-modal-action='close']"
@@ -952,7 +944,7 @@
 
     const submitButton =
       form.querySelector(
-        'button[type="submit"]'
+        "[data-upload-submit]"
       );
 
     if (submitButton) {
