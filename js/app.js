@@ -557,7 +557,7 @@
     title,
     type
   ) {
-    return createModal(
+    const modal = createModal(
       title,
       `
         <form
@@ -623,6 +623,23 @@
         </form>
       `
     );
+
+    const uploadButton = modal.querySelector(
+      "[data-upload-submit]"
+    );
+
+    const uploadForm = modal.querySelector(
+      "[data-upload-form]"
+    );
+
+    if (uploadButton && uploadForm) {
+      uploadButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        handleUploadSubmit(uploadForm);
+      });
+    }
+
+    return modal;
   }
 
   /* =========================================================
