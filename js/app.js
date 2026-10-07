@@ -2483,7 +2483,17 @@
       "apostolic_created_items",
       []
     ).filter(function (item) {
-      return item && item.type === type;
+      if (!item || item.type !== type) {
+        return false;
+      }
+
+      return !uploaded.some(function (remoteItem) {
+        return (
+          remoteItem &&
+          remoteItem.type === item.type &&
+          remoteItem.title === item.title
+        );
+      });
     });
 
     const cards = [];
