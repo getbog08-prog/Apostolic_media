@@ -1852,41 +1852,34 @@
     `;
   }
 
-  function renderPage(route) {
-    const main =
-      $("#mainContent");
+  ```javascript
+function renderPage(route) {
 
-    if (!main) return;
+  const pages = document.querySelectorAll(".page");
 
-    const cleanRoute =
-      String(route || "home")
-        .replace(/^#/, "")
-        .trim();
+  pages.forEach(function (page) {
+    page.classList.remove("active");
+    page.style.display = "none";
+  });
 
-    const page =
-      pages[cleanRoute] ||
-      pages.home;
+  const page =
+    document.getElementById(route) ||
+    document.querySelector('[data-page="' + route + '"]');
 
-    activateNavigation(
-      cleanRoute
-    );
-
-    main.innerHTML = `
-      <div class="page-container">
-
-        ${page.content}
-
-      </div>
-    `;
-
-    initThemeControls();
-    initLanguageControls();
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+  if (!page) {
+    console.warn("Page not found:", route);
+    return;
   }
+
+  page.classList.add("active");
+  page.style.display = "block";
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+```
 
   ```javascript
 function initRouter() {
