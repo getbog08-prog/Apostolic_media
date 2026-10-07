@@ -1,14 +1,18 @@
-const CACHE = "apostolic-media-v2";
+/* =========================================================
+   Apostolic Media Service Worker
+   Network-first for app files so GitHub Pages updates appear
+   without serving stale JS/CSS/HTML.
+   ========================================================= */
+
+const CACHE = "apostolic-media-v3";
 
 const CORE = [
   "./",
   "./index.html",
   "./manifest.json",
-
   "./css/style.css",
   "./css/themes.css",
   "./css/responsive.css",
-
   "./js/app.js",
   "./js/config.js",
   "./js/data.js",
@@ -19,103 +23,89 @@ const CORE = [
   "./js/supabase.js"
 ];
 
-
-/* =========================================================
-   INSTALL
-   ========================================================= */
+const APP_FILE_EXTENSIONS = [
+  ".html",
+  ".js",
+  ".css"
+];
 
 self.addEventListener("install", (event) => {
-
   event.waitUntil(
-
     caches.open(CACHE)
       .then((cache) => cache.addAll(CORE))
       .then(() => self.skipWaiting())
-
   );
-
 });
 
-
-/* =========================================================
-   ACTIVATE
-   ========================================================= */
-
 self.addEventListener("activate", (event) => {
-
   event.waitUntil(
-
     caches.keys()
-      .then((keys) => {
-
-        return Promise.all(
-
+      .then((keys) =>
+        Promise.all(
           keys
             .filter((key) => key !== CACHE)
             .map((key) => caches.delete(key))
-
-        );
-
-      })
+        )
+      )
       .then(() => self.clients.claim())
-
   );
-
 });
 
-
-/* =========================================================
-   FETCH
-   ========================================================= */
-
 self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
 
-  if (event.request.method !== "GET") {
-    return;
+  const request = event.request;
+  const url = new URL(request.url);
+
+  if (url.origin === self.location.origin) {
+    const isAppFile = APP_FILE_EXTENSIONS.some((extension) =>
+      url.pathname.endsWith(extension)
+    );
+
+    if (isAppFile || url.pathname.endsWith("/")) {
+      event.respondWith(
+        fetch(request, { cache: "no-store" })
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.ok) {
+              const responseClone = networkResponse.clone();
+              caches.open(CACHE).then((cache) => {
+                cache.put(request, responseClone);
+              });
+            }
+            return networkResponse;
+          })
+          .catch(() =>
+            caches.match(request).then(
+              (cachedResponse) =>
+                cachedResponse || caches.match("./index.html")
+            )
+          )
+      );
+      return;
+    }
   }
 
   event.respondWith(
-
-    caches.match(event.request)
+    caches.match(request)
       .then((cachedResponse) => {
+        if (cachedResponse) return cachedResponse;
 
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        return fetch(event.request)
+        return fetch(request)
           .then((networkResponse) => {
-
             if (
-              !networkResponse ||
-              networkResponse.status !== 200 ||
-              networkResponse.type === "opaque"
+              networkResponse &&
+              networkResponse.status === 200 &&
+              networkResponse.type !== "opaque"
             ) {
-              return networkResponse;
+              const responseClone = networkResponse.clone();
+              caches.open(CACHE).then((cache) => {
+                cache.put(request, responseClone);
+              });
             }
 
-            const responseClone =
-              networkResponse.clone();
-
-            caches.open(CACHE)
-              .then((cache) => {
-                cache.put(
-                  event.request,
-                  responseClone
-                );
-              });
-
             return networkResponse;
-
           })
-          .catch(() => {
-
-            return caches.match("./index.html");
-
-          });
-
+          .catch(() => caches.match("./index.html"));
       })
-
   );
-
 });
