@@ -287,3 +287,26 @@
 .apostolic-modal .upload-status[data-status="success"] {
   border: 1px solid currentColor;
 }
+
+
+/* Upload button touch/click safety */
+.apostolic-modal .modal-content,
+.apostolic-modal .modal-header,
+.apostolic-modal .modal-body,
+.apostolic-modal .dynamic-form,
+.apostolic-modal .form-group,
+.apostolic-modal .btn,
+.apostolic-modal .btn.primary {
+  position: relative !important;
+  z-index: 2001 !important;
+  pointer-events: auto !important;
+}
+
+.apostolic-modal .btn.primary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 44px !important;
+  touch-action: manipulation !important;
+  cursor: pointer !important;
+}
