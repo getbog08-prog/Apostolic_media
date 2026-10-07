@@ -321,15 +321,20 @@
       };
     }
 
+    const fileOptions = {
+      upsert:
+        options.upsert === true
+    };
+
+    if (options.contentType) {
+      fileOptions.contentType =
+        options.contentType;
+    }
+
     return await bucketClient.upload(
       path,
       file,
-      {
-        upsert:
-          options.upsert === true,
-        contentType:
-          options.contentType
-      }
+      fileOptions
     );
   }
 
