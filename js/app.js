@@ -41,7 +41,7 @@
       try {
         localStorage.setItem(key, JSON.stringify(value));
       } catch {
-        /* Storage may be unavailable */
+        /* Ignore storage errors */
       }
     },
 
@@ -60,7 +60,10 @@
 
   const theme = {
     get() {
-      return storage.get("apostolic_theme", APP.defaultTheme);
+      return storage.get(
+        "apostolic_theme",
+        APP.defaultTheme
+      );
     },
 
     set(value) {
@@ -70,7 +73,11 @@
         value = APP.defaultTheme;
       }
 
-      document.documentElement.setAttribute("data-theme", value);
+      document.documentElement.setAttribute(
+        "data-theme",
+        value
+      );
+
       storage.set("apostolic_theme", value);
 
       window.dispatchEvent(
@@ -116,21 +123,23 @@
         value = APP.defaultLanguage;
       }
 
-      storage.set("apostolic_language", value);
+      storage.set(
+        "apostolic_language",
+        value
+      );
 
       document.documentElement.setAttribute(
         "lang",
-        value === "am"
-          ? "am"
-          : value === "om"
-          ? "om"
-          : "en"
+        value
       );
 
       window.dispatchEvent(
-        new CustomEvent("apostolic:languagechange", {
-          detail: { language: value }
-        })
+        new CustomEvent(
+          "apostolic:languagechange",
+          {
+            detail: { language: value }
+          }
+        )
       );
     },
 
@@ -147,112 +156,104 @@
     const menuButton =
       $(".menu-btn") ||
       $("[data-menu-toggle]") ||
-      $(".mobile-menu-button");
+      $(".mobile-menu-button") ||
+      $('[data-action="toggle-sidebar"]');
 
     const sidebar =
       $(".sidebar") ||
       $("[data-sidebar]");
 
-    if (!menuButton || !sidebar) return;
+    if (!menuButton || !sidebar) {
+      return;
+    }
 
-    menuButton.addEventListener("click", () => {
-      sidebar.classList.toggle("open");
-      menuButton.classList.toggle("active");
+    menuButton.addEventListener(
+      "click",
+      function () {
+        sidebar.classList.toggle("open");
+        menuButton.classList.toggle("active");
 
-      const isOpen = sidebar.classList.contains("open");
+        const isOpen =
+          sidebar.classList.contains("open");
 
-      menuButton.setAttribute(
-        "aria-expanded",
-        String(isOpen)
-      );
-    });
+        menuButton.setAttribute(
+          "aria-expanded",
+          String(isOpen)
+        );
+      }
+    );
 
-    $$(".nav-item, .sidebar a").forEach((item) => {
-      item.addEventListener("click", () => {
-        if (window.innerWidth < 1024) {
-          sidebar.classList.remove("open");
-          menuButton.classList.remove("active");
-        }
-      });
-    });
+    $$(".nav-item, .sidebar a").forEach(
+      function (item) {
+        item.addEventListener(
+          "click",
+          function () {
+            if (window.innerWidth < 1024) {
+              sidebar.classList.remove("open");
+              menuButton.classList.remove("active");
+            }
+          }
+        );
+      }
+    );
   }
 
   /* -------------------------------------------------------
      Navigation
+     IMPORTANT:
+     Navigation is controlled by router.js.
      ------------------------------------------------------- */
 
   function initNavigation() {
-    const links = $$(
-      "[data-route], [data-page], .nav-item"
-    );
-
-    links.forEach((link) => {
-      link.addEventListener("click", (event) => {
-        const route =
-          link.dataset.route ||
-          link.dataset.page;
-
-        if (!route) return;
-
-        event.preventDefault();
-
-        navigate(route);
-      });
-    });
-
-    window.addEventListener("popstate", () => {
-      const route =
-        window.location.hash.replace("#", "") ||
-        "home";
-
-      activateNavigation(route);
-    });
+    /*
+      router.js handles navigation.
+      We intentionally do not add another
+      navigation click handler here.
+    */
+    return;
   }
 
   function navigate(route) {
-    if (!route) return;
+    if (!route) {
+      return;
+    }
 
     const cleanRoute = String(route)
       .replace(/^#/, "")
       .trim();
 
-    history.pushState(
-      { route: cleanRoute },
-      "",
-      "#" + cleanRoute
-    );
-
-    activateNavigation(cleanRoute);
-
-    window.dispatchEvent(
-      new CustomEvent("apostolic:navigate", {
-        detail: { route: cleanRoute }
-      })
-    );
+    if (window.ApostolicRouter) {
+      window.ApostolicRouter.navigate(
+        "#" + cleanRoute
+      );
+    } else {
+      window.location.hash = cleanRoute;
+    }
   }
 
   function activateNavigation(route) {
-    $$(
-      ".nav-item.active, [data-route].active, [data-page].active"
-    ).forEach((item) => {
-      item.classList.remove("active");
-    });
+    const cleanRoute = String(route || "")
+      .replace(/^#/, "")
+      .trim();
 
     $$(
-      `[data-route="${route}"], [data-page="${route}"]`
-    ).forEach((item) => {
-      item.classList.add("active");
+      "[data-route], [data-nav], [data-page], .nav-item"
+    ).forEach(function (item) {
+      const target =
+        item.dataset.route ||
+        item.dataset.nav ||
+        item.dataset.page ||
+        item.getAttribute("href");
+
+      const cleanTarget = String(target || "")
+        .replace(/^#/, "")
+        .trim();
+
+      item.classList.toggle(
+        "active",
+        cleanTarget === cleanRoute
+      );
     });
-
-    const target =
-      document.getElementById(route);
-
-    if (target) {
-      target.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    }
   }
 
   /* -------------------------------------------------------
@@ -264,30 +265,48 @@
       'input[type="search"], .search-input, [data-search]'
     );
 
-    inputs.forEach((input) => {
-      input.addEventListener("input", () => {
-        const query = input.value.trim();
+    inputs.forEach(function (input) {
+      input.addEventListener(
+        "input",
+        function () {
+          const query =
+            input.value.trim();
 
-        window.dispatchEvent(
-          new CustomEvent("apostolic:search", {
-            detail: { query }
-          })
-        );
-      });
+          window.dispatchEvent(
+            new CustomEvent(
+              "apostolic:search",
+              {
+                detail: { query }
+              }
+            )
+          );
+        }
+      );
 
-      input.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter") return;
+      input.addEventListener(
+        "keydown",
+        function (event) {
+          if (event.key !== "Enter") {
+            return;
+          }
 
-        const query = input.value.trim();
+          const query =
+            input.value.trim();
 
-        if (!query) return;
+          if (!query) {
+            return;
+          }
 
-        window.dispatchEvent(
-          new CustomEvent("apostolic:searchsubmit", {
-            detail: { query }
-          })
-        );
-      });
+          window.dispatchEvent(
+            new CustomEvent(
+              "apostolic:searchsubmit",
+              {
+                detail: { query }
+              }
+            )
+          );
+        }
+      );
     });
   }
 
@@ -298,25 +317,30 @@
   function initThemeControls() {
     $$(
       "[data-theme], [data-set-theme]"
-    ).forEach((button) => {
-      button.addEventListener("click", () => {
-        const selected =
-          button.dataset.theme ||
-          button.dataset.setTheme;
+    ).forEach(function (button) {
+      button.addEventListener(
+        "click",
+        function () {
+          const selected =
+            button.dataset.theme ||
+            button.dataset.setTheme;
 
-        if (selected) {
-          theme.set(selected);
+          if (selected) {
+            theme.set(selected);
+          }
         }
-      });
+      );
     });
 
-    $$(".theme-toggle, [data-theme-toggle]").forEach(
-      (button) => {
-        button.addEventListener("click", () => {
-          theme.toggle();
-        });
-      }
-    );
+    $$(".theme-toggle, [data-theme-toggle]")
+      .forEach(function (button) {
+        button.addEventListener(
+          "click",
+          function () {
+            theme.toggle();
+          }
+        );
+      });
   }
 
   /* -------------------------------------------------------
@@ -326,50 +350,70 @@
   function initLanguageControls() {
     $$(
       "[data-language], [data-set-language]"
-    ).forEach((button) => {
-      button.addEventListener("click", () => {
-        const selected =
-          button.dataset.language ||
-          button.dataset.setLanguage;
+    ).forEach(function (button) {
+      button.addEventListener(
+        "click",
+        function () {
+          const selected =
+            button.dataset.language ||
+            button.dataset.setLanguage;
 
-        if (selected) {
-          language.set(selected);
+          if (selected) {
+            language.set(selected);
+          }
         }
-      });
+      );
     });
   }
 
   /* -------------------------------------------------------
-     Toast Notification
+     Toast
      ------------------------------------------------------- */
 
-  function toast(message, type = "info") {
-    let container = $(".toast-container");
+  function toast(
+    message,
+    type = "info"
+  ) {
+    let container =
+      $(".toast-container");
 
     if (!container) {
-      container = document.createElement("div");
-      container.className = "toast-container";
-      document.body.appendChild(container);
+      container =
+        document.createElement("div");
+
+      container.className =
+        "toast-container";
+
+      document.body.appendChild(
+        container
+      );
     }
 
-    const item = document.createElement("div");
+    const item =
+      document.createElement("div");
 
-    item.className = `toast toast-${type}`;
+    item.className =
+      `toast toast-${type}`;
 
-    item.setAttribute("role", "status");
+    item.setAttribute(
+      "role",
+      "status"
+    );
 
     item.textContent = message;
 
     container.appendChild(item);
 
-    requestAnimationFrame(() => {
-      item.classList.add("show");
-    });
+    requestAnimationFrame(
+      function () {
+        item.classList.add("show");
+      }
+    );
 
-    setTimeout(() => {
+    setTimeout(function () {
       item.classList.remove("show");
 
-      setTimeout(() => {
+      setTimeout(function () {
         item.remove();
       }, 250);
     }, 3000);
@@ -379,8 +423,13 @@
      Loading
      ------------------------------------------------------- */
 
-  function setLoading(element, loading = true) {
-    if (!element) return;
+  function setLoading(
+    element,
+    loading = true
+  ) {
+    if (!element) {
+      return;
+    }
 
     element.classList.toggle(
       "is-loading",
@@ -398,119 +447,178 @@
      ------------------------------------------------------- */
 
   function openModal(id) {
-    const modal = document.getElementById(id);
+    const modal =
+      document.getElementById(id);
 
-    if (!modal) return;
+    if (!modal) {
+      return;
+    }
 
     modal.classList.add("open");
-    document.body.classList.add("modal-open");
 
-    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add(
+      "modal-open"
+    );
+
+    modal.setAttribute(
+      "aria-hidden",
+      "false"
+    );
   }
 
   function closeModal(id) {
-    const modal = document.getElementById(id);
+    const modal =
+      document.getElementById(id);
 
-    if (!modal) return;
+    if (!modal) {
+      return;
+    }
 
     modal.classList.remove("open");
-    modal.setAttribute("aria-hidden", "true");
+
+    modal.setAttribute(
+      "aria-hidden",
+      "true"
+    );
 
     if (!$(".modal.open")) {
-      document.body.classList.remove("modal-open");
+      document.body.classList.remove(
+        "modal-open"
+      );
     }
   }
 
   function initModals() {
-    $$("[data-modal-open]").forEach((button) => {
-      button.addEventListener("click", () => {
-        openModal(button.dataset.modalOpen);
+    $$("[data-modal-open]")
+      .forEach(function (button) {
+        button.addEventListener(
+          "click",
+          function () {
+            openModal(
+              button.dataset.modalOpen
+            );
+          }
+        );
       });
-    });
 
-    $$("[data-modal-close]").forEach((button) => {
-      button.addEventListener("click", () => {
-        closeModal(button.dataset.modalClose);
+    $$("[data-modal-close]")
+      .forEach(function (button) {
+        button.addEventListener(
+          "click",
+          function () {
+            closeModal(
+              button.dataset.modalClose
+            );
+          }
+        );
       });
-    });
 
-    $$(".modal").forEach((modal) => {
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) {
-          closeModal(modal.id);
+    $$(".modal").forEach(
+      function (modal) {
+        modal.addEventListener(
+          "click",
+          function (event) {
+            if (
+              event.target === modal
+            ) {
+              closeModal(
+                modal.id
+              );
+            }
+          }
+        );
+      }
+    );
+
+    document.addEventListener(
+      "keydown",
+      function (event) {
+        if (event.key !== "Escape") {
+          return;
         }
-      });
-    });
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
-
-      $$(".modal.open").forEach((modal) => {
-        closeModal(modal.id);
-      });
-    });
+        $$(".modal.open")
+          .forEach(function (modal) {
+            closeModal(
+              modal.id
+            );
+          });
+      }
+    );
   }
 
   /* -------------------------------------------------------
-     Save / Like Buttons
+     Like / Save
      ------------------------------------------------------- */
 
   function initActions() {
-    $$("[data-like]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const id = button.dataset.like;
+    $$("[data-like]")
+      .forEach(function (button) {
+        button.addEventListener(
+          "click",
+          function () {
+            const id =
+              button.dataset.like;
 
-        const liked = storage.get(
-          `liked_${id}`,
-          false
-        );
+            const liked =
+              storage.get(
+                `liked_${id}`,
+                false
+              );
 
-        storage.set(
-          `liked_${id}`,
-          !liked
-        );
+            storage.set(
+              `liked_${id}`,
+              !liked
+            );
 
-        button.classList.toggle(
-          "active",
-          !liked
-        );
+            button.classList.toggle(
+              "active",
+              !liked
+            );
 
-        toast(
-          !liked
-            ? "Added to liked content."
-            : "Removed from liked content.",
-          "success"
-        );
-      });
-    });
-
-    $$("[data-save]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const id = button.dataset.save;
-
-        const saved = storage.get(
-          `saved_${id}`,
-          false
-        );
-
-        storage.set(
-          `saved_${id}`,
-          !saved
-        );
-
-        button.classList.toggle(
-          "active",
-          !saved
-        );
-
-        toast(
-          !saved
-            ? "Saved successfully."
-            : "Removed from saved content.",
-          "success"
+            toast(
+              !liked
+                ? "Added to liked content."
+                : "Removed from liked content.",
+              "success"
+            );
+          }
         );
       });
-    });
+
+    $$("[data-save]")
+      .forEach(function (button) {
+        button.addEventListener(
+          "click",
+          function () {
+            const id =
+              button.dataset.save;
+
+            const saved =
+              storage.get(
+                `saved_${id}`,
+                false
+              );
+
+            storage.set(
+              `saved_${id}`,
+              !saved
+            );
+
+            button.classList.toggle(
+              "active",
+              !saved
+            );
+
+            toast(
+              !saved
+                ? "Saved successfully."
+                : "Removed from saved content.",
+              "success"
+            );
+          }
+        );
+      });
   }
 
   /* -------------------------------------------------------
@@ -522,25 +630,33 @@
       $(".back-to-top") ||
       $("[data-back-to-top]");
 
-    if (!button) return;
+    if (!button) {
+      return;
+    }
 
-    window.addEventListener("scroll", () => {
-      button.classList.toggle(
-        "visible",
-        window.scrollY > 400
-      );
-    });
+    window.addEventListener(
+      "scroll",
+      function () {
+        button.classList.toggle(
+          "visible",
+          window.scrollY > 400
+        );
+      }
+    );
 
-    button.addEventListener("click", () => {
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      });
-    });
+    button.addEventListener(
+      "click",
+      function () {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+      }
+    );
   }
 
   /* -------------------------------------------------------
-     Online / Offline Status
+     Online / Offline
      ------------------------------------------------------- */
 
   function updateConnectionStatus() {
@@ -570,64 +686,75 @@
   }
 
   /* -------------------------------------------------------
-     Service Worker / PWA
+     Service Worker
      ------------------------------------------------------- */
 
   function registerServiceWorker() {
-    if (!("serviceWorker" in navigator)) {
+    if (
+      !("serviceWorker" in navigator)
+    ) {
       return;
     }
 
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("./sw.js")
-        .then(() => {
-          console.log(
-            "Apostolic Media service worker registered."
-          );
-        })
-        .catch((error) => {
-          console.warn(
-            "Service worker registration failed:",
-            error
-          );
-        });
-    });
+    window.addEventListener(
+      "load",
+      function () {
+        navigator.serviceWorker
+          .register("./sw.js")
+          .then(function () {
+            console.log(
+              "Apostolic Media service worker registered."
+            );
+          })
+          .catch(function (error) {
+            console.warn(
+              "Service worker registration failed:",
+              error
+            );
+          });
+      }
+    );
   }
 
   /* -------------------------------------------------------
-     Global Keyboard Shortcuts
+     Keyboard Shortcuts
      ------------------------------------------------------- */
 
   function initKeyboardShortcuts() {
-    document.addEventListener("keydown", (event) => {
-      if (
-        event.key === "/" &&
-        !["INPUT", "TEXTAREA"].includes(
-          document.activeElement.tagName
-        )
-      ) {
-        event.preventDefault();
+    document.addEventListener(
+      "keydown",
+      function (event) {
+        if (
+          event.key === "/" &&
+          ![
+            "INPUT",
+            "TEXTAREA"
+          ].includes(
+            document.activeElement.tagName
+          )
+        ) {
+          event.preventDefault();
 
-        const search =
-          $('input[type="search"]') ||
-          $(".search-input");
+          const search =
+            $('input[type="search"]') ||
+            $(".search-input");
 
-        if (search) {
-          search.focus();
+          if (search) {
+            search.focus();
+          }
         }
       }
-    });
+    );
   }
 
   /* -------------------------------------------------------
-     Page Visibility
+     Visibility
      ------------------------------------------------------- */
 
   function initVisibility() {
     document.addEventListener(
       "visibilitychange",
-      () => {
+      function () {
         window.dispatchEvent(
           new CustomEvent(
             "apostolic:visibility",
@@ -644,23 +771,24 @@
   }
 
   /* -------------------------------------------------------
-     Global Error Handler
+     Error Handling
      ------------------------------------------------------- */
 
   function initErrorHandling() {
     window.addEventListener(
       "error",
-      (event) => {
+      function (event) {
         console.error(
           "Apostolic Media error:",
-          event.error || event.message
+          event.error ||
+            event.message
         );
       }
     );
 
     window.addEventListener(
       "unhandledrejection",
-      (event) => {
+      function (event) {
         console.error(
           "Unhandled promise rejection:",
           event.reason
@@ -669,126 +797,188 @@
     );
   }
 
-    /* -------------------------------------------------------
-     Router + Page Renderer
+  /* -------------------------------------------------------
+     Page Renderer
      ------------------------------------------------------- */
 
   function renderPage(page) {
-    const main = document.getElementById("mainContent");
+    const main =
+      document.getElementById(
+        "mainContent"
+      );
 
-    if (!main) return;
+    if (!main) {
+      return;
+    }
 
     const pages = {
+
       home: {
-        title: "Welcome to የኢየሱስ ልጆች",
-        subtitle: "Apostolic Media",
+        title:
+          "Welcome to የኢየሱስ ልጆች",
+        subtitle:
+          "Apostolic Media",
         icon: "🕎",
-        text: "Wherever you are, join the same Apostolic Christian community."
+        text:
+          "Wherever you are, join the same Apostolic Christian community."
       },
 
       bible: {
-        title: "Holy Bible",
-        subtitle: "Read and study God's Word.",
+        title:
+          "Holy Bible",
+        subtitle:
+          "Read and study God's Word.",
         icon: "📖",
-        text: "Bible resources, Scripture reading and Bible study will be available here."
+        text:
+          "Bible resources, Scripture reading and Bible study will be available here."
       },
 
       "bible-study": {
-        title: "Bible Study",
-        subtitle: "Grow in the Word",
+        title:
+          "Bible Study",
+        subtitle:
+          "Grow in the Word",
         icon: "📚",
-        text: "Explore structured Bible studies and Scripture-based teaching."
+        text:
+          "Explore structured Bible studies and Scripture-based teaching."
       },
 
       teachings: {
-        title: "Christian Teachings",
-        subtitle: "Scripture-based teaching",
+        title:
+          "Christian Teachings",
+        subtitle:
+          "Scripture-based teaching",
         icon: "📘",
-        text: "Discover Apostolic Christian teachings and lessons."
+        text:
+          "Discover Apostolic Christian teachings and lessons."
       },
 
       sermons: {
-        title: "Sermons",
-        subtitle: "Messages for spiritual growth",
+        title:
+          "Sermons",
+        subtitle:
+          "Messages for spiritual growth",
         icon: "🎙️",
-        text: "Listen to sermons and messages from Christian ministers."
+        text:
+          "Listen to sermons and messages from Christian ministers."
       },
 
       songs: {
-        title: "Christian Songs",
-        subtitle: "Worship and praise",
+        title:
+          "Christian Songs",
+        subtitle:
+          "Worship and praise",
         icon: "🎵",
-        text: "Discover Apostolic Christian worship songs."
+        text:
+          "Discover Apostolic Christian worship songs."
       },
 
       lyrics: {
-        title: "Lyrics",
-        subtitle: "Christian song lyrics",
+        title:
+          "Lyrics",
+        subtitle:
+          "Christian song lyrics",
         icon: "📝",
-        text: "Read Christian worship and praise lyrics."
+        text:
+          "Read Christian worship and praise lyrics."
       },
 
       videos: {
-        title: "Christian Videos",
-        subtitle: "Watch and learn",
+        title:
+          "Christian Videos",
+        subtitle:
+          "Watch and learn",
         icon: "▶️",
-        text: "Watch Apostolic Christian videos and ministry content."
+        text:
+          "Watch Apostolic Christian videos and ministry content."
       },
 
       community: {
-        title: "Community",
-        subtitle: "Connect with believers",
+        title:
+          "Community",
+        subtitle:
+          "Connect with believers",
         icon: "👥",
-        text: "Connect, share and communicate with the Apostolic Christian community."
+        text:
+          "Connect, share and communicate with the Apostolic Christian community."
       },
 
       live: {
-        title: "Live",
-        subtitle: "Live Christian ministry",
+        title:
+          "Live",
+        subtitle:
+          "Live Christian ministry",
         icon: "🔴",
-        text: "Live ministry and Christian broadcasts will appear here."
+        text:
+          "Live ministry and Christian broadcasts will appear here."
       },
 
       events: {
-        title: "Events",
-        subtitle: "Christian events",
+        title:
+          "Events",
+        subtitle:
+          "Christian events",
         icon: "📅",
-        text: "Discover upcoming Apostolic Christian events."
+        text:
+          "Discover upcoming Apostolic Christian events."
       },
 
       playlists: {
-        title: "Playlists",
-        subtitle: "Your Christian media",
+        title:
+          "Playlists",
+        subtitle:
+          "Your Christian media",
         icon: "🎶",
-        text: "Create and manage your favorite Christian media playlists."
+        text:
+          "Create and manage your favorite Christian media playlists."
       },
 
       artists: {
-        title: "Artists & Ministers",
-        subtitle: "Christian ministers and creators",
+        title:
+          "Artists & Ministers",
+        subtitle:
+          "Christian ministers and creators",
         icon: "🎤",
-        text: "Explore Christian artists, ministers and creators."
+        text:
+          "Explore Christian artists, ministers and creators."
       },
 
       courses: {
-        title: "Courses",
-        subtitle: "Christian learning",
+        title:
+          "Courses",
+        subtitle:
+          "Christian learning",
         icon: "🎓",
-        text: "Learn through structured Christian courses."
+        text:
+          "Learn through structured Christian courses."
       }
     };
 
-    const content = pages[page];
+    const content =
+      pages[page];
 
     if (!content) {
       main.innerHTML = `
         <section class="empty-state">
-          <div class="empty-state-icon">🔎</div>
+          <div class="empty-state-icon">
+            🔎
+          </div>
+
           <h2>Page not found</h2>
-          <p>This section is not available yet.</p>
-          <a href="#home" class="btn primary">Back to Home</a>
+
+          <p>
+            This section is not available yet.
+          </p>
+
+          <a
+            href="#home"
+            class="btn primary"
+          >
+            ← Home
+          </a>
         </section>
       `;
+
       return;
     }
 
@@ -796,7 +986,10 @@
       <section class="hero">
         <div class="hero-content">
 
-          <span class="hero-icon" style="font-size:3rem;">
+          <span
+            class="hero-icon"
+            style="font-size:3rem;"
+          >
             ${content.icon}
           </span>
 
@@ -804,7 +997,9 @@
             APOSTOLIC MEDIA
           </span>
 
-          <h1>${content.title}</h1>
+          <h1>
+            ${content.title}
+          </h1>
 
           <p class="hero-subtitle">
             ${content.subtitle}
@@ -815,7 +1010,10 @@
           </p>
 
           <div class="hero-actions">
-            <a href="#home" class="btn primary">
+            <a
+              href="#home"
+              class="btn primary"
+            >
               ← Home
             </a>
           </div>
@@ -825,70 +1023,134 @@
     `;
   }
 
+  /* -------------------------------------------------------
+     Router Integration
+     ------------------------------------------------------- */
+
   function initRouter() {
 
-    // Listen for pages requested by router.js
-    window.addEventListener("pageLoad", (event) => {
-      if (!event.detail) return;
+    /*
+      router.js sends pageLoad events.
+    */
 
-      renderPage(event.detail.page);
-    });
+    window.addEventListener(
+      "pageLoad",
+      function (event) {
+        if (
+          !event.detail ||
+          !event.detail.page
+        ) {
+          return;
+        }
 
-    // Load router.js because index.html currently
-    // loads only app.js
-    if (!window.ApostolicRouter) {
+        renderPage(
+          event.detail.page
+        );
 
-      const script = document.createElement("script");
+        activateNavigation(
+          event.detail.page
+        );
+      }
+    );
 
-      script.src = "js/router.js";
+    /*
+      Load router.js only if it has
+      not already been loaded.
+    */
 
-      script.onload = () => {
+    if (
+      window.ApostolicRouter
+    ) {
+      window.ApostolicRouter.start();
+      return;
+    }
 
-        window.ApostolicRouter.start();
+    const existingScript =
+      document.querySelector(
+        'script[src$="js/router.js"]'
+      );
 
+    if (existingScript) {
+      existingScript.addEventListener(
+        "load",
+        function () {
+          if (
+            window.ApostolicRouter
+          ) {
+            window.ApostolicRouter.start();
+          }
+        }
+      );
+
+      return;
+    }
+
+    const script =
+      document.createElement(
+        "script"
+      );
+
+    script.src =
+      "./js/router.js";
+
+    script.onload =
+      function () {
+        if (
+          window.ApostolicRouter
+        ) {
+          window.ApostolicRouter.start();
+        }
       };
 
-      script.onerror = () => {
-
+    script.onerror =
+      function () {
         console.error(
           "Could not load js/router.js"
         );
-
       };
 
-      document.head.appendChild(script);
-
-    } else {
-
-      window.ApostolicRouter.start();
-
-    }
+    document.head.appendChild(
+      script
+    );
   }
-   
-   /* -------------------------------------------------------
+
+  /* -------------------------------------------------------
      App Initialization
      ------------------------------------------------------- */
 
   function init() {
+
     theme.init();
+
     language.init();
 
     initMobileMenu();
+
+    /*
+      Navigation is handled by router.js.
+    */
     initNavigation();
+
     initSearch();
+
     initRouter();
 
     initThemeControls();
+
     initLanguageControls();
 
     initModals();
+
     initActions();
 
     initBackToTop();
+
     initConnectionStatus();
 
     initKeyboardShortcuts();
+
     initVisibility();
+
     initErrorHandling();
 
     registerServiceWorker();
@@ -907,15 +1169,27 @@
      ------------------------------------------------------- */
 
   window.ApostolicMedia = {
+
     APP,
+
     storage,
+
     theme,
+
     language,
+
     navigate,
+
     toast,
+
     setLoading,
+
     openModal,
-    closeModal
+
+    closeModal,
+
+    renderPage
+
   };
 
   /* -------------------------------------------------------
@@ -923,7 +1197,8 @@
      ------------------------------------------------------- */
 
   if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
   ) {
     document.addEventListener(
       "DOMContentLoaded",
