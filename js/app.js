@@ -1128,7 +1128,7 @@
      CREATE
      ========================================================= */
 
-  function handleCreateSubmit(
+  async function handleCreateSubmit(
     form
   ) {
     const formData =
@@ -1161,13 +1161,7 @@
       return;
     }
 
-    const items =
-      storage.get(
-        "apostolic_created_items",
-        []
-      );
-
-    items.push({
+    const createdItem = {
       id: Date.now().toString(),
       title,
       description,
@@ -1175,7 +1169,46 @@
       type,
       createdAt:
         new Date().toISOString()
-    });
+    };
+
+    let savedOnline = false;
+
+    try {
+      const api = window.ApostolicSupabase;
+
+      if (api && api.isConfigured()) {
+        const result = await api.insert(
+          "media_uploads",
+          {
+            title,
+            description,
+            type,
+            file_name: null,
+            file_path: null,
+            file_url: null,
+            file_size: null,
+            file_type: null
+          }
+        );
+
+        if (result && !result.error) {
+          savedOnline = true;
+        }
+      }
+    } catch (error) {
+      console.warn(
+        "Online create failed; keeping a local copy:",
+        error
+      );
+    }
+
+    const items =
+      storage.get(
+        "apostolic_created_items",
+        []
+      );
+
+    items.push(createdItem);
 
     storage.set(
       "apostolic_created_items",
@@ -1189,7 +1222,9 @@
     );
 
     toast(
-      `"${title}" created successfully.`,
+      savedOnline
+        ? `"${title}" created and saved to Media.`
+        : `"${title}" created successfully on this device.`,
       "success"
     );
   }
@@ -2384,6 +2419,124 @@
   };
 
   /* =========================================================
+     MEDIA CONTENT LOADER
+     ========================================================= */
+
+  const mediaRouteTypes = {
+    teachings: "teaching",
+    sermons: "sermon",
+    songs: "song",
+    videos: "video",
+    lyrics: "lyric",
+    "bible-study": "bible",
+    courses: "course"
+  };
+
+  async function loadMediaForPage(route) {
+    const type = mediaRouteTypes[route];
+    if (!type) return;
+
+    const container = $(".page-container");
+    if (!container) return;
+
+    const section = document.createElement("section");
+    section.className = "content-grid media-content-grid";
+    section.innerHTML = `
+      <article class="card media-loading-card">
+        <div class="card-icon">⏳</div>
+        <h3>Media Library</h3>
+        <p>Loading your saved content...</p>
+      </article>
+    `;
+    container.appendChild(section);
+
+    let uploaded = [];
+    let uploadError = null;
+
+    try {
+      const api = window.ApostolicSupabase;
+      if (api && api.isConfigured()) {
+        const result = await api.select(
+          "media_uploads",
+          "*",
+          {
+            eq: { type },
+            order: {
+              column: "created_at",
+              ascending: false
+            },
+            limit: 100
+          }
+        );
+        uploaded = result && Array.isArray(result.data)
+          ? result.data
+          : [];
+        uploadError = result && result.error
+          ? result.error
+          : null;
+      }
+    } catch (error) {
+      uploadError = error;
+    }
+
+    const localItems = storage.get(
+      "apostolic_created_items",
+      []
+    ).filter(function (item) {
+      return item && item.type === type;
+    });
+
+    const cards = [];
+
+    uploaded.forEach(function (item) {
+      const title = item.title || item.file_name || "Untitled";
+      const description =
+        item.description ||
+        (item.file_name
+          ? "Uploaded media file."
+          : "Saved media content.");
+
+      const action = item.file_url
+        ? `<a class="btn" href="${escapeHTML(item.file_url)}" target="_blank" rel="noopener">Open File</a>`
+        : "";
+
+      cards.push(renderCard(
+        item.file_name ? "📎" : "📝",
+        title,
+        description,
+        action
+      ));
+    });
+
+    localItems.forEach(function (item) {
+      cards.push(renderCard(
+        "📝",
+        item.title || "Untitled",
+        item.description || "Created content.",
+        ""
+      ));
+    });
+
+    if (uploadError && cards.length === 0) {
+      cards.push(renderCard(
+        "⚠️",
+        "Media Library",
+        "Could not load saved media right now. Please refresh and try again.",
+        ""
+      ));
+    } else if (cards.length === 0) {
+      cards.push(renderCard(
+        "📂",
+        "No Media Yet",
+        "Content you create or upload here will appear in this section.",
+        ""
+      ));
+    }
+
+    section.innerHTML = cards.join("");
+  }
+
+  /* =========================================================
      RENDER PAGE
      ========================================================= */
 
@@ -2420,6 +2573,8 @@
 
     initThemeControls();
     initLanguageControls();
+
+    loadMediaForPage(cleanRoute);
 
     /*
       Always bring the newly selected page
