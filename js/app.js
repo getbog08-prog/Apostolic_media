@@ -588,7 +588,6 @@
               id="uploadFile"
               name="file"
               type="file"
-              accept="*/*"
               required
             />
           </div>
@@ -605,6 +604,13 @@
               placeholder="Write a description..."
             ></textarea>
           </div>
+
+          <div
+            class="upload-status"
+            hidden
+            role="status"
+            aria-live="polite"
+          ></div>
 
           <button
             type="submit"
@@ -858,7 +864,30 @@
       form.dataset.uploadForm ||
       "document";
 
+    const statusElement =
+      form.querySelector(".upload-status");
+
+    function setUploadStatus(
+      message,
+      status = "info"
+    ) {
+      if (!statusElement) return;
+
+      statusElement.textContent =
+        message || "";
+
+      statusElement.dataset.status =
+        status;
+
+      statusElement.hidden =
+        !message;
+    }
+
     if (!title) {
+      setUploadStatus(
+        "Please enter a title.",
+        "error"
+      );
       toast(
         "Please enter a title.",
         "error"
@@ -870,6 +899,10 @@
       !file ||
       !file.name
     ) {
+      setUploadStatus(
+        "Please select a file.",
+        "error"
+      );
       toast(
         "Please select a file.",
         "error"
@@ -878,12 +911,20 @@
     }
 
     const submitButton =
-      form.querySelector('button[type="submit"]');
+      form.querySelector(
+        'button[type="submit"]'
+      );
 
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = "Uploading...";
+      submitButton.textContent =
+        "Uploading...";
     }
+
+    setUploadStatus(
+      "Preparing upload...",
+      "info"
+    );
 
     try {
       const api =
@@ -894,22 +935,34 @@
         window.APP_CONFIG || {};
 
       const bucketName =
-        (config.UPLOADS && config.UPLOADS.BUCKET) ||
+        (config.UPLOADS &&
+          config.UPLOADS.BUCKET) ||
         "Apostolic_Media";
 
       if (!api || !api.isConfigured()) {
         throw new Error(
-          "Supabase is not configured."
+          "Supabase is not configured. Please check js/config.js."
         );
       }
 
       const safeName =
         file.name
-          .replace(/[^a-zA-Z0-9._-]/g, "_")
-          .replace(/_+/g, "_");
+          .replace(
+            /[^a-zA-Z0-9._-]/g,
+            "_"
+          )
+          .replace(
+            /_+/g,
+            "_"
+          );
 
       const path =
         `${type}/${Date.now()}-${safeName}`;
+
+      setUploadStatus(
+        "Uploading file to Supabase Storage...",
+        "info"
+      );
 
       const uploadPromise =
         api.uploadFile(
@@ -917,8 +970,7 @@
           path,
           file,
           {
-            upsert: false,
-            ...(file.type ? { contentType: file.type } : {})
+            upsert: false
           }
         );
 
@@ -927,25 +979,45 @@
           uploadPromise,
           new Promise((_, reject) =>
             setTimeout(
-              () => reject(
-                new Error(
-                  "Upload is taking too long. Please check your internet connection and Supabase Storage policy."
-                )
-              ),
+              () =>
+                reject(
+                  new Error(
+                    "Upload timed out after 60 seconds. Please check your internet connection and Supabase Storage policy."
+                  )
+                ),
               60000
             )
           )
         ]);
 
-      if (uploadResult.error) {
-        throw uploadResult.error;
+      if (
+        !uploadResult ||
+        uploadResult.error
+      ) {
+        throw (
+          uploadResult &&
+          uploadResult.error
+        ) || new Error(
+          "Supabase Storage upload failed."
+        );
       }
+
+      setUploadStatus(
+        "File uploaded. Saving file information...",
+        "info"
+      );
 
       const fileUrl =
         api.getPublicUrl(
           bucketName,
           path
         );
+
+      if (!fileUrl) {
+        throw new Error(
+          "The file uploaded, but its public URL could not be created."
+        );
+      }
 
       const dbResult =
         await api.insert(
@@ -958,13 +1030,27 @@
             file_path: path,
             file_url: fileUrl,
             file_size: file.size,
-            file_type: file.type || null
+            file_type:
+              file.type || null
           }
         );
 
-      if (dbResult.error) {
-        throw dbResult.error;
+      if (
+        !dbResult ||
+        dbResult.error
+      ) {
+        throw (
+          dbResult &&
+          dbResult.error
+        ) || new Error(
+          "The file uploaded, but its database record could not be saved."
+        );
       }
+
+      setUploadStatus(
+        "Upload completed successfully.",
+        "success"
+      );
 
       closeDynamicModal(
         form.closest(
@@ -983,15 +1069,24 @@
         error
       );
 
+      const message =
+        error && error.message
+          ? error.message
+          : "Unknown upload error.";
+
+      setUploadStatus(
+        `Upload failed: ${message}`,
+        "error"
+      );
+
       if (submitButton) {
         submitButton.disabled = false;
-        submitButton.textContent = "Upload";
+        submitButton.textContent =
+          "Upload";
       }
 
       toast(
-        error && error.message
-          ? `Upload failed: ${error.message}`
-          : "Upload failed. Please try again.",
+        `Upload failed: ${message}`,
         "error"
       );
     }
