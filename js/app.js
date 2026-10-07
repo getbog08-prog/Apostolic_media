@@ -588,7 +588,7 @@
               id="uploadFile"
               name="file"
               type="file"
-              accept=".pdf,.doc,.docx,.mp3,.mp4,.jpg,.jpeg,.png"
+              accept="*/*"
               required
             />
           </div>
@@ -911,16 +911,31 @@
       const path =
         `${type}/${Date.now()}-${safeName}`;
 
-      const uploadResult =
-        await api.uploadFile(
+      const uploadPromise =
+        api.uploadFile(
           bucketName,
           path,
           file,
           {
             upsert: false,
-            contentType: file.type || undefined
+            ...(file.type ? { contentType: file.type } : {})
           }
         );
+
+      const uploadResult =
+        await Promise.race([
+          uploadPromise,
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(
+                new Error(
+                  "Upload is taking too long. Please check your internet connection and Supabase Storage policy."
+                )
+              ),
+              60000
+            )
+          )
+        ]);
 
       if (uploadResult.error) {
         throw uploadResult.error;
