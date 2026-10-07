@@ -669,7 +669,203 @@
     );
   }
 
-  /* -------------------------------------------------------
+    /* -------------------------------------------------------
+     Router + Page Renderer
+     ------------------------------------------------------- */
+
+  function renderPage(page) {
+    const main = document.getElementById("mainContent");
+
+    if (!main) return;
+
+    const pages = {
+      home: {
+        title: "Welcome to የኢየሱስ ልጆች",
+        subtitle: "Apostolic Media",
+        icon: "🕎",
+        text: "Wherever you are, join the same Apostolic Christian community."
+      },
+
+      bible: {
+        title: "Holy Bible",
+        subtitle: "Read and study God's Word.",
+        icon: "📖",
+        text: "Bible resources, Scripture reading and Bible study will be available here."
+      },
+
+      "bible-study": {
+        title: "Bible Study",
+        subtitle: "Grow in the Word",
+        icon: "📚",
+        text: "Explore structured Bible studies and Scripture-based teaching."
+      },
+
+      teachings: {
+        title: "Christian Teachings",
+        subtitle: "Scripture-based teaching",
+        icon: "📘",
+        text: "Discover Apostolic Christian teachings and lessons."
+      },
+
+      sermons: {
+        title: "Sermons",
+        subtitle: "Messages for spiritual growth",
+        icon: "🎙️",
+        text: "Listen to sermons and messages from Christian ministers."
+      },
+
+      songs: {
+        title: "Christian Songs",
+        subtitle: "Worship and praise",
+        icon: "🎵",
+        text: "Discover Apostolic Christian worship songs."
+      },
+
+      lyrics: {
+        title: "Lyrics",
+        subtitle: "Christian song lyrics",
+        icon: "📝",
+        text: "Read Christian worship and praise lyrics."
+      },
+
+      videos: {
+        title: "Christian Videos",
+        subtitle: "Watch and learn",
+        icon: "▶️",
+        text: "Watch Apostolic Christian videos and ministry content."
+      },
+
+      community: {
+        title: "Community",
+        subtitle: "Connect with believers",
+        icon: "👥",
+        text: "Connect, share and communicate with the Apostolic Christian community."
+      },
+
+      live: {
+        title: "Live",
+        subtitle: "Live Christian ministry",
+        icon: "🔴",
+        text: "Live ministry and Christian broadcasts will appear here."
+      },
+
+      events: {
+        title: "Events",
+        subtitle: "Christian events",
+        icon: "📅",
+        text: "Discover upcoming Apostolic Christian events."
+      },
+
+      playlists: {
+        title: "Playlists",
+        subtitle: "Your Christian media",
+        icon: "🎶",
+        text: "Create and manage your favorite Christian media playlists."
+      },
+
+      artists: {
+        title: "Artists & Ministers",
+        subtitle: "Christian ministers and creators",
+        icon: "🎤",
+        text: "Explore Christian artists, ministers and creators."
+      },
+
+      courses: {
+        title: "Courses",
+        subtitle: "Christian learning",
+        icon: "🎓",
+        text: "Learn through structured Christian courses."
+      }
+    };
+
+    const content = pages[page];
+
+    if (!content) {
+      main.innerHTML = `
+        <section class="empty-state">
+          <div class="empty-state-icon">🔎</div>
+          <h2>Page not found</h2>
+          <p>This section is not available yet.</p>
+          <a href="#home" class="btn primary">Back to Home</a>
+        </section>
+      `;
+      return;
+    }
+
+    main.innerHTML = `
+      <section class="hero">
+        <div class="hero-content">
+
+          <span class="hero-icon" style="font-size:3rem;">
+            ${content.icon}
+          </span>
+
+          <span class="eyebrow">
+            APOSTOLIC MEDIA
+          </span>
+
+          <h1>${content.title}</h1>
+
+          <p class="hero-subtitle">
+            ${content.subtitle}
+          </p>
+
+          <p>
+            ${content.text}
+          </p>
+
+          <div class="hero-actions">
+            <a href="#home" class="btn primary">
+              ← Home
+            </a>
+          </div>
+
+        </div>
+      </section>
+    `;
+  }
+
+  function initRouter() {
+
+    // Listen for pages requested by router.js
+    window.addEventListener("pageLoad", (event) => {
+      if (!event.detail) return;
+
+      renderPage(event.detail.page);
+    });
+
+    // Load router.js because index.html currently
+    // loads only app.js
+    if (!window.ApostolicRouter) {
+
+      const script = document.createElement("script");
+
+      script.src = "js/router.js";
+
+      script.onload = () => {
+
+        window.ApostolicRouter.start();
+
+      };
+
+      script.onerror = () => {
+
+        console.error(
+          "Could not load js/router.js"
+        );
+
+      };
+
+      document.head.appendChild(script);
+
+    } else {
+
+      window.ApostolicRouter.start();
+
+    }
+  }
+   
+   /* -------------------------------------------------------
      App Initialization
      ------------------------------------------------------- */
 
