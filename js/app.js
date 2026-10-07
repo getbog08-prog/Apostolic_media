@@ -19,11 +19,6 @@
   const $$ = (selector, parent = document) =>
     Array.from(parent.querySelectorAll(selector));
 
-
-  /* =========================================================
-     STORAGE
-     ========================================================= */
-
   const storage = {
     get(key, fallback = null) {
       try {
@@ -47,27 +42,13 @@
     }
   };
 
-
-  /* =========================================================
-     THEME
-     ========================================================= */
-
   const theme = {
-
     get() {
-      return storage.get(
-        "apostolic_theme",
-        APP.defaultTheme
-      );
+      return storage.get("apostolic_theme", APP.defaultTheme);
     },
 
     set(value) {
-
-      const allowed = [
-        "light",
-        "dark",
-        "system"
-      ];
+      const allowed = ["light", "dark", "system"];
 
       if (!allowed.includes(value)) {
         value = APP.defaultTheme;
@@ -78,20 +59,12 @@
         value
       );
 
-      storage.set(
-        "apostolic_theme",
-        value
-      );
+      storage.set("apostolic_theme", value);
 
       window.dispatchEvent(
-        new CustomEvent(
-          "apostolic:themechange",
-          {
-            detail: {
-              theme: value
-            }
-          }
-        )
+        new CustomEvent("apostolic:themechange", {
+          detail: { theme: value }
+        })
       );
     },
 
@@ -100,7 +73,6 @@
     },
 
     toggle() {
-
       const current = this.get();
 
       if (current === "light") {
@@ -113,13 +85,7 @@
     }
   };
 
-
-  /* =========================================================
-     LANGUAGE
-     ========================================================= */
-
   const language = {
-
     get() {
       return storage.get(
         "apostolic_language",
@@ -128,21 +94,13 @@
     },
 
     set(value) {
-
-      const allowed = [
-        "am",
-        "en",
-        "om"
-      ];
+      const allowed = ["am", "en", "om"];
 
       if (!allowed.includes(value)) {
         value = APP.defaultLanguage;
       }
 
-      storage.set(
-        "apostolic_language",
-        value
-      );
+      storage.set("apostolic_language", value);
 
       document.documentElement.setAttribute(
         "lang",
@@ -150,14 +108,9 @@
       );
 
       window.dispatchEvent(
-        new CustomEvent(
-          "apostolic:languagechange",
-          {
-            detail: {
-              language: value
-            }
-          }
-        )
+        new CustomEvent("apostolic:languagechange", {
+          detail: { language: value }
+        })
       );
     },
 
@@ -166,13 +119,7 @@
     }
   };
 
-
-  /* =========================================================
-     MOBILE MENU
-     ========================================================= */
-
   function initMobileMenu() {
-
     const menuButton =
       $(".menu-btn") ||
       $("[data-menu-toggle]") ||
@@ -183,89 +130,52 @@
       $(".sidebar") ||
       $("[data-sidebar]");
 
-    if (!menuButton || !sidebar) {
-      return;
-    }
+    if (!menuButton || !sidebar) return;
 
-    menuButton.addEventListener(
-      "click",
-      function () {
+    menuButton.addEventListener("click", function () {
+      sidebar.classList.toggle("open");
+      menuButton.classList.toggle("active");
 
-        sidebar.classList.toggle("open");
+      const isOpen =
+        sidebar.classList.contains("open");
 
-        menuButton.classList.toggle(
-          "active"
-        );
-
-        const isOpen =
-          sidebar.classList.contains("open");
-
-        menuButton.setAttribute(
-          "aria-expanded",
-          String(isOpen)
-        );
-      }
-    );
+      menuButton.setAttribute(
+        "aria-expanded",
+        String(isOpen)
+      );
+    });
 
     $$(".nav-item, .sidebar a")
       .forEach(function (item) {
-
-        item.addEventListener(
-          "click",
-          function () {
-
-            if (window.innerWidth < 1024) {
-
-              sidebar.classList.remove(
-                "open"
-              );
-
-              menuButton.classList.remove(
-                "active"
-              );
-            }
+        item.addEventListener("click", function () {
+          if (window.innerWidth < 1024) {
+            sidebar.classList.remove("open");
+            menuButton.classList.remove("active");
           }
-        );
+        });
       });
   }
-
-
-  /* =========================================================
-     NAVIGATION
-     ========================================================= */
 
   function initNavigation() {
     return;
   }
 
-
   function navigate(route) {
-
-    if (!route) {
-      return;
-    }
+    if (!route) return;
 
     const cleanRoute =
-      String(route)
-        .replace(/^#/, "")
-        .trim();
+      String(route).replace(/^#/, "").trim();
 
     if (window.ApostolicRouter) {
-
       window.ApostolicRouter.navigate(
         "#" + cleanRoute
       );
-
     } else {
-
-      window.location.hash =
-        cleanRoute;
+      window.location.hash = cleanRoute;
     }
   }
 
-
   function activateNavigation(route) {
-
     const cleanRoute =
       String(route || "")
         .replace(/^#/, "")
@@ -274,7 +184,6 @@
     $$(
       "[data-route], [data-nav], [data-page], .nav-item"
     ).forEach(function (item) {
-
       const target =
         item.dataset.route ||
         item.dataset.nav ||
@@ -293,84 +202,42 @@
     });
   }
 
-
-  /* =========================================================
-     SEARCH
-     ========================================================= */
-
   function initSearch() {
-
     const inputs = $$(
       'input[type="search"], .search-input, [data-search]'
     );
 
     inputs.forEach(function (input) {
+      input.addEventListener("input", function () {
+        const query = input.value.trim();
 
-      input.addEventListener(
-        "input",
-        function () {
+        window.dispatchEvent(
+          new CustomEvent("apostolic:search", {
+            detail: { query }
+          })
+        );
+      });
 
-          const query =
-            input.value.trim();
+      input.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter") return;
 
-          window.dispatchEvent(
-            new CustomEvent(
-              "apostolic:search",
-              {
-                detail: {
-                  query
-                }
-              }
-            )
-          );
-        }
-      );
+        const query = input.value.trim();
 
-      input.addEventListener(
-        "keydown",
-        function (event) {
+        if (!query) return;
 
-          if (event.key !== "Enter") {
-            return;
-          }
-
-          const query =
-            input.value.trim();
-
-          if (!query) {
-            return;
-          }
-
-          window.dispatchEvent(
-            new CustomEvent(
-              "apostolic:searchsubmit",
-              {
-                detail: {
-                  query
-                }
-              }
-            )
-          );
-        }
-      );
+        window.dispatchEvent(
+          new CustomEvent("apostolic:searchsubmit", {
+            detail: { query }
+          })
+        );
+      });
     });
   }
 
-
-  /* =========================================================
-     THEME CONTROLS
-     ========================================================= */
-
   function initThemeControls() {
-
-    $$(
-      "[data-theme], [data-set-theme]"
-    ).forEach(function (button) {
-
-      button.addEventListener(
-        "click",
-        function () {
-
+    $$("[data-theme], [data-set-theme]")
+      .forEach(function (button) {
+        button.addEventListener("click", function () {
           const selected =
             button.dataset.theme ||
             button.dataset.setTheme;
@@ -378,38 +245,21 @@
           if (selected) {
             theme.set(selected);
           }
-        }
-      );
-    });
+        });
+      });
 
-    $$(
-      ".theme-toggle, [data-theme-toggle]"
-    ).forEach(function (button) {
-
-      button.addEventListener(
-        "click",
-        function () {
+    $$(".theme-toggle, [data-theme-toggle]")
+      .forEach(function (button) {
+        button.addEventListener("click", function () {
           theme.toggle();
-        }
-      );
-    });
+        });
+      });
   }
 
-
-  /* =========================================================
-     LANGUAGE CONTROLS
-     ========================================================= */
-
   function initLanguageControls() {
-
-    $$(
-      "[data-language], [data-set-language]"
-    ).forEach(function (button) {
-
-      button.addEventListener(
-        "click",
-        function () {
-
+    $$("[data-language], [data-set-language]")
+      .forEach(function (button) {
+        button.addEventListener("click", function () {
           const selected =
             button.dataset.language ||
             button.dataset.setLanguage;
@@ -417,159 +267,41 @@
           if (selected) {
             language.set(selected);
           }
-        }
-      );
-    });
+        });
+      });
   }
 
-
-  /* =========================================================
-     TOAST
-     ========================================================= */
-
-  function toast(
-    message,
-    type = "info"
-  ) {
-
-    let container =
-      $(".toast-container");
+  function toast(message, type = "info") {
+    let container = $(".toast-container");
 
     if (!container) {
-
-      container =
-        document.createElement("div");
-
-      container.className =
-        "toast-container";
-
-      document.body.appendChild(
-        container
-      );
+      container = document.createElement("div");
+      container.className = "toast-container";
+      document.body.appendChild(container);
     }
 
-    const item =
-      document.createElement("div");
+    const item = document.createElement("div");
 
-    item.className =
-      `toast toast-${type}`;
+    item.className = `toast toast-${type}`;
+    item.setAttribute("role", "status");
+    item.textContent = message;
 
-    item.setAttribute(
-      "role",
-      "status"
-    );
+    container.appendChild(item);
 
-    item.textContent =
-      message;
+    requestAnimationFrame(function () {
+      item.classList.add("show");
+    });
 
-    container.appendChild(
-      item
-    );
+    setTimeout(function () {
+      item.classList.remove("show");
 
-    requestAnimationFrame(
-      function () {
-        item.classList.add(
-          "show"
-        );
-      }
-    );
-
-    setTimeout(
-      function () {
-
-        item.classList.remove(
-          "show"
-        );
-
-        setTimeout(
-          function () {
-            item.remove();
-          },
-          250
-        );
-
-      },
-      3000
-    );
+      setTimeout(function () {
+        item.remove();
+      }, 250);
+    }, 3000);
   }
-
-
-  /* =========================================================
-     MODAL
-     ========================================================= */
-
-  function closeDynamicModal(modal) {
-
-    if (!modal) {
-      return;
-    }
-
-    modal.remove();
-
-    if (!$(".apostolic-modal")) {
-      document.body.classList.remove(
-        "modal-open"
-      );
-    }
-  }
-
-
-  function createModal(title, bodyHTML) {
-
-    const modal =
-      document.createElement("div");
-
-    modal.className =
-      "modal open apostolic-modal";
-
-    modal.setAttribute(
-      "aria-hidden",
-      "false"
-    );
-
-    modal.innerHTML = `
-
-      <div class="modal-content">
-
-        <div class="modal-header">
-
-          <h2>${escapeHTML(title)}</h2>
-
-          <button
-            type="button"
-            class="modal-close"
-            data-modal-action="close"
-            aria-label="Close">
-            ×
-          </button>
-
-        </div>
-
-        <div class="modal-body">
-
-          ${bodyHTML}
-
-        </div>
-
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    document.body.classList.add(
-      "modal-open"
-    );
-
-    return modal;
-  }
-
-
-  /* =========================================================
-     ESCAPE HTML
-     ========================================================= */
 
   function escapeHTML(value) {
-
     return String(value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -577,510 +309,390 @@
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
+     function closeDynamicModal(modal) {
+    if (!modal) return;
 
+    modal.remove();
 
-  /* =========================================================
-     CREATE FORM
-     ========================================================= */
+    if (!$(".apostolic-modal")) {
+      document.body.classList.remove("modal-open");
+    }
+  }
 
-  function showCreateForm(
-    title,
-    type
-  ) {
+  function createModal(title, bodyHTML) {
+    const modal = document.createElement("div");
 
-    const modal =
-      createModal(
-        title,
-        `
+    modal.className = "modal open apostolic-modal";
+    modal.setAttribute("aria-hidden", "false");
 
-        <form
-          class="apostolic-create-form"
-          data-form-type="${escapeHTML(type)}">
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>${escapeHTML(title)}</h2>
 
-          <div class="form-group">
+          <button
+            type="button"
+            class="modal-close"
+            data-modal-action="close"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
 
-            <label>
-              Title
-            </label>
+        <div class="modal-body">
+          ${bodyHTML}
+        </div>
+      </div>
+    `;
 
-            <input
-              type="text"
-              name="title"
-              placeholder="Enter title"
-              required>
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label>
-              Description
-            </label>
-
-            <textarea
-              name="description"
-              rows="5"
-              placeholder="Write your content..."
-              required></textarea>
-
-          </div>
-
-
-          <div class="form-actions">
-
-            <button
-              type="submit"
-              class="btn primary">
-              Create
-            </button>
-
-            <button
-              type="button"
-              class="btn secondary"
-              data-modal-action="close">
-              Cancel
-            </button>
-
-          </div>
-
-        </form>
-        `
-      );
+    document.body.appendChild(modal);
+    document.body.classList.add("modal-open");
 
     return modal;
   }
 
-
-  /* =========================================================
-     UPLOAD FORM
-     ========================================================= */
-
-  function showUploadForm(
-    title,
-    type
-  ) {
-
-    const modal =
-      createModal(
-        title,
-        `
-
+  function showCreateForm(title, type) {
+    const modal = createModal(
+      title,
+      `
         <form
-          class="apostolic-upload-form"
-          data-form-type="${escapeHTML(type)}">
+          class="dynamic-form"
+          data-create-form="${escapeHTML(type)}"
+        >
 
           <div class="form-group">
-
-            <label>
+            <label for="createTitle">
               Title
             </label>
 
             <input
-              type="text"
+              id="createTitle"
               name="title"
+              type="text"
               placeholder="Enter title"
-              required>
-
+              required
+            />
           </div>
 
-
           <div class="form-group">
-
-            <label>
+            <label for="createDescription">
               Description
             </label>
 
             <textarea
+              id="createDescription"
               name="description"
-              rows="4"
-              placeholder="Optional description"></textarea>
-
+              rows="5"
+              placeholder="Write a description..."
+            ></textarea>
           </div>
 
+          <div class="form-group">
+            <label for="createLanguage">
+              Language
+            </label>
+
+            <select
+              id="createLanguage"
+              name="language"
+            >
+              <option value="en">English</option>
+              <option value="am">አማርኛ</option>
+              <option value="om">Afaan Oromoo</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            class="btn primary"
+          >
+            Create
+          </button>
+
+        </form>
+      `
+    );
+
+    return modal;
+  }
+
+  function showUploadForm(title, type) {
+    const modal = createModal(
+      title,
+      `
+        <form
+          class="dynamic-form"
+          data-upload-form="${escapeHTML(type)}"
+        >
 
           <div class="form-group">
+            <label for="uploadTitle">
+              Title
+            </label>
 
-            <label>
+            <input
+              id="uploadTitle"
+              name="title"
+              type="text"
+              placeholder="Enter title"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="uploadFile">
               Select file
             </label>
 
             <input
-              type="file"
+              id="uploadFile"
               name="file"
-              required>
-
+              type="file"
+              accept=".pdf,.doc,.docx,.mp3,.mp4,.jpg,.jpeg,.png"
+              required
+            />
           </div>
 
+          <div class="form-group">
+            <label for="uploadDescription">
+              Description
+            </label>
 
-          <div class="form-actions">
-
-            <button
-              type="submit"
-              class="btn primary">
-              Upload
-            </button>
-
-            <button
-              type="button"
-              class="btn secondary"
-              data-modal-action="close">
-              Cancel
-            </button>
-
+            <textarea
+              id="uploadDescription"
+              name="description"
+              rows="4"
+              placeholder="Write a description..."
+            ></textarea>
           </div>
+
+          <button
+            type="submit"
+            class="btn primary"
+          >
+            Upload
+          </button>
 
         </form>
-        `
-      );
+      `
+    );
 
     return modal;
   }
 
-
-  /* =========================================================
-     PAGE ACTION HANDLER
-     IMPORTANT: EVENT DELEGATION
-     ========================================================= */
-
   function initPageActionDelegation() {
+    document.addEventListener("click", function (event) {
+      const actionElement =
+        event.target.closest("[data-page-action]");
 
-    document.addEventListener(
-      "click",
-      function (event) {
-
-        const actionButton =
-          event.target.closest(
-            "[data-page-action]"
-          );
-
-        if (!actionButton) {
-          return;
-        }
-
+      if (actionElement) {
         event.preventDefault();
 
         const action =
-          actionButton.dataset.pageAction;
+          actionElement.dataset.pageAction;
 
         handlePageAction(action);
+
+        return;
       }
-    );
 
+      const modalClose =
+        event.target.closest("[data-modal-action='close']");
 
-    document.addEventListener(
-      "click",
-      function (event) {
-
-        const closeButton =
-          event.target.closest(
-            "[data-modal-action='close']"
-          );
-
-        if (!closeButton) {
-          return;
-        }
-
+      if (modalClose) {
         event.preventDefault();
 
         const modal =
-          closeButton.closest(
-            ".apostolic-modal"
-          );
+          modalClose.closest(".apostolic-modal");
 
-        closeDynamicModal(
-          modal
-        );
+        closeDynamicModal(modal);
+
+        return;
       }
-    );
 
+      const modal =
+        event.target.closest(".apostolic-modal");
 
-    document.addEventListener(
-      "click",
-      function (event) {
-
-        const modal =
-          event.target.closest(
-            ".apostolic-modal"
-          );
-
-        if (
-          modal &&
-          event.target === modal
-        ) {
-          closeDynamicModal(
-            modal
-          );
-        }
+      if (
+        modal &&
+        event.target === modal
+      ) {
+        closeDynamicModal(modal);
       }
-    );
+    });
 
+    document.addEventListener("submit", function (event) {
+      const uploadForm =
+        event.target.closest("[data-upload-form]");
 
-    document.addEventListener(
-      "submit",
-      function (event) {
+      if (uploadForm) {
+        event.preventDefault();
 
-        if (
-          event.target.matches(
-            ".apostolic-upload-form"
-          )
-        ) {
+        handleUploadSubmit(uploadForm);
 
-          event.preventDefault();
-
-          handleUploadSubmit(
-            event.target
-          );
-
-          return;
-        }
-
-
-        if (
-          event.target.matches(
-            ".apostolic-create-form"
-          )
-        ) {
-
-          event.preventDefault();
-
-          handleCreateSubmit(
-            event.target
-          );
-        }
+        return;
       }
-    );
 
+      const createForm =
+        event.target.closest("[data-create-form]");
 
-    document.addEventListener(
-      "keydown",
-      function (event) {
+      if (createForm) {
+        event.preventDefault();
 
-        if (event.key !== "Escape") {
-          return;
-        }
-
-        const modal =
-          $(".apostolic-modal");
-
-        if (modal) {
-          closeDynamicModal(
-            modal
-          );
-        }
+        handleCreateSubmit(createForm);
       }
-    );
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key !== "Escape") return;
+
+      const modal = $(".apostolic-modal");
+
+      if (modal) {
+        closeDynamicModal(modal);
+      }
+    });
   }
 
-
-  /* =========================================================
-     ACTIONS
-     ========================================================= */
-
   function handlePageAction(action) {
-
     switch (action) {
-
-      case "theme-light":
-
-        theme.set("light");
-
-        toast(
-          "Light theme enabled.",
-          "success"
-        );
-
-        break;
-
-
-      case "theme-dark":
-
-        theme.set("dark");
-
-        toast(
-          "Dark theme enabled.",
-          "success"
-        );
-
-        break;
-
-
-      case "theme-system":
-
-        theme.set("system");
-
-        toast(
-          "System theme enabled.",
-          "success"
-        );
-
-        break;
-
-
       case "create-teaching":
-
         showCreateForm(
-          "Create Christian Teaching",
+          "Create Teaching",
           "teaching"
         );
-
         break;
 
-
-      case "upload-teaching":
-
-        showUploadForm(
-          "Upload Teaching",
-          "teaching"
-        );
-
-        break;
-
-
-      case "upload-sermon":
-
-        showUploadForm(
-          "Upload Sermon",
+      case "create-sermon":
+        showCreateForm(
+          "Create Sermon",
           "sermon"
         );
-
         break;
 
-
-      case "upload-song":
-
-        showUploadForm(
-          "Upload Christian Song",
+      case "create-song":
+        showCreateForm(
+          "Create Song",
           "song"
         );
-
         break;
 
-
-      case "add-lyrics":
-
+      case "create-lyric":
         showCreateForm(
-          "Add Christian Lyrics",
-          "lyrics"
+          "Create Lyrics",
+          "lyric"
         );
-
         break;
 
-
-      case "upload-video":
-
-        showUploadForm(
-          "Upload Christian Video",
-          "video"
-        );
-
-        break;
-
-
-      case "create-post":
-
+      case "create-course":
         showCreateForm(
-          "Create Community Post",
-          "post"
+          "Create Course",
+          "course"
         );
-
         break;
-
-
-      case "ask-question":
-
-        showCreateForm(
-          "Ask a Christian Question",
-          "question"
-        );
-
-        break;
-
-
-      case "start-live":
-
-        showCreateForm(
-          "Start Live Ministry",
-          "live"
-        );
-
-        break;
-
 
       case "create-event":
-
         showCreateForm(
-          "Create Christian Event",
+          "Create Event",
           "event"
         );
-
         break;
 
-
       case "create-playlist":
-
         showCreateForm(
           "Create Playlist",
           "playlist"
         );
-
         break;
 
+      case "upload-teaching":
+        showUploadForm(
+          "Upload Teaching",
+          "teaching"
+        );
+        break;
 
-      case "create-course":
+      case "upload-sermon":
+        showUploadForm(
+          "Upload Sermon",
+          "sermon"
+        );
+        break;
 
-        showCreateForm(
-          "Create Christian Course",
+      case "upload-song":
+        showUploadForm(
+          "Upload Song",
+          "song"
+        );
+        break;
+
+      case "upload-video":
+        showUploadForm(
+          "Upload Video",
+          "video"
+        );
+        break;
+
+      case "upload-bible":
+        showUploadForm(
+          "Upload Bible Resource",
+          "bible"
+        );
+        break;
+
+      case "upload-course":
+        showUploadForm(
+          "Upload Course Material",
           "course"
         );
-
         break;
 
-
-      case "create-content":
-
-        showCreateForm(
-          "Create Christian Content",
-          "content"
-        );
-
-        break;
-
-
-      case "upload-media":
-
+      case "upload-document":
         showUploadForm(
-          "Upload Ministry Media",
-          "media"
+          "Upload Document",
+          "document"
         );
-
         break;
-
 
       default:
-
         toast(
-          "This feature is being prepared.",
+          "This feature is not available yet.",
           "info"
         );
     }
   }
 
-
-  /* =========================================================
-     UPLOAD SUBMIT
-     ========================================================= */
-
   function handleUploadSubmit(form) {
+    const formData = new FormData(form);
 
-    const formData =
-      new FormData(form);
+    const title =
+      String(formData.get("title") || "").trim();
+
+    const description =
+      String(
+        formData.get("description") || ""
+      ).trim();
 
     const file =
       formData.get("file");
 
-    if (!file || !file.name) {
+    const type =
+      form.dataset.uploadForm || "document";
 
+    if (!title) {
+      toast(
+        "Please enter a title.",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      !file ||
+      !file.name
+    ) {
       toast(
         "Please select a file.",
         "error"
@@ -1089,185 +701,153 @@
       return;
     }
 
-
-    const uploadInfo = {
-
-      id:
-        Date.now().toString(),
-
-      type:
-        form.dataset.formType,
-
-      title:
-        formData.get("title"),
-
-      description:
-        formData.get("description"),
-
-      filename:
-        file.name,
-
-      size:
-        file.size,
-
-      createdAt:
-        new Date().toISOString()
-    };
-
-
-    const existing =
+    const uploads =
       storage.get(
         "apostolic_uploads",
         []
       );
 
-
-    existing.push(
-      uploadInfo
-    );
-
-
-    storage.set(
-      "apostolic_uploads",
-      existing
-    );
-
-
-    const modal =
-      form.closest(
-        ".apostolic-modal"
-      );
-
-
-    closeDynamicModal(
-      modal
-    );
-
-
-    toast(
-      "File selected successfully.",
-      "success"
-    );
-
-
-    console.log(
-      "Upload prepared:",
-      uploadInfo
-    );
-  }
-
-
-  /* =========================================================
-     CREATE SUBMIT
-     ========================================================= */
-
-  function handleCreateSubmit(form) {
-
-    const formData =
-      new FormData(form);
-
-
-    const item = {
-
+    uploads.push({
       id:
         Date.now().toString(),
 
-      type:
-        form.dataset.formType,
+      title,
 
-      title:
-        formData.get("title"),
+      description,
 
-      description:
-        formData.get("description"),
+      type,
+
+      fileName:
+        file.name,
+
+      fileSize:
+        file.size,
+
+      fileType:
+        file.type,
 
       createdAt:
         new Date().toISOString()
-    };
-
-
-    const existing =
-      storage.get(
-        "apostolic_created_content",
-        []
-      );
-
-
-    existing.push(
-      item
-    );
-
+    });
 
     storage.set(
-      "apostolic_created_content",
-      existing
+      "apostolic_uploads",
+      uploads
     );
-
 
     const modal =
-      form.closest(
-        ".apostolic-modal"
-      );
+      form.closest(".apostolic-modal");
 
-
-    closeDynamicModal(
-      modal
-    );
-
+    closeDynamicModal(modal);
 
     toast(
-      "Content created successfully.",
+      `"${title}" uploaded successfully.`,
       "success"
     );
   }
 
+  function handleCreateSubmit(form) {
+    const formData =
+      new FormData(form);
 
-  /* =========================================================
-     LIKE / SAVE
-     ========================================================= */
+    const title =
+      String(
+        formData.get("title") || ""
+      ).trim();
+
+    const description =
+      String(
+        formData.get("description") || ""
+      ).trim();
+
+    const selectedLanguage =
+      String(
+        formData.get("language") || "en"
+      );
+
+    const type =
+      form.dataset.createForm ||
+      "content";
+
+    if (!title) {
+      toast(
+        "Please enter a title.",
+        "error"
+      );
+
+      return;
+    }
+
+    const items =
+      storage.get(
+        "apostolic_created_items",
+        []
+      );
+
+    items.push({
+      id:
+        Date.now().toString(),
+
+      title,
+
+      description,
+
+      language:
+        selectedLanguage,
+
+      type,
+
+      createdAt:
+        new Date().toISOString()
+    });
+
+    storage.set(
+      "apostolic_created_items",
+      items
+    );
+
+    const modal =
+      form.closest(".apostolic-modal");
+
+    closeDynamicModal(modal);
+
+    toast(
+      `"${title}" created successfully.`,
+      "success"
+    );
+  }
 
   function initActions() {
-
     document.addEventListener(
       "click",
       function (event) {
-
         const likeButton =
           event.target.closest(
             "[data-like]"
           );
 
         if (likeButton) {
+          event.preventDefault();
 
-          const id =
-            likeButton.dataset.like;
-
-          const liked =
-            storage.get(
-              `liked_${id}`,
-              false
+          const active =
+            likeButton.classList.toggle(
+              "active"
             );
 
-          storage.set(
-            `liked_${id}`,
-            !liked
-          );
-
-          likeButton.classList.toggle(
-            "active",
-            !liked
+          likeButton.setAttribute(
+            "aria-pressed",
+            String(active)
           );
 
           toast(
-            !liked
-              ? "Added to liked content."
-              : "Removed from liked content.",
+            active
+              ? "Added to likes."
+              : "Removed from likes.",
             "success"
           );
 
           return;
         }
-
 
         const saveButton =
           event.target.closest(
@@ -1275,168 +855,108 @@
           );
 
         if (saveButton) {
+          event.preventDefault();
 
-          const id =
-            saveButton.dataset.save;
-
-          const saved =
-            storage.get(
-              `saved_${id}`,
-              false
+          const active =
+            saveButton.classList.toggle(
+              "active"
             );
 
-          storage.set(
-            `saved_${id}`,
-            !saved
-          );
-
-          saveButton.classList.toggle(
-            "active",
-            !saved
+          saveButton.setAttribute(
+            "aria-pressed",
+            String(active)
           );
 
           toast(
-            !saved
+            active
               ? "Saved successfully."
-              : "Removed from saved content.",
+              : "Removed from saved items.",
             "success"
           );
         }
       }
     );
   }
-
-
-  /* =========================================================
-     BACK TO TOP
-     ========================================================= */
-
-  function initBackToTop() {
-
+     function initBackToTop() {
     const button =
-      $(".back-to-top") ||
-      $("[data-back-to-top]");
+      $("[data-back-to-top]") ||
+      $(".back-to-top");
 
-    if (!button) {
-      return;
-    }
+    if (!button) return;
 
-    window.addEventListener(
-      "scroll",
-      function () {
+    window.addEventListener("scroll", function () {
+      button.classList.toggle(
+        "show",
+        window.scrollY > 400
+      );
+    });
 
-        button.classList.toggle(
-          "visible",
-          window.scrollY > 400
-        );
-      }
-    );
-
-    button.addEventListener(
-      "click",
-      function () {
-
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth"
-        });
-      }
-    );
+    button.addEventListener("click", function () {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    });
   }
-
-
-  /* =========================================================
-     CONNECTION
-     ========================================================= */
-
-  function updateConnectionStatus() {
-
-    document.body.classList.toggle(
-      "offline",
-      !navigator.onLine
-    );
-
-    document.body.classList.toggle(
-      "online",
-      navigator.onLine
-    );
-  }
-
 
   function initConnectionStatus() {
+    function updateStatus() {
+      document.documentElement.classList.toggle(
+        "offline",
+        !navigator.onLine
+      );
 
-    updateConnectionStatus();
+      window.dispatchEvent(
+        new CustomEvent(
+          "apostolic:connection",
+          {
+            detail: {
+              online: navigator.onLine
+            }
+          }
+        )
+      );
+    }
 
     window.addEventListener(
       "online",
-      updateConnectionStatus
+      updateStatus
     );
 
     window.addEventListener(
       "offline",
-      updateConnectionStatus
+      updateStatus
     );
+
+    updateStatus();
   }
 
-
-  /* =========================================================
-     SERVICE WORKER
-     ========================================================= */
-
-  function registerServiceWorker() {
-
+  function initServiceWorker() {
     if (
-      !("serviceWorker" in navigator)
+      "serviceWorker" in navigator
     ) {
-      return;
+      window.addEventListener(
+        "load",
+        function () {
+          navigator.serviceWorker
+            .register("./sw.js")
+            .catch(function () {
+              // Service worker is optional.
+            });
+        }
+      );
     }
-
-    window.addEventListener(
-      "load",
-      function () {
-
-        navigator.serviceWorker
-          .register("./sw.js")
-          .then(function (registration) {
-
-            console.log(
-              "Apostolic Media service worker registered.",
-              registration.scope
-            );
-
-          })
-          .catch(function (error) {
-
-            console.warn(
-              "Service worker registration failed:",
-              error
-            );
-          });
-      }
-    );
   }
-
-
-  /* =========================================================
-     KEYBOARD
-     ========================================================= */
 
   function initKeyboardShortcuts() {
-
     document.addEventListener(
       "keydown",
       function (event) {
-
         if (
-          event.key === "/" &&
-          ![
-            "INPUT",
-            "TEXTAREA"
-          ].includes(
-            document.activeElement.tagName
-          )
+          (event.ctrlKey ||
+            event.metaKey) &&
+          event.key.toLowerCase() === "k"
         ) {
-
           event.preventDefault();
 
           const search =
@@ -1451,17 +971,10 @@
     );
   }
 
-
-  /* =========================================================
-     VISIBILITY
-     ========================================================= */
-
   function initVisibility() {
-
     document.addEventListener(
       "visibilitychange",
       function () {
-
         window.dispatchEvent(
           new CustomEvent(
             "apostolic:visibility",
@@ -1477,21 +990,13 @@
     );
   }
 
-
-  /* =========================================================
-     ERROR HANDLING
-     ========================================================= */
-
   function initErrorHandling() {
-
     window.addEventListener(
       "error",
       function (event) {
-
         console.error(
           "Apostolic Media error:",
-          event.error ||
-          event.message
+          event.error || event.message
         );
       }
     );
@@ -1499,870 +1004,923 @@
     window.addEventListener(
       "unhandledrejection",
       function (event) {
-
         console.error(
-          "Unhandled promise rejection:",
+          "Apostolic Media promise error:",
           event.reason
         );
       }
     );
   }
 
-
-  /* =========================================================
-     PAGE DATA
-     ========================================================= */
-
   const pages = {
 
     home: {
-      title:
-        "Welcome to የኢየሱስ ልጆች",
-
+      title: "Home",
       subtitle:
-        "Apostolic Media",
+        "Welcome to Apostolic Media.",
 
-      icon:
-        "🕎",
-
-      text:
-        "Wherever you are, join the same Apostolic Christian community.",
-
-      actions: [
-        {
-          label:
-            "Explore Bible",
-
-          route:
-            "bible"
-        },
-
-        {
-          label:
-            "Browse Songs",
-
-          route:
-            "songs"
-        }
-      ]
-    },
-
-
-    bible: {
-      title:
-        "Holy Bible",
-
-      subtitle:
-        "Read and study God's Word.",
-
-      icon:
-        "📖",
-
-      text:
-        "Bible resources, Scripture reading and Bible study.",
-
-      actions: [
-        {
-          label:
-            "Bible Study",
-
-          route:
-            "bible-study"
-        }
-      ]
-    },
-
-
-    "bible-study": {
-      title:
-        "Bible Study",
-
-      subtitle:
-        "Grow in the Word",
-
-      icon:
-        "📚",
-
-      text:
-        "Explore structured Bible studies and Scripture-based teaching.",
-
-      actions: [
-        {
-          label:
-            "View Teachings",
-
-          route:
-            "teachings"
-        }
-      ]
-    },
-
-
-    teachings: {
-      title:
-        "Christian Teachings",
-
-      subtitle:
-        "Scripture-based teaching",
-
-      icon:
-        "📘",
-
-      text:
-        "Discover Apostolic Christian teachings and lessons.",
-
-      actions: [
-        {
-          label:
-            "Create Teaching",
-
-          action:
-            "create-teaching"
-        },
-
-        {
-          label:
-            "Upload Teaching",
-
-          action:
-            "upload-teaching"
-        }
-      ]
-    },
-
-
-    sermons: {
-      title:
-        "Sermons",
-
-      subtitle:
-        "Messages for spiritual growth",
-
-      icon:
-        "🎙️",
-
-      text:
-        "Listen to sermons and messages from Christian ministers.",
-
-      actions: [
-        {
-          label:
-            "Upload Sermon",
-
-          action:
-            "upload-sermon"
-        }
-      ]
-    },
-
-
-    songs: {
-      title:
-        "Christian Songs",
-
-      subtitle:
-        "Worship and praise",
-
-      icon:
-        "🎵",
-
-      text:
-        "Discover Apostolic Christian worship songs.",
-
-      actions: [
-        {
-          label:
-            "Upload Song",
-
-          action:
-            "upload-song"
-        },
-
-        {
-          label:
-            "View Lyrics",
-
-          route:
-            "lyrics"
-        }
-      ]
-    },
-
-
-    lyrics: {
-      title:
-        "Lyrics",
-
-      subtitle:
-        "Christian song lyrics",
-
-      icon:
-        "📝",
-
-      text:
-        "Read Christian worship and praise lyrics.",
-
-      actions: [
-        {
-          label:
-            "Add Lyrics",
-
-          action:
-            "add-lyrics"
-        }
-      ]
-    },
-
-
-    videos: {
-      title:
-        "Christian Videos",
-
-      subtitle:
-        "Watch and learn",
-
-      icon:
-        "▶️",
-
-      text:
-        "Watch Apostolic Christian videos and ministry content.",
-
-      actions: [
-        {
-          label:
-            "Upload Video",
-
-          action:
-            "upload-video"
-        }
-      ]
-    },
-
-
-    community: {
-      title:
-        "Community",
-
-      subtitle:
-        "Connect with believers",
-
-      icon:
-        "👥",
-
-      text:
-        "Connect, share and communicate with the Apostolic Christian community.",
-
-      actions: [
-        {
-          label:
-            "Create Post",
-
-          action:
-            "create-post"
-        },
-
-        {
-          label:
-            "Q&A",
-
-          route:
-            "qa"
-        }
-      ]
-    },
-
-
-    qa: {
-      title:
-        "Questions & Answers",
-
-      subtitle:
-        "Ask and learn together",
-
-      icon:
-        "❓",
-
-      text:
-        "Ask Christian questions and share Scripture-based answers.",
-
-      actions: [
-        {
-          label:
-            "Ask a Question",
-
-          action:
-            "ask-question"
-        }
-      ]
-    },
-
-
-    live: {
-      title:
-        "Live",
-
-      subtitle:
-        "Live Christian ministry",
-
-      icon:
-        "🔴",
-
-      text:
-        "Live ministry and Christian broadcasts will appear here.",
-
-      actions: [
-        {
-          label:
-            "Start Live",
-
-          action:
-            "start-live"
-        }
-      ]
-    },
-
-
-    events: {
-      title:
-        "Events",
-
-      subtitle:
-        "Christian events",
-
-      icon:
-        "📅",
-
-      text:
-        "Discover upcoming Apostolic Christian events.",
-
-      actions: [
-        {
-          label:
-            "Create Event",
-
-          action:
-            "create-event"
-        }
-      ]
-    },
-
-
-    playlists: {
-      title:
-        "Playlists",
-
-      subtitle:
-        "Your Christian media",
-
-      icon:
-        "🎶",
-
-      text:
-        "Create and manage your favorite Christian media playlists.",
-
-      actions: [
-        {
-          label:
-            "Create Playlist",
-
-          action:
-            "create-playlist"
-        }
-      ]
-    },
-
-
-    artists: {
-      title:
-        "Artists & Ministers",
-
-      subtitle:
-        "Christian ministers and creators",
-
-      icon:
-        "🎤",
-
-      text:
-        "Explore Christian artists, ministers and creators.",
-
-      actions: [
-        {
-          label:
-            "Creator Studio",
-
-          route:
-            "creator"
-        }
-      ]
-    },
-
-
-    courses: {
-      title:
-        "Courses",
-
-      subtitle:
-        "Christian learning",
-
-      icon:
-        "🎓",
-
-      text:
-        "Learn through structured Christian courses.",
-
-      actions: [
-        {
-          label:
-            "Create Course",
-
-          action:
-            "create-course"
-        }
-      ]
-    },
-
-
-    profile: {
-      title:
-        "My Profile",
-
-      subtitle:
-        "Your Apostolic Media profile",
-
-      icon:
-        "👤",
-
-      text:
-        "Manage your profile, ministry information and account settings.",
-
-      actions: [
-        {
-          label:
-            "Settings",
-
-          route:
-            "settings"
-        }
-      ]
-    },
-
-
-    notifications: {
-      title:
-        "Notifications",
-
-      subtitle:
-        "Stay updated",
-
-      icon:
-        "🔔",
-
-      text:
-        "Your latest Apostolic Media notifications will appear here."
-    },
-
-
-    downloads: {
-      title:
-        "Downloads",
-
-      subtitle:
-        "Offline Christian media",
-
-      icon:
-        "⬇️",
-
-      text:
-        "Access your downloaded Christian songs, teachings, videos and documents."
-    },
-
-
-    saved: {
-      title:
-        "Saved",
-
-      subtitle:
-        "Your saved content",
-
-      icon:
-        "🔖",
-
-      text:
-        "Find Christian content that you saved for later."
-    },
-
-
-    creator: {
-      title:
-        "Creator Studio",
-
-      subtitle:
-        "Create and manage Christian content",
-
-      icon:
-        "✨",
-
-      text:
-        "Create, upload and manage songs, teachings, sermons, videos and other ministry content.",
-
-      actions: [
-        {
-          label:
-            "Create Content",
-
-          action:
-            "create-content"
-        },
-
-        {
-          label:
-            "Upload Media",
-
-          action:
-            "upload-media"
-        }
-      ]
-    },
-
-
-    wallet: {
-      title:
-        "Wallet",
-
-      subtitle:
-        "Creator and ministry payments",
-
-      icon:
-        "💳",
-
-      text:
-        "Your creator wallet and future ministry payment features will appear here."
-    },
-
-
-    admin: {
-      title:
-        "Admin Dashboard",
-
-      subtitle:
-        "Manage Apostolic Media",
-
-      icon:
-        "🛡️",
-
-      text:
-        "Administration tools for content, users, moderation and platform management."
-    },
-
-
-    settings: {
-      title:
-        "Settings",
-
-      subtitle:
-        "Customize your Apostolic Media experience",
-
-      icon:
-        "⚙️",
-
-      text:
-        "Manage language, appearance, account and application preferences.",
-
-      actions: [
-        {
-          label:
-            "Light",
-
-          action:
-            "theme-light"
-        },
-
-        {
-          label:
-            "Dark",
-
-          action:
-            "theme-dark"
-        },
-
-        {
-          label:
-            "System",
-
-          action:
-            "theme-system"
-        }
-      ]
-    },
-
-
-    about: {
-      title:
-        "About",
-
-      subtitle:
-        "የኢየሱስ ልጆች Apostolic Media",
-
-      icon:
-        "ℹ️",
-
-      text:
-        "A digital Apostolic Christian community for worship, Bible study, teaching, fellowship and ministry."
-    }
-
-  };
-
-
-  /* =========================================================
-     RENDER ACTION
-     ========================================================= */
-
-  function renderAction(action) {
-
-    if (action.route) {
-
-      return `
-        <a
-          href="#${escapeHTML(action.route)}"
-          class="btn primary">
-          ${escapeHTML(action.label)}
-        </a>
-      `;
-    }
-
-
-    if (action.action) {
-
-      return `
-        <button
-          type="button"
-          class="btn primary"
-          data-page-action="${escapeHTML(action.action)}">
-          ${escapeHTML(action.label)}
-        </button>
-      `;
-    }
-
-
-    return "";
-  }
-
-
-  /* =========================================================
-     RENDER PAGE
-     ========================================================= */
-
-  function renderPage(page) {
-
-    const main =
-      document.getElementById(
-        "mainContent"
-      );
-
-    if (!main) {
-      return;
-    }
-
-
-    const content =
-      pages[page];
-
-
-    if (!content) {
-
-      main.innerHTML = `
-
-        <section class="empty-state">
-
-          <div class="empty-state-icon">
-            🔎
-          </div>
-
-          <h2>
-            Page not found
-          </h2>
-
-          <p>
-            This section is not available yet.
-          </p>
-
-          <div class="hero-actions">
-
-            <a
-              href="#home"
-              class="btn primary">
-              ← Home
-            </a>
-
-          </div>
-
-        </section>
-      `;
-
-      return;
-    }
-
-
-    const actions =
-      (content.actions || [])
-        .map(renderAction)
-        .join("");
-
-
-    main.innerHTML = `
-
-      <section class="hero">
-
-        <div class="hero-content">
-
-          <span
-            class="hero-icon"
-            style="font-size:3rem;">
-            ${content.icon}
-          </span>
-
+      content: `
+        <section class="page-hero">
           <span class="eyebrow">
             APOSTOLIC MEDIA
           </span>
 
           <h1>
-            ${escapeHTML(content.title)}
+            የኢየሱስ ልጆች
+            Apostolic Media
           </h1>
 
-          <p class="hero-subtitle">
-            ${escapeHTML(content.subtitle)}
+          <p>
+            Wherever you are, join the same
+            Apostolic Christian community.
           </p>
+        </section>
+
+        <section class="content-grid">
+
+          <article class="card">
+            <h3>Teachings</h3>
+            <p>
+              Biblical teachings and Christian
+              study materials.
+            </p>
+
+            ${renderAction(
+              "Open Teachings",
+              "teachings"
+            )}
+          </article>
+
+          <article class="card">
+            <h3>Sermons</h3>
+            <p>
+              Listen to Apostolic sermons and
+              messages.
+            </p>
+
+            ${renderAction(
+              "Open Sermons",
+              "sermons"
+            )}
+          </article>
+
+          <article class="card">
+            <h3>Bible</h3>
+            <p>
+              Read and study the Holy Bible.
+            </p>
+
+            ${renderAction(
+              "Open Bible",
+              "bible"
+            )}
+          </article>
+
+          <article class="card">
+            <h3>Community</h3>
+            <p>
+              Connect with other believers.
+            </p>
+
+            ${renderAction(
+              "Open Community",
+              "community"
+            )}
+          </article>
+
+        </section>
+      `
+    },
+
+    bible: {
+      title: "Bible",
+      subtitle:
+        "Read and study the Holy Bible.",
+
+      content: `
+        <section class="page-hero">
+          <span class="eyebrow">
+            SCRIPTURE
+          </span>
+
+          <h1>Bible</h1>
 
           <p>
-            ${escapeHTML(content.text)}
+            Explore Scripture and Bible resources.
+          </p>
+        </section>
+
+        <div class="card">
+          <h3>Bible Reader</h3>
+
+          <p>
+            Bible reading features will be
+            connected here.
           </p>
 
+          ${renderAction(
+            "Bible Study",
+            "bible-study"
+          )}
+        </div>
+      `
+    },
 
-          ${
-            actions
-              ? `
-                <div class="hero-actions">
-                  ${actions}
-                </div>
-              `
-              : ""
-          }
+    "bible-study": {
+      title: "Bible Study",
+      subtitle:
+        "Structured Bible study materials.",
 
+      content: `
+        <section class="page-hero">
+          <span class="eyebrow">
+            SCRIPTURE
+          </span>
 
-          <div class="hero-actions">
+          <h1>Bible Study</h1>
 
-            <a
-              href="#home"
-              class="btn secondary">
-              ← Home
-            </a>
+          <p>
+            Scripture-based study and teaching.
+          </p>
+        </section>
+
+        <div class="card">
+          <h3>Study Series</h3>
+
+          <p>
+            Bible study series will appear here.
+          </p>
+
+          ${renderAction(
+            "Create Study",
+            "create-teaching"
+          )}
+        </div>
+      `
+    },
+
+    teachings: {
+      title: "Teachings",
+      subtitle:
+        "Christian teachings and Bible studies.",
+
+      content: `
+        <section class="page-hero">
+          <span class="eyebrow">
+            TEACHINGS
+          </span>
+
+          <h1>Teachings</h1>
+
+          <p>
+            Original Christian teachings and
+            Bible studies.
+          </p>
+
+          <div class="page-actions">
+            ${renderAction(
+              "Create Teaching",
+              "create-teaching"
+            )}
+
+            ${renderAction(
+              "Upload Teaching",
+              "upload-teaching"
+            )}
+          </div>
+        </section>
+
+        <div class="content-grid">
+
+          <article class="card">
+            <h3>Christian Teachings</h3>
+
+            <p>
+              Biblical teaching materials for
+              spiritual growth.
+            </p>
+          </article>
+
+          <article class="card">
+            <h3>Bible Studies</h3>
+
+            <p>
+              Scripture-based studies and
+              explanations.
+            </p>
+          </article>
+
+        </div>
+      `
+    },
+
+    sermons: {
+      title: "Sermons",
+      subtitle:
+        "Apostolic sermons and messages.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            SERMONS
+          </span>
+
+          <h1>Sermons</h1>
+
+          <p>
+            Listen to Apostolic Christian
+            sermons and messages.
+          </p>
+
+          <div class="page-actions">
+
+            ${renderAction(
+              "Create Sermon",
+              "create-sermon"
+            )}
+
+            ${renderAction(
+              "Upload Sermon",
+              "upload-sermon"
+            )}
 
           </div>
 
+        </section>
+      `
+    },
+
+    songs: {
+      title: "Songs",
+      subtitle:
+        "Apostolic Christian songs.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            MUSIC
+          </span>
+
+          <h1>Songs</h1>
+
+          <p>
+            Discover Christian songs and music.
+          </p>
+
+          <div class="page-actions">
+
+            ${renderAction(
+              "Create Song",
+              "create-song"
+            )}
+
+            ${renderAction(
+              "Upload Song",
+              "upload-song"
+            )}
+
+          </div>
+
+        </section>
+      `
+    },
+
+    lyrics: {
+      title: "Lyrics",
+      subtitle:
+        "Christian song lyrics.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            LYRICS
+          </span>
+
+          <h1>Lyrics</h1>
+
+          <p>
+            Read Christian song lyrics.
+          </p>
+
+          <div class="page-actions">
+
+            ${renderAction(
+              "Create Lyrics",
+              "create-lyric"
+            )}
+
+          </div>
+
+        </section>
+      `
+    },
+
+    videos: {
+      title: "Videos",
+      subtitle:
+        "Christian video content.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            VIDEO
+          </span>
+
+          <h1>Videos</h1>
+
+          <p>
+            Watch Christian media and teachings.
+          </p>
+
+          <div class="page-actions">
+
+            ${renderAction(
+              "Upload Video",
+              "upload-video"
+            )}
+
+          </div>
+
+        </section>
+      `
+    },
+
+    community: {
+      title: "Community",
+      subtitle:
+        "Connect with believers.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            COMMUNITY
+          </span>
+
+          <h1>Community</h1>
+
+          <p>
+            Connect, discuss and encourage
+            one another.
+          </p>
+
+        </section>
+
+        <div class="card">
+
+          <h3>Apostolic Community</h3>
+
+          <p>
+            Community features will appear here.
+          </p>
+
         </div>
+      `
+    },
 
-      </section>
+    qa: {
+      title: "Q&A",
+      subtitle:
+        "Ask and answer Christian questions.",
 
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            COMMUNITY
+          </span>
+
+          <h1>Questions & Answers</h1>
+
+          <p>
+            Ask Bible and Christian-life questions.
+          </p>
+
+        </section>
+      `
+    },
+
+    live: {
+      title: "Live",
+      subtitle:
+        "Live Apostolic broadcasts.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            LIVE
+          </span>
+
+          <h1>Live</h1>
+
+          <p>
+            Live broadcasting features will
+            appear here.
+          </p>
+
+        </section>
+      `
+    },
+
+    events: {
+      title: "Events",
+      subtitle:
+        "Apostolic Christian events.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            EVENTS
+          </span>
+
+          <h1>Events</h1>
+
+          <p>
+            Discover upcoming Christian events.
+          </p>
+
+          <div class="page-actions">
+
+            ${renderAction(
+              "Create Event",
+              "create-event"
+            )}
+
+          </div>
+
+        </section>
+      `
+    },
+
+    playlists: {
+      title: "Playlists",
+      subtitle:
+        "Organize your favorite content.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            PLAYLISTS
+          </span>
+
+          <h1>Playlists</h1>
+
+          <p>
+            Create and manage your playlists.
+          </p>
+
+          <div class="page-actions">
+
+            ${renderAction(
+              "Create Playlist",
+              "create-playlist"
+            )}
+
+          </div>
+
+        </section>
+      `
+    },
+
+    artists: {
+      title: "Artists & Ministers",
+      subtitle:
+        "Discover Christian ministers and creators.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            MINISTRY
+          </span>
+
+          <h1>Artists & Ministers</h1>
+
+          <p>
+            Discover Apostolic ministers,
+            musicians and creators.
+          </p>
+
+        </section>
+      `
+    },
+
+    courses: {
+      title: "Courses",
+      subtitle:
+        "Christian learning courses.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            LEARNING
+          </span>
+
+          <h1>Courses</h1>
+
+          <p>
+            Learn through structured Christian
+            courses.
+          </p>
+
+          <div class="page-actions">
+
+            ${renderAction(
+              "Create Course",
+              "create-course"
+            )}
+
+            ${renderAction(
+              "Upload Course",
+              "upload-course"
+            )}
+
+          </div>
+
+        </section>
+      `
+    },
+
+    profile: {
+      title: "Profile",
+      subtitle:
+        "Manage your profile.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            ACCOUNT
+          </span>
+
+          <h1>Profile</h1>
+
+          <p>
+            Your profile information will
+            appear here.
+          </p>
+
+        </section>
+      `
+    },
+
+    notifications: {
+      title: "Notifications",
+      subtitle:
+        "Your latest notifications.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            ACCOUNT
+          </span>
+
+          <h1>Notifications</h1>
+
+          <p>
+            You have no new notifications.
+          </p>
+
+        </section>
+      `
+    },
+
+    downloads: {
+      title: "Downloads",
+      subtitle:
+        "Your downloaded resources.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            LIBRARY
+          </span>
+
+          <h1>Downloads</h1>
+
+          <p>
+            Downloaded resources will appear here.
+          </p>
+
+        </section>
+      `
+    },
+
+    saved: {
+      title: "Saved",
+      subtitle:
+        "Your saved content.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            LIBRARY
+          </span>
+
+          <h1>Saved</h1>
+
+          <p>
+            Your saved content will appear here.
+          </p>
+
+        </section>
+      `
+    },
+
+    creator: {
+      title: "Creator Dashboard",
+      subtitle:
+        "Manage your Christian content.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            CREATOR
+          </span>
+
+          <h1>Creator Dashboard</h1>
+
+          <p>
+            Create, upload and manage your
+            content.
+          </p>
+
+          <div class="page-actions">
+
+            ${renderAction(
+              "Create Teaching",
+              "create-teaching"
+            )}
+
+            ${renderAction(
+              "Upload Document",
+              "upload-document"
+            )}
+
+          </div>
+
+        </section>
+      `
+    },
+
+    wallet: {
+      title: "Wallet",
+      subtitle:
+        "Creator earnings and support.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            WALLET
+          </span>
+
+          <h1>Wallet</h1>
+
+          <p>
+            Wallet and creator-support features
+            will appear here.
+          </p>
+
+        </section>
+      `
+    },
+
+    admin: {
+      title: "Admin",
+      subtitle:
+        "Platform administration.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            ADMIN
+          </span>
+
+          <h1>Admin Dashboard</h1>
+
+          <p>
+            Administration features will appear
+            here.
+          </p>
+
+        </section>
+      `
+    },
+
+    settings: {
+      title: "Settings",
+      subtitle:
+        "Customize your Apostolic Media experience.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            SETTINGS
+          </span>
+
+          <h1>Settings</h1>
+
+          <div class="content-grid">
+
+            <article class="card">
+
+              <h3>Theme</h3>
+
+              <p>
+                Choose light, dark or system theme.
+              </p>
+
+              <div class="page-actions">
+
+                <button
+                  class="btn"
+                  data-theme="light"
+                >
+                  Light
+                </button>
+
+                <button
+                  class="btn"
+                  data-theme="dark"
+                >
+                  Dark
+                </button>
+
+                <button
+                  class="btn"
+                  data-theme="system"
+                >
+                  System
+                </button>
+
+              </div>
+
+            </article>
+
+            <article class="card">
+
+              <h3>Language</h3>
+
+              <p>
+                Choose your interface language.
+              </p>
+
+              <div class="page-actions">
+
+                <button
+                  class="btn"
+                  data-language="en"
+                >
+                  English
+                </button>
+
+                <button
+                  class="btn"
+                  data-language="am"
+                >
+                  አማርኛ
+                </button>
+
+                <button
+                  class="btn"
+                  data-language="om"
+                >
+                  Afaan Oromoo
+                </button>
+
+              </div>
+
+            </article>
+
+          </div>
+
+        </section>
+      `
+    },
+
+    about: {
+      title: "About",
+      subtitle:
+        "About Apostolic Media.",
+
+      content: `
+        <section class="page-hero">
+
+          <span class="eyebrow">
+            ABOUT
+          </span>
+
+          <h1>
+            የኢየሱስ ልጆች Apostolic Media
+          </h1>
+
+          <p>
+            Wherever you are, join the same
+            Apostolic Christian community.
+          </p>
+
+        </section>
+      `
+    }
+
+  };
+
+  function renderAction(label, action) {
+    return `
+      <button
+        type="button"
+        class="btn primary"
+        data-page-action="${escapeHTML(action)}"
+      >
+        ${escapeHTML(label)}
+      </button>
     `;
   }
 
+  function renderPage(route) {
+    const main =
+      $("#mainContent");
 
-  /* =========================================================
-     ROUTER
-     ========================================================= */
+    if (!main) return;
+
+    const cleanRoute =
+      String(route || "home")
+        .replace(/^#/, "")
+        .trim();
+
+    const page =
+      pages[cleanRoute] ||
+      pages.home;
+
+    activateNavigation(
+      cleanRoute
+    );
+
+    main.innerHTML = `
+      <div class="page-container">
+
+        ${page.content}
+
+      </div>
+    `;
+
+    initThemeControls();
+    initLanguageControls();
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }
 
   function initRouter() {
-
     window.addEventListener(
       "pageLoad",
       function (event) {
+        const route =
+          event.detail &&
+          event.detail.route
+            ? event.detail.route
+            : window.location.hash;
 
-        if (
-          !event.detail ||
-          !event.detail.page
-        ) {
-          return;
-        }
-
-        renderPage(
-          event.detail.page
-        );
-
-        activateNavigation(
-          event.detail.page
-        );
+        renderPage(route);
       }
     );
 
+    const initialRoute =
+      window.location.hash
+        ? window.location.hash.substring(1)
+        : "home";
 
     if (
       window.ApostolicRouter
     ) {
+      window.ApostolicRouter.init();
 
-      window.ApostolicRouter.start();
-
-      return;
+      window.ApostolicRouter.navigate(
+        "#" + initialRoute
+      );
+    } else {
+      renderPage(initialRoute);
     }
-
-
-    const existingScript =
-      document.querySelector(
-        'script[src$="js/router.js"]'
-      );
-
-
-    if (existingScript) {
-
-      existingScript.addEventListener(
-        "load",
-        function () {
-
-          if (
-            window.ApostolicRouter
-          ) {
-
-            window.ApostolicRouter.start();
-          }
-        }
-      );
-
-      return;
-    }
-
-
-    const script =
-      document.createElement(
-        "script"
-      );
-
-    script.src =
-      "./js/router.js";
-
-
-    script.onload =
-      function () {
-
-        if (
-          window.ApostolicRouter
-        ) {
-
-          window.ApostolicRouter.start();
-        }
-      };
-
-
-    document.head.appendChild(
-      script
-    );
   }
 
-
-  /* =========================================================
-     INITIALIZATION
-     ========================================================= */
-
   function init() {
-
     theme.init();
 
     language.init();
@@ -2372,8 +1930,6 @@
     initNavigation();
 
     initSearch();
-
-    initRouter();
 
     initThemeControls();
 
@@ -2387,69 +1943,61 @@
 
     initConnectionStatus();
 
+    initServiceWorker();
+
     initKeyboardShortcuts();
 
     initVisibility();
 
     initErrorHandling();
 
-    registerServiceWorker();
+    initRouter();
 
-
-    document.body.classList.add(
-      "app-ready"
-    );
-
-
-    console.log(
-      `${APP.name} v${APP.version} initialized.`
+    window.dispatchEvent(
+      new CustomEvent(
+        "apostolic:ready",
+        {
+          detail: {
+            app: APP
+          }
+        }
+      )
     );
   }
 
+  window.ApostolicApp = {
+    version: APP.version,
 
-  /* =========================================================
-     PUBLIC API
-     ========================================================= */
+    navigate,
 
-  window.ApostolicMedia = {
+    renderPage,
 
-    APP,
-
-    storage,
+    toast,
 
     theme,
 
     language,
 
-    navigate,
+    storage,
 
-    toast,
-
-    renderPage,
-
-    showCreateForm,
-
-    showUploadForm
-
+    getAppInfo() {
+      return {
+        name: APP.name,
+        version: APP.version
+      };
+    }
   };
-
-
-  /* =========================================================
-     START
-     ========================================================= */
 
   if (
     document.readyState ===
     "loading"
   ) {
-
     document.addEventListener(
       "DOMContentLoaded",
-      init
+      init,
+      { once: true }
     );
-
   } else {
-
     init();
   }
 
