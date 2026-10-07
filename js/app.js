@@ -613,8 +613,9 @@
           ></div>
 
           <button
-            type="submit"
+            type="button"
             class="btn primary"
+            data-upload-submit
           >
             Upload
           </button>
@@ -643,6 +644,28 @@
           handlePageAction(
             actionElement.dataset.pageAction
           );
+
+          return;
+        }
+
+        const uploadSubmit =
+          event.target.closest(
+            "[data-upload-submit]"
+          );
+
+        if (uploadSubmit) {
+          event.preventDefault();
+
+          const uploadForm =
+            uploadSubmit.closest(
+              "[data-upload-form]"
+            );
+
+          if (uploadForm) {
+            handleUploadSubmit(
+              uploadForm
+            );
+          }
 
           return;
         }
