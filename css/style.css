@@ -150,3 +150,119 @@
   position: relative;
   z-index: 2;
 }
+
+
+/* =========================================================
+   APOSTOLIC MEDIA — DYNAMIC MODAL POSITION FIX
+   ========================================================= */
+
+.apostolic-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2000 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow-y: auto !important;
+  background: rgba(9, 16, 32, 0.55) !important;
+  backdrop-filter: blur(5px);
+}
+
+.apostolic-modal .modal-content {
+  width: min(560px, 100%) !important;
+  max-height: calc(100vh - 40px) !important;
+  overflow-y: auto !important;
+  margin: auto !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 30px 90px rgba(0,0,0,.35) !important;
+}
+
+.apostolic-modal .modal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 18px 20px !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+.apostolic-modal .modal-header h2 {
+  margin: 0 !important;
+  font-size: 17px !important;
+}
+
+.apostolic-modal .modal-close {
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: var(--surface2) !important;
+  color: var(--text) !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+
+.apostolic-modal .modal-body {
+  padding: 20px !important;
+}
+
+.apostolic-modal .dynamic-form {
+  width: 100% !important;
+}
+
+.apostolic-modal .form-group {
+  margin-bottom: 15px !important;
+}
+
+.apostolic-modal .form-group label {
+  display: block !important;
+  margin-bottom: 6px !important;
+  color: var(--muted) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.apostolic-modal .form-group input,
+.apostolic-modal .form-group textarea,
+.apostolic-modal .form-group select {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 11px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  outline: none !important;
+}
+
+.apostolic-modal .form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+@media (max-width: 600px) {
+  .apostolic-modal {
+    padding: 12px !important;
+  }
+
+  .apostolic-modal .modal-content {
+    width: 100% !important;
+    max-height: calc(100vh - 24px) !important;
+    border-radius: 16px !important;
+  }
+
+  .apostolic-modal .modal-body {
+    padding: 16px !important;
+  }
+}
