@@ -1,79 +1,117 @@
-const CACHE = 'apostolic-media-v2';
+const CACHE = "apostolic-media-v2";
 
 const CORE = [
-  './',
-  './index.html',
+  "./",
+  "./index.html",
+  "./manifest.json",
 
-  './manifest.json',
+  "./css/style.css",
+  "./css/themes.css",
+  "./css/responsive.css",
 
-  './css/style.css',
-  './css/themes.css',
-  './css/responsive.css',
-
-  './js/app.js',
-  './js/config.js',
-  './js/data.js',
-  './js/ui.js',
-  './js/router.js',
-  './js/auth.js',
-  './js/languages.js',
-  './js/supabase.js'
+  "./js/app.js",
+  "./js/config.js",
+  "./js/data.js",
+  "./js/ui.js",
+  "./js/router.js",
+  "./js/auth.js",
+  "./js/languages.js",
+  "./js/supabase.js"
 ];
 
-self.addEventListener('install', event => {
+
+/* =========================================================
+   INSTALL
+   ========================================================= */
+
+self.addEventListener("install", (event) => {
+
   event.waitUntil(
+
     caches.open(CACHE)
-      .then(cache => cache.addAll(CORE))
+      .then((cache) => cache.addAll(CORE))
       .then(() => self.skipWaiting())
+
   );
+
 });
 
 
-self.addEventListener('activate', event => {
+/* =========================================================
+   ACTIVATE
+   ========================================================= */
+
+self.addEventListener("activate", (event) => {
+
   event.waitUntil(
+
     caches.keys()
-      .then(keys =>
-        Promise.all(
+      .then((keys) => {
+
+        return Promise.all(
+
           keys
-            .filter(key => key !== CACHE)
-            .map(key => caches.delete(key))
-        )
-      )
+            .filter((key) => key !== CACHE)
+            .map((key) => caches.delete(key))
+
+        );
+
+      })
       .then(() => self.clients.claim())
+
   );
+
 });
 
 
-self.addEventListener('fetch', event => {
+/* =========================================================
+   FETCH
+   ========================================================= */
 
-  if (event.request.method !== 'GET') {
+self.addEventListener("fetch", (event) => {
+
+  if (event.request.method !== "GET") {
     return;
   }
 
   event.respondWith(
 
-    fetch(event.request)
-      .then(response => {
+    caches.match(event.request)
+      .then((cachedResponse) => {
 
-        const copy = response.clone();
+        if (cachedResponse) {
+          return cachedResponse;
+        }
 
-        caches.open(CACHE).then(cache => {
-          cache.put(event.request, copy);
-        });
+        return fetch(event.request)
+          .then((networkResponse) => {
 
-        return response;
-      })
-
-      .catch(() => {
-
-        return caches.match(event.request)
-          .then(cachedResponse => {
-
-            if (cachedResponse) {
-              return cachedResponse;
+            if (
+              !networkResponse ||
+              networkResponse.status !== 200 ||
+              networkResponse.type === "opaque"
+            ) {
+              return networkResponse;
             }
 
-            return caches.match('./index.html');
+            const responseClone =
+              networkResponse.clone();
+
+            caches.open(CACHE)
+              .then((cache) => {
+                cache.put(
+                  event.request,
+                  responseClone
+                );
+              });
+
+            return networkResponse;
+
+          })
+          .catch(() => {
+
+            return caches.match("./index.html");
+
           });
 
       })
