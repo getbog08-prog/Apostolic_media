@@ -266,3 +266,24 @@
     padding: 16px !important;
   }
 }
+
+
+/* Upload status feedback */
+.apostolic-modal .upload-status {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2, var(--surface));
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.apostolic-modal .upload-status[data-status="error"] {
+  border: 1px solid currentColor;
+}
+
+.apostolic-modal .upload-status[data-status="success"] {
+  border: 1px solid currentColor;
+}
