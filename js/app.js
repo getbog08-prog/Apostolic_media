@@ -741,6 +741,7 @@
 
         const openMedia = event.target.closest("[data-open-media]");
         if (openMedia) {
+          if (event.target.closest("button,a,input,select,textarea,video,audio")) return;
           event.preventDefault();
           const item = (window.__apostolicMediaById || {})[String(openMedia.dataset.openMedia)];
           openMediaViewer(item);
@@ -1459,7 +1460,7 @@
             }
             done++;
             const percent=Math.min(100,Math.round((done/total)*100));
-            status.textContent=percent+"%";
+            status.textContent=done+"/"+total+" ("+percent+"%)";
             if(offlineProgress) offlineProgress.style.width=percent+"%";
           }
         }
@@ -1469,7 +1470,7 @@
       }catch(error){
         console.error("Offline Bible download failed:",error);
         const percent=Math.min(99,Math.round((done/total)*100));
-        status.textContent=percent+"%";
+        status.textContent=done+"/"+total+" ("+percent+"%)";
         if(offlineProgress) offlineProgress.style.width=percent+"%";
         toast("የoffline ማውረድ አልተጠናቀቀም።","error");
       }finally{
@@ -1878,7 +1879,7 @@
         const up=await api.uploadFile(bucket,path,file,{upsert:false});
         if(up?.error) throw up.error;
         const url=api.getPublicUrl(bucket,path); if(!url) throw new Error("Could not create the file URL.");
-        const base=title||file.name.replace(/.[^.]+$/,"");
+        const base=title||file.name.replace(/\\.[^.]+$/,"");
         const itemTitle=files.length>1?base+" "+(done+failed+1):base;
         const db=await api.insert("media_uploads",{title:itemTitle,description,type,user_id:user.id,file_name:file.name,file_path:path,file_url:url,file_size:file.size,file_type:file.type||null});
         if(db?.error) throw db.error;
