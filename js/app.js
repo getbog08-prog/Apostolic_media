@@ -2803,20 +2803,8 @@
       title: "Teachings",
 
       content: `
-        ${renderPageHero(
-          "Teachings",
-          "Christian teachings, Bible lessons and written resources.",
-          renderAction(
-            "Create Teaching",
-            "create-teaching"
-          ) +
-          renderAction(
-            "Upload Teaching",
-            "upload-teaching"
-          )
-        )}
-
-        `
+        ${renderPageHero("Teachings", "Christian teachings, Bible lessons and written resources.", renderAction("Create Teaching","create-teaching")+renderAction("Upload Teaching","upload-teaching"))}
+      `
     },
 
     /* -------------------------------------------------------
@@ -2827,40 +2815,7 @@
       title: "Sermons",
 
       content: `
-        ${renderPageHero(
-          "Sermons",
-          "Listen to Christian sermons and messages.",
-          renderAction(
-            "Upload Sermon",
-            "upload-sermon"
-          ) +
-          renderAction(
-            "Create Sermon",
-            "create-sermon"
-          )
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "🎙️",
-            "Recent Sermons",
-            "Listen to recent Christian messages."
-          )}
-
-          ${renderCard(
-            "🔥",
-            "Featured Messages",
-            "Messages selected for encouragement and spiritual growth."
-          )}
-
-          ${renderCard(
-            "📚",
-            "Sermon Library",
-            "Browse the sermon collection."
-          )}
-
-        </section>
+        ${renderPageHero("Sermons", "Listen to Christian sermons and messages.", renderAction("Upload Sermon","upload-sermon")+renderAction("Create Sermon","create-sermon"))}
       `
     },
 
@@ -2872,43 +2827,7 @@
       title: "Songs",
 
       content: `
-        ${renderPageHero(
-          "Songs",
-          "Christian worship songs and music.",
-          renderAction("Open Music Player","open-music") +
-          renderAction(
-            "Upload Song",
-            "upload-song"
-          ) +
-          renderAction(
-            "Create Song",
-            "create-song"
-          )
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "🎵",
-            "Worship Songs",
-            "Discover Christian worship music."
-          )}
-
-          ${renderCard(
-            "🎤",
-            "Artists",
-            "Explore Christian artists.",
-            `<a class="btn" href="#artists">Artists</a>`
-          )}
-
-          ${renderCard(
-            "📜",
-            "Lyrics",
-            "Read lyrics for Christian songs.",
-            `<a class="btn" href="#lyrics">Lyrics</a>`
-          )}
-
-        </section>
+        ${renderPageHero("Songs", "Christian worship songs and music.", renderAction("Open Music Player","open-music")+renderAction("Upload Song","upload-song")+renderAction("Create Song","create-song"))}
       `
     },
 
@@ -2920,30 +2839,7 @@
       title: "Lyrics",
 
       content: `
-        ${renderPageHero(
-          "Lyrics",
-          "Read Christian song lyrics.",
-          renderAction(
-            "Create Lyrics",
-            "create-lyric"
-          )
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "📜",
-            "Song Lyrics",
-            "Browse available Christian lyrics."
-          )}
-
-          ${renderCard(
-            "🔎",
-            "Search Lyrics",
-            "Find lyrics by song or artist."
-          )}
-
-        </section>
+        ${renderPageHero("Lyrics", "Read Christian song lyrics.", renderAction("Create Lyrics","create-lyric"))}
       `
     },
 
@@ -2955,36 +2851,7 @@
       title: "Videos",
 
       content: `
-        ${renderPageHero(
-          "Videos",
-          "Watch Christian videos, teachings and sermons.",
-          renderAction(
-            "Upload Video",
-            "upload-video"
-          )
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "▶️",
-            "Christian Videos",
-            "Watch Christian media."
-          )}
-
-          ${renderCard(
-            "🎙️",
-            "Video Sermons",
-            "Watch sermons and messages."
-          )}
-
-          ${renderCard(
-            "📚",
-            "Bible Lessons",
-            "Learn through Christian video lessons."
-          )}
-
-        </section>
+        ${renderPageHero("Videos", "Watch Christian videos, teachings and sermons.", renderAction("Upload Video","upload-video"))}
       `
     },
 
@@ -2996,33 +2863,7 @@
       title: "Community",
 
       content: `
-        ${renderPageHero(
-          "Community",
-          "Connect, encourage one another and grow together.",
-          renderAction("Create Post","create-post")
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "👥",
-            "Christian Community",
-            "Connect with other believers."
-          )}
-
-          ${renderCard(
-            "💬",
-            "Discussions",
-            "Share thoughts and Christian encouragement."
-          )}
-
-          ${renderCard(
-            "🙏",
-            "Prayer",
-            "Encourage one another through prayer."
-          )}
-
-        </section>
+        ${renderPageHero("Community", "Connect, encourage one another and grow together.", renderAction("Create Post","create-post"))}
       `
     },
 
@@ -3186,34 +3027,7 @@
       title: "Courses",
 
       content: `
-        ${renderPageHero(
-          "Courses",
-          "Learn through structured Christian courses.",
-          renderAction(
-            "Create Course",
-            "create-course"
-          ) +
-          renderAction(
-            "Upload Course",
-            "upload-course"
-          )
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "🎓",
-            "Bible Courses",
-            "Explore structured Bible and Christian courses."
-          )}
-
-          ${renderCard(
-            "📚",
-            "Learning Materials",
-            "Study Christian learning materials."
-          )}
-
-        </section>
+        ${renderPageHero("Courses", "Learn through structured Christian courses.", renderAction("Create Course","create-course")+renderAction("Upload Course","upload-course"))}
       `
     },
 
@@ -3660,122 +3474,95 @@
     } catch(error) { console.error("Downloads failed:", error); }
   }
 
+  function renderFeedItem(item, profile = {}, options = {}) {
+    const title = item.title || item.file_name || "Untitled";
+    const description = item.description || item.content || "";
+    const name = profile.full_name || (item.user_id ? "Apostolic Media Member" : "Apostolic Media");
+    const initial = name.trim().charAt(0).toUpperCase() || "A";
+    const avatar = profile.avatar_url
+      ? '<img class="feed-avatar" src="' + escapeHTML(profile.avatar_url) + '" alt="" loading="lazy">'
+      : '<span class="feed-avatar feed-avatar-fallback">' + escapeHTML(initial) + '</span>';
+    const media = item.file_url
+      ? (item.type === "video"
+        ? '<video class="feed-video" controls preload="metadata" src="' + escapeHTML(item.file_url) + '"></video>'
+        : item.type === "song"
+          ? '<audio class="feed-audio" controls preload="metadata" src="' + escapeHTML(item.file_url) + '"></audio>'
+          : "")
+      : "";
+    let actions = "";
+    if (options.community) {
+      actions = renderEngagementActions("community_post", item.id) +
+        '<button type="button" class="btn" data-content-action="comments" data-content-type="community_post" data-content-id="' + escapeHTML(item.id) + '" data-content-title="' + escapeHTML(title) + '">Comments</button>' +
+        contentActionButtons("community_post", item.id, item.user_id);
+    } else {
+      const special = item.type === "song" && item.file_url
+        ? '<button type="button" class="btn primary" data-media-play="' + escapeHTML(item.id) + '">▶ Play</button>'
+        : item.type === "video" && item.file_url
+          ? '<button type="button" class="btn primary" data-media-short="' + escapeHTML(item.id) + '">▶ Watch</button>'
+          : "";
+      const open = item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : "";
+      actions = special + open + renderEngagementActions("media_upload", item.id, item.file_url || "") + contentActionButtons("media_upload", item.id, item.user_id || null);
+    }
+    return '<article class="social-feed-item">' +
+      '<header class="feed-author">' + avatar + '<div><strong>' + escapeHTML(name) + '</strong><span>' +
+      (item.created_at ? new Date(item.created_at).toLocaleDateString() : "Apostolic Media") + '</span></div></header>' +
+      '<div class="feed-body"><div class="feed-type">' + escapeHTML(options.label || item.type || "Christian Content") + '</div>' +
+      '<h3>' + escapeHTML(title) + '</h3>' + (description ? '<p>' + escapeHTML(description) + '</p>' : "") + media + '</div>' +
+      '<div class="feed-actions">' + actions + '</div></article>';
+  }
+
   async function loadMediaForPage(route) {
     const types = mediaRouteTypes[route];
     if (!Array.isArray(types) || !types.length) return;
-
     const container = $(".page-container");
     if (!container) return;
-
     const section = document.createElement("section");
-    section.className = "content-grid media-content-grid";
-    section.innerHTML = `
-      <article class="card media-loading-card">
-        <div class="card-icon">⏳</div>
-        <h3>Media Library</h3>
-        <p>Loading your saved content...</p>
-      </article>
-    `;
+    section.className = "social-feed";
+    section.innerHTML = '<article class="social-feed-item feed-loading"><div class="feed-body"><p>Loading content...</p></div></article>';
     container.appendChild(section);
 
-    let uploaded = [];
-    let uploadError = null;
-
+    let uploaded = [], uploadError = null;
+    const profiles = {};
     try {
       const api = window.ApostolicSupabase;
       if (api && api.isConfigured()) {
-        const result = await api.select(
-          "media_uploads",
-          "*",
-          {
-            order: {
-              column: "created_at",
-              ascending: false
-            },
-            limit: 100
-          }
-        );
+        const result = await api.select("media_uploads", "*", { order: { column: "created_at", ascending: false }, limit: 100 });
         if (!isCurrentRoute(route)) return;
-        uploaded = result && Array.isArray(result.data)
-          ? result.data.filter(function (item) {
-              return item && types.includes(item.type);
-            })
-          : [];
-        uploadError = result && result.error
-          ? result.error
-          : null;
+        uploaded = Array.isArray(result?.data) ? result.data.filter(item => item && types.includes(item.type)) : [];
+        uploadError = result?.error || null;
+        const ids = [...new Set(uploaded.map(item => item.user_id).filter(Boolean))];
+        if (ids.length) {
+          const pr = await api.select("profiles", "id,full_name,avatar_url", { in: { id: ids } });
+          (pr?.data || []).forEach(profile => { profiles[String(profile.id)] = profile; });
+        }
       }
-    } catch (error) {
-      uploadError = error;
-    }
+    } catch (error) { uploadError = error; }
 
-    const localItems = storage.get(
-      "apostolic_created_items",
-      []
-    ).filter(function (item) {
-      if (!item || !types.includes(item.type)) {
-        return false;
-      }
+    const localItems = storage.get("apostolic_created_items", []).filter(item =>
+      item && types.includes(item.type) &&
+      !uploaded.some(remote => remote && remote.type === item.type && remote.title === item.title)
+    );
+    window.__apostolicMediaById = window.__apostolicMediaById || {};
+    if (route === "videos") window.__apostolicShorts = uploaded.filter(item => item.file_url);
+    if (route === "songs") window.__apostolicSongs = uploaded.filter(item => item.file_url);
 
-      return !uploaded.some(function (remoteItem) {
-        return (
-          remoteItem &&
-          remoteItem.type === item.type &&
-          remoteItem.title === item.title
-        );
+    const feedItems = uploaded.map(item => {
+      window.__apostolicMediaById[String(item.id)] = item;
+      return renderFeedItem(item, profiles[String(item.user_id)] || {}, {
+        label: route === "bible-study" ? "Bible Study" : route === "courses" ? "Course" : route.slice(0,1).toUpperCase() + route.slice(1)
       });
     });
-
-    const cards = [];
-    if (route === "videos") window.__apostolicShorts = uploaded.filter(function(item){ return item && item.file_url; });
-    if (route === "songs") window.__apostolicSongs = uploaded.filter(function(item){ return item && item.file_url; });
-
-    uploaded.forEach(function (item) {
-      const title = item.title || item.file_name || "Untitled";
-      const description = item.description || (item.file_name ? "Uploaded media file." : "Saved media content.");
-      window.__apostolicMediaById = window.__apostolicMediaById || {};
+    localItems.forEach(item => {
       window.__apostolicMediaById[String(item.id)] = item;
-      const openAction = item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : "";
-      let specialAction = "";
-      if (route === "songs" && item.file_url) specialAction = '<button type="button" class="btn primary" data-media-play="' + escapeHTML(item.id) + '">▶ Play</button>';
-      if (route === "videos" && item.file_url) specialAction = '<button type="button" class="btn primary" data-media-short="' + escapeHTML(item.id) + '">▶ Watch</button>';
-      const action = specialAction + openAction + renderEngagementActions("media_upload", item.id, item.file_url || "") + contentActionButtons("media_upload", item.id, item.user_id || null);
-      cards.push(renderCard(route === "songs" ? "🎵" : route === "videos" ? "▶" : (item.file_name ? "📎" : "📝"), title, description, action));
+      feedItems.push(renderFeedItem(item, {}, { label: route }));
     });
 
-    localItems.forEach(function (item) {
-      window.__apostolicMediaById = window.__apostolicMediaById || {};
-      window.__apostolicMediaById[String(item.id)] = item;
-      const localActions = '<div class="card-actions">' +
-        '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Read in app</button>' +
-        '<button type="button" class="btn" data-content-action="edit-local" data-content-type="' + escapeHTML(item.type) + '" data-content-id="' + escapeHTML(item.id) + '">Edit</button>' +
-        '<button type="button" class="btn" data-content-action="delete-local" data-content-type="' + escapeHTML(item.type) + '" data-content-id="' + escapeHTML(item.id) + '">Delete</button>' +
-      '</div>';
-      cards.push(renderCard(
-        "📝",
-        item.title || "Untitled",
-        item.description || "Created content.",
-        localActions
-      ));
-    });
-
-    if (uploadError && cards.length === 0) {
-      cards.push(renderCard(
-        "⚠️",
-        "Media Library",
-        "Could not load saved media right now. Please refresh and try again.",
-        ""
-      ));
-    } else if (cards.length === 0) {
-      cards.push(renderCard(
-        "📂",
-        "No Media Yet",
-        "Content you create or upload here will appear in this section.",
-        ""
-      ));
+    if (uploadError && !feedItems.length) {
+      feedItems.push('<article class="social-feed-item"><div class="feed-body"><h3>Could not load content</h3><p>Please refresh and try again.</p></div></article>');
+    } else if (!feedItems.length) {
+      feedItems.push('<article class="social-feed-item"><div class="feed-body"><h3>No content yet</h3><p>Content you create or upload will appear here.</p></div></article>');
     }
-
-    section.innerHTML = cards.join("");
+    section.innerHTML = feedItems.join("");
   }
 
   function refreshCurrentMediaPage() {
