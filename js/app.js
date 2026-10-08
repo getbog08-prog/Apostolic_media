@@ -874,6 +874,20 @@
           return;
         }
 
+        const playlistSongsForm = event.target.closest("[data-playlist-songs-form]");
+        if (playlistSongsForm) {
+          event.preventDefault();
+          if (!requireLogin()) return;
+          const data=new FormData(playlistSongsForm), api=window.ApostolicSupabase, playlistId=playlistSongsForm.dataset.playlistId, ids=data.getAll("song_ids");
+          try {
+            const existing=await api.select("playlist_songs","*",{eq:{playlist_id:playlistId},limit:200});
+            for(const row of (existing?.data||[])){ const d=await api.remove("playlist_songs",{playlist_id:playlistId,song_id:row.song_id}); if(d?.error) throw d.error; }
+            for(let i=0;i<ids.length;i++){ const r=await api.insert("playlist_songs",{playlist_id:playlistId,song_id:ids[i],position:i}); if(r?.error) throw r.error; }
+            closeDynamicModal(playlistSongsForm.closest(".apostolic-modal")); toast("Playlist songs updated.","success"); renderPage("playlists");
+          } catch(e){toast(e?.message||"Could not update playlist songs.","error");}
+          return;
+        }
+
         const eventForm = event.target.closest("[data-event-form]");
         if (eventForm) {
           event.preventDefault();
@@ -1132,6 +1146,19 @@
     }
     if (action === "comments") {
       await showComments(type, id, element.dataset.contentTitle || "Content");
+      return;
+    }
+    if (action === "manage-playlist") {
+      try {
+        const api=window.ApostolicSupabase, user=currentUser();
+        const p=await api.select("playlists","*",{eq:{id:id,user_id:user.id},limit:1});
+        const playlist=p?.data?.[0]; if(!playlist){toast("Playlist not found.","error");return;}
+        const [songs,links]=await Promise.all([
+          api.select("media_uploads","*",{eq:{type:"song"},order:{column:"created_at",ascending:false},limit:200}),
+          api.select("playlist_songs","*",{eq:{playlist_id:id},limit:200})
+        ]);
+        showPlaylistSongsForm(playlist,songs?.data||[],(links?.data||[]).map(x=>x.song_id));
+      } catch(e){toast(e?.message||"Could not load playlist songs.","error");}
       return;
     }
     if (action === "edit-playlist") {
@@ -3224,13 +3251,30 @@
     if(!container || !api || !api.isConfigured() || !user) return;
     try {
       const result=await api.select("playlists","*",{eq:{user_id:user.id},order:{column:"created_at",ascending:false},limit:100});
-      const rows=result?.data||[];
-      const cards=rows.map(function(row){
-        const actions='<button type="button" class="btn" data-content-action="edit-playlist" data-content-id="'+escapeHTML(row.id)+'">Edit</button><button type="button" class="btn" data-content-action="delete-playlist" data-content-id="'+escapeHTML(row.id)+'">Delete</button>';
-        return renderCard("🎵",row.name||"Playlist",row.description||"Your Christian playlist.",actions);
-      }).join("");
-      container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+(cards||renderCard("🎵","No Playlists Yet","Create your first playlist."))+'</section>');
+      const rows=result?.data||[], cards=[];
+      const songsResult=await api.select("media_uploads","*",{eq:{type:"song"},order:{column:"created_at",ascending:false},limit:200});
+      const songMap=Object.fromEntries((songsResult?.data||[]).map(s=>[s.id,s]));
+      for(const row of rows){
+        const links=await api.select("playlist_songs","*",{eq:{playlist_id:row.id},order:{column:"position",ascending:true},limit:100});
+        const songText=(links?.data||[]).map(x=>escapeHTML(songMap[x.song_id]?.title||"Song")).join(" • ") || "No songs added yet.";
+        const actions='<button type="button" class="btn" data-content-action="manage-playlist" data-content-id="'+escapeHTML(row.id)+'">Manage Songs</button>'+
+          '<button type="button" class="btn" data-content-action="edit-playlist" data-content-id="'+escapeHTML(row.id)+'">Edit</button>'+
+          '<button type="button" class="btn" data-content-action="delete-playlist" data-content-id="'+escapeHTML(row.id)+'">Delete</button>';
+        cards.push(renderCard("🎵",row.name||"Playlist",(row.description?escapeHTML(row.description)+"<br>":"")+songText,actions));
+      }
+      container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+(cards.join("")||renderCard("🎵","No Playlists Yet","Create your first playlist."))+'</section>');
     } catch(e){console.error("Playlists load failed:",e);}
+  }
+
+  function showPlaylistSongsForm(playlist, songs, selectedIds) {
+    const selected=new Set(selectedIds||[]);
+    const checks=(songs||[]).map(function(song){
+      return '<label style="display:block;margin:.45rem 0"><input type="checkbox" name="song_ids" value="'+escapeHTML(song.id)+'" '+(selected.has(song.id)?"checked":"")+'> '+escapeHTML(song.title||song.file_name||"Song")+'</label>';
+    }).join("");
+    return createModal("Manage Playlist Songs",
+      '<form class="dynamic-form" data-playlist-songs-form data-playlist-id="'+escapeHTML(playlist.id)+'"><p>Select songs to include in <strong>'+escapeHTML(playlist.name||"Playlist")+'</strong>.</p>'+
+      (checks||"<p>No uploaded songs are available yet.</p>")+
+      '<button type="submit" class="btn primary">Save Songs</button></form>');
   }
 
   async function loadEventsPage() {
