@@ -39,6 +39,7 @@
   const auth = {
     user: null,
     session: null,
+    profile: null,
 
     /* -----------------------------------------------------
        Initialize
@@ -83,6 +84,7 @@
         }
       }
 
+      await this.syncProfile();
       this.updateUI();
 
       window.dispatchEvent(
@@ -139,6 +141,7 @@
         if (data?.user) {
           this.user = data.user;
           this.session = data.session || null;
+          await this.syncProfile();
 
           storage.set(
             AUTH_KEY,
@@ -216,6 +219,7 @@
 
         this.user = data.user;
         this.session = data.session;
+        await this.syncProfile();
 
         storage.set(
           AUTH_KEY,
@@ -276,6 +280,7 @@
 
       this.user = null;
       this.session = null;
+      this.profile = null;
 
       storage.remove(
         AUTH_KEY
@@ -332,6 +337,37 @@
     },
 
     /* -----------------------------------------------------
+       Profile / Database Role
+       ----------------------------------------------------- */
+
+    async syncProfile() {
+      if (!this.user || !window.SupabaseAPI) {
+        this.profile = null;
+        return null;
+      }
+
+      try {
+        const { data, error } = await window.SupabaseAPI.select(
+          "profiles",
+          "*",
+          { eq: { id: this.user.id }, limit: 1 }
+        );
+
+        if (error) {
+          console.warn("Profile sync failed:", error);
+          return null;
+        }
+
+        this.profile = data?.[0] || null;
+        this.updateUI();
+        return this.profile;
+      } catch (error) {
+        console.warn("Profile sync failed:", error);
+        return null;
+      }
+    },
+
+    /* -----------------------------------------------------
        Current User
        ----------------------------------------------------- */
 
@@ -365,9 +401,10 @@
       }
 
       return (
+        this.profile?.role ||
         this.user.user_metadata?.role ||
         this.user.role ||
-        "User"
+        "user"
       );
     },
 
