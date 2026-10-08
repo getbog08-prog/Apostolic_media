@@ -2958,7 +2958,7 @@
         renderCard("📁", "Content Types", String(Object.keys(counts).length) + " types in your library.") +
         '</section>';
       const cards = items.map(function(item) {
-        const actions = (item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : '') +
+        const actions = 
           contentActionButtons("media_upload", item.id, item.user_id);
         return renderCard("📝", item.title || item.file_name || "Untitled", item.description || "", actions);
       }).join("");
@@ -2999,7 +2999,7 @@
       const open=item.file_url?'<button type="button" class="btn" data-open-media="'+escapeHTML(item.id)+'">Open in app</button>':"";
       actions=special+open+renderEngagementActions("media_upload",item.id,item.file_url||"",item.type)+contentActionButtons("media_upload",item.id,item.user_id||null);
     }
-    return '<article class="social-feed-item"><header class="feed-author">'+avatar+'<div><strong>'+escapeHTML(name)+'</strong><span>'+(item.created_at?new Date(item.created_at).toLocaleDateString():"Apostolic Media")+'</span></div></header><div class="feed-body"><div class="feed-type">'+escapeHTML(options.label||item.type||"Christian Content")+'</div><h3>'+escapeHTML(title)+'</h3>'+(description?'<p class="feed-post-text">'+escapeHTML(description)+'</p>':"")+media+'</div><div class="feed-actions">'+actions+'</div></article>';
+    return '<article class="social-feed-item"><header class="feed-author">'+avatar+'<div><strong>'+escapeHTML(name)+'</strong><span>'+(item.created_at?new Date(item.created_at).toLocaleDateString():"Apostolic Media")+'</span></div></header><div class="feed-body" data-open-media="'+escapeHTML(item.id)+'" role="button" tabindex="0" aria-label="Open content in app"><div class="feed-type">'+escapeHTML(options.label||item.type||"Christian Content")+'</div><h3>'+escapeHTML(title)+'</h3>'+(description?'<p class="feed-post-text">'+escapeHTML(description)+'</p>':"")+media+'</div><div class="feed-actions">'+actions+'</div></article>';
   }
 
   async function loadMediaForPage(route) {
