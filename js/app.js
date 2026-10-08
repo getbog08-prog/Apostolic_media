@@ -1441,10 +1441,57 @@
     async function fetchChapter(v,b,c){
       const key=cacheKey(v,b,c), cached=storage.get(key,null);
       if(cached&&Array.isArray(cached.data)) return cached;
-      const url="https://bible-api-kappa.vercel.app/api/v1/verses/"+encodeURIComponent(v)+"/"+encodeURIComponent(b)+"/"+c;
+
+      const book=selectedBook();
+      let url="";
+      if(v==="kjv"){
+        const names={
+          GEN:"Genesis",EXO:"Exodus",LEV:"Leviticus",NUM:"Numbers",DEU:"Deuteronomy",JOS:"Joshua",JDG:"Judges",RUT:"Ruth",
+          "1SA":"1_Samuel","2SA":"2_Samuel","1KI":"1_Kings","2KI":"2_Kings","1CH":"1_Chronicles","2CH":"2_Chronicles",
+          EZR:"Ezra",NEH:"Nehemiah",EST:"Esther",JOB:"Job",PSA:"Psalms",PRO:"Proverbs",ECC:"Ecclesiastes",SNG:"Song_of_Solomon",
+          ISA:"Isaiah",JER:"Jeremiah",LAM:"Lamentations",EZK:"Ezekiel",DAN:"Daniel",HOS:"Hosea",JOL:"Joel",AMO:"Amos",
+          OBA:"Obadiah",JON:"Jonah",MIC:"Micah",NAM:"Nahum",HAB:"Habakkuk",ZEP:"Zephaniah",HAG:"Haggai",ZEC:"Zechariah",
+          MAL:"Malachi",MAT:"Matthew",MRK:"Mark",LUK:"Luke",JHN:"John",ACT:"Acts",ROM:"Romans","1CO":"1_Corinthians",
+          "2CO":"2_Corinthians",GAL:"Galatians",EPH:"Ephesians",PHP:"Philippians",COL:"Colossians","1TH":"1_Thessalonians",
+          "2TH":"2_Thessalonians","1TI":"1_Timothy","2TI":"2_Timothy",TIT:"Titus",PHM:"Philemon",HEB:"Hebrews",JAS:"James",
+          "1PE":"1_Peter","2PE":"2_Peter","1JN":"1_John","2JN":"2_John","3JN":"3_John",JUD:"Jude",REV:"Revelation"
+        };
+        url="https://raw.githubusercontent.com/nolanbaxter/kjv-bible/main/"+encodeURIComponent(names[b]+".json");
+      } else {
+        const amhFiles=[
+          "01_ኦሪት ዘፍጥረት.json","02_ኦሪት ዘጸአት.json","03_ኦሪት ዘሌዋውያን.json","04_ኦሪት ዘኍልቍ.json","05_ኦሪት ዘዳግም.json",
+          "06_መጽሐፈ ኢያሱ ወልደ ነዌ.json","07_መጽሐፈ መሣፍንት.json","08_መጽሐፈ ሩት.json","09_መጽሐፈ ሳሙኤል ቀዳማዊ.json","10_መጽሐፈ ሳሙኤል ካል.json",
+          "11_መጽሐፈ ነገሥት ቀዳማዊ።.json","12_መጽሐፈ ነገሥት ካልዕ።.json","13_መጽሐፈ ዜና መዋዕል ቀዳማዊ።.json","14_መጽሐፈ ዜና መዋዕል ካልዕ።.json",
+          "15_መጽሐፈ ዕዝራ።.json","16_መጽሐፈ ነህምያ።.json","17_መጽሐፈ አስቴር።.json","18_መጽሐፈ ኢዮብ።.json","19_መዝሙረ ዳዊት.json",
+          "20_መጽሐፈ ምሳሌ.json","21_መጽሐፈ መክብብ.json","22_መኃልየ መኃልይ ዘሰሎሞን.json","23_ትንቢተ ኢሳይያስ.json","24_ትንቢተ ኤርምያስ.json",
+          "25_ሰቆቃው ኤርምያስ.json","26_ትንቢተ ሕዝቅኤል.json","27_ትንቢተ ዳንኤል.json","28_ትንቢተ ሆሴዕ.json","29_ትንቢተ ኢዮኤል.json",
+          "30_ትንቢተ አሞጽ.json","31_ትንቢተ አብድዩ.json","32_ትንቢተ ዮናስ.json","33_ትንቢተ ሚክያስ.json","34_ትንቢተ ናሆም.json",
+          "35_ትንቢተ ዕንባቆም.json","36_ትንቢተ ሶፎንያስ.json","37_ትንቢተ ሐጌ.json","38_ትንቢተ ዘካርያስ.json","39_ትንቢተ ሚልክያ.json",
+          "40_የማቴዎስ ወንጌል.json","41_የማርቆስ ወንጌል.json","42_የሉቃስ ወንጌል.json","43_የዮሐንስ ወንጌል.json","44_የሐዋርያት ሥራ.json",
+          "45_ወደ ሮሜ ሰዎች.json","46_1ኛ ወደ ቆሮንቶስ ሰዎች.json","47_2ኛ ወደ ቆሮንቶስ ሰዎች.json","48_ወደ ገላትያ ሰዎች.json","49_ወደ ኤፌሶን ሰዎች.json",
+          "50_ወደ ፊልጵስዩስ ሰዎች.json","51_ወደ ቆላስይስ ሰዎች.json","52_1ኛ ወደ ተሰሎንቄ ሰዎች.json","53_2ኛ ወደ ተሰሎንቄ ሰዎች.json",
+          "54_1ኛ ወደ ጢሞቴዎስ.json","55_2ኛ ወደ ጢሞቴዎስ.json","56_ወደ ቲቶ.json","57_ወደ ፊልሞና.json","58_ወደ ዕብራውያን.json",
+          "59_የያዕቆብ መልእክት.json","60_1ኛ የጴጥሮስ መልእክት.json","61_2ኛ የጴጥሮስ መልእክት.json","62_1ኛ የዮሐንስ መልእክት.json",
+          "63_2ኛ የዮሐንስ መልእክት.json","64_3ኛ የዮሐንስ መልእክት.json","65_የይሁዳ መልእክት.json","66_የዮሐንስ ራእይ.json"
+        ];
+        const file=amhFiles[books.findIndex(function(item){return item[1]===b;})]||amhFiles[0];
+        url="https://raw.githubusercontent.com/magna25/amharic-bible-json/main/individual_books/"+encodeURIComponent(file);
+      }
       const response=await fetch(url,{headers:{"Accept":"application/json"}});
-      if(!response.ok) throw new Error("Bible service unavailable");
-      const json=await response.json(), data=Array.isArray(json.data)?json.data:[];
+      if(!response.ok) throw new Error("Bible data unavailable");
+      const json=await response.json();
+      let data=[];
+      if(v==="kjv"){
+        const chapterData=json.chapters && json.chapters[String(c)];
+        if(!chapterData) throw new Error("Chapter not found");
+        data=Object.keys(chapterData).map(function(n){return {verseNum:n,verse:chapterData[n]};});
+      } else {
+        const chapterData=json[String(c)]||json.chapters&&json.chapters[String(c)];
+        if(!chapterData) throw new Error("Chapter not found");
+        data=Array.isArray(chapterData)
+          ? chapterData.map(function(x){return {verseNum:x.verse||x.verseNum||x.number,verse:x.text||x.verse||""};})
+          : Object.keys(chapterData).map(function(n){const x=chapterData[n];return {verseNum:n,verse:typeof x==="string"?x:(x.text||x.verse||"")};});
+      }
       if(!data.length) throw new Error("No verses were returned");
       const result={data:data,savedAt:Date.now()};
       storage.set(key,result);
