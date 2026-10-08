@@ -660,15 +660,28 @@
      COMMUNITY
      ========================================================= */
 
-  function showCommunityPostForm() {
+  function showCommunityPostForm(post = null) {
+    const editing = !!post;
     return createModal(
-      "Create Community Post",
-      '<form class="dynamic-form" data-community-form>' +
-        '<div class="form-group"><label>Title</label><input name="title" type="text"></div>' +
-        '<div class="form-group"><label>Message</label><textarea name="content" rows="6" required></textarea></div>' +
-        '<button type="submit" class="btn primary">Publish</button>' +
+      editing ? "Edit Community Post" : "Create Community Post",
+      '<form class="dynamic-form" data-community-form' +
+        (editing ? ' data-edit-id="' + escapeHTML(post.id) + '"' : '') + '>' +
+        '<div class="form-group"><label>Title</label><input name="title" type="text" value="' + escapeHTML(post?.title || '') + '"></div>' +
+        '<div class="form-group"><label>Message</label><textarea name="content" rows="6" required>' + escapeHTML(post?.content || '') + '</textarea></div>' +
+        '<button type="submit" class="btn primary">' + (editing ? "Save Changes" : "Publish") + '</button>' +
       '</form>'
     );
+  }
+
+  function contentActionButtons(type, id, ownerId = null) {
+    const auth = window.ApostolicAuth;
+    const user = auth && auth.getUser ? auth.getUser() : null;
+    const canManage = !!user && (!ownerId || user.id === ownerId || auth.hasAnyRole?.(["admin", "super_admin"]));
+    if (!canManage) return "";
+    return '<div class="card-actions">' +
+      '<button type="button" class="btn" data-content-action="edit" data-content-type="' + escapeHTML(type) + '" data-content-id="' + escapeHTML(id) + '">Edit</button>' +
+      '<button type="button" class="btn" data-content-action="delete" data-content-type="' + escapeHTML(type) + '" data-content-id="' + escapeHTML(id) + '">Delete</button>' +
+    '</div>';
   }
 
   async function loadCommunityPosts() {
@@ -695,7 +708,8 @@
       const posts = result && Array.isArray(result.data) ? result.data : [];
       section.innerHTML = posts.length
         ? posts.map(function (post) {
-            return renderCard("💬", post.title || "Christian Community", post.content || "");
+            const actions = contentActionButtons("community_post", post.id, post.user_id);
+            return renderCard("💬", post.title || "Christian Community", post.content || "", actions);
           }).join("")
         : renderCard("💬", "No Posts Yet", "Be the first to share encouragement with the community.");
     } catch (error) {
@@ -764,6 +778,13 @@
           return;
         }
 
+        const contentAction = event.target.closest("[data-content-action]");
+        if (contentAction) {
+          event.preventDefault();
+          handleContentAction(contentAction);
+          return;
+        }
+
         const modalClose =
           event.target.closest(
             "[data-modal-action='close']"
@@ -809,20 +830,29 @@
             return;
           }
           const data = new FormData(communityForm);
+          const editId = communityForm.dataset.editId || "";
           try {
-            const result = await api.insert("community_posts", {
-              user_id: auth.getUser().id,
-              title: String(data.get("title") || "").trim(),
-              content: String(data.get("content") || "").trim(),
-              is_published: true
-            });
+            let result;
+            if (editId) {
+              result = await api.update("community_posts", {
+                title: String(data.get("title") || "").trim(),
+                content: String(data.get("content") || "").trim()
+              }, { id: editId, user_id: auth.getUser().id });
+            } else {
+              result = await api.insert("community_posts", {
+                user_id: auth.getUser().id,
+                title: String(data.get("title") || "").trim(),
+                content: String(data.get("content") || "").trim(),
+                is_published: true
+              });
+            }
             if (result && result.error) throw result.error;
             closeDynamicModal(communityForm.closest(".apostolic-modal"));
-            toast("Your community post was published.", "success");
+            toast(editId ? "Your post was updated." : "Your community post was published.", "success");
             renderPage("community");
           } catch (error) {
-            console.error("Community post failed:", error);
-            toast(error && error.message ? error.message : "Could not publish post.", "error");
+            console.error("Community post save failed:", error);
+            toast(error && error.message ? error.message : "Could not save post.", "error");
           }
           return;
         }
@@ -872,6 +902,32 @@
           return;
         }
 
+        const mediaEditForm = event.target.closest("[data-media-edit-form]");
+        if (mediaEditForm) {
+          event.preventDefault();
+          const api = window.ApostolicSupabase;
+          const auth = window.ApostolicAuth;
+          if (!api || !api.isConfigured() || !auth || !auth.isLoggedIn()) {
+            toast("Please sign in and make sure Supabase is configured.", "error");
+            return;
+          }
+          const data = new FormData(mediaEditForm);
+          try {
+            const result = await api.update("media_uploads", {
+              title: String(data.get("title") || "").trim(),
+              description: String(data.get("description") || "").trim()
+            }, { id: mediaEditForm.dataset.editId });
+            if (result?.error) throw result.error;
+            closeDynamicModal(mediaEditForm.closest(".apostolic-modal"));
+            toast("Content updated successfully.", "success");
+            renderPage(window.location.hash.substring(1) || "home");
+          } catch (error) {
+            console.error("Media edit failed:", error);
+            toast(error?.message || "Could not update content.", "error");
+          }
+          return;
+        }
+
         const createForm =
           event.target.closest(
             "[data-create-form]"
@@ -899,6 +955,92 @@
           closeDynamicModal(modal);
         }
       }
+    );
+  }
+
+  async function handleContentAction(element) {
+    const action = element.dataset.contentAction;
+    const type = element.dataset.contentType;
+    const id = element.dataset.contentId;
+    if (!action || !id) return;
+
+    const auth = window.ApostolicAuth;
+    const api = window.ApostolicSupabase;
+    if (!auth || !auth.isLoggedIn()) {
+      toast("Please sign in first.", "error");
+      return;
+    }
+    if (!api || !api.isConfigured()) {
+      toast("Supabase is not configured.", "error");
+      return;
+    }
+
+    if (action === "edit") {
+      try {
+        if (type === "community_post") {
+          const result = await api.select("community_posts", "*", { eq: { id } });
+          const post = result?.data?.[0];
+          if (!post || post.user_id !== auth.getUser().id) {
+            toast("You can edit only your own post.", "error");
+            return;
+          }
+          showCommunityPostForm(post);
+          return;
+        }
+
+        if (type === "media_upload") {
+          const result = await api.select("media_uploads", "*", { eq: { id } });
+          const item = result?.data?.[0];
+          if (!item) {
+            toast("Content was not found.", "error");
+            return;
+          }
+          showEditMediaForm(item);
+          return;
+        }
+      } catch (error) {
+        console.error("Edit load failed:", error);
+        toast("Could not load this content.", "error");
+      }
+      return;
+    }
+
+    if (action === "delete") {
+      if (!window.confirm("Delete this content? This action cannot be undone.")) return;
+      try {
+        if (type === "community_post") {
+          const result = await api.remove("community_posts", { id, user_id: auth.getUser().id });
+          if (result?.error) throw result.error;
+        } else if (type === "media_upload") {
+          const result = await api.select("media_uploads", "*", { eq: { id } });
+          const item = result?.data?.[0];
+          if (!item) throw new Error("Content was not found.");
+          const deleted = await api.remove("media_uploads", { id });
+          if (deleted?.error) throw deleted.error;
+          if (item.file_path && api.removeFile) {
+            const storageResult = await api.removeFile("Apostolic_Media", [item.file_path]);
+            if (storageResult?.error) console.warn("Storage cleanup failed:", storageResult.error);
+          }
+        } else {
+          return;
+        }
+        toast("Content deleted successfully.", "success");
+        renderPage(window.location.hash.substring(1) || "home");
+      } catch (error) {
+        console.error("Delete failed:", error);
+        toast(error?.message || "Could not delete content.", "error");
+      }
+    }
+  }
+
+  function showEditMediaForm(item) {
+    createModal(
+      "Edit Content",
+      '<form class="dynamic-form" data-media-edit-form data-edit-id="' + escapeHTML(item.id) + '">' +
+        '<div class="form-group"><label>Title</label><input name="title" type="text" value="' + escapeHTML(item.title || '') + '" required></div>' +
+        '<div class="form-group"><label>Description</label><textarea name="description" rows="5">' + escapeHTML(item.description || '') + '</textarea></div>' +
+        '<button type="submit" class="btn primary">Save Changes</button>' +
+      '</form>'
     );
   }
 
@@ -2719,9 +2861,10 @@
           ? "Uploaded media file."
           : "Saved media content.");
 
-      const action = item.file_url
+      const openAction = item.file_url
         ? `<a class="btn" href="${escapeHTML(item.file_url)}" target="_blank" rel="noopener">Open File</a>`
         : "";
+      const action = openAction + contentActionButtons("media_upload", item.id);
 
       cards.push(renderCard(
         item.file_name ? "📎" : "📝",
@@ -2732,11 +2875,15 @@
     });
 
     localItems.forEach(function (item) {
+      const localActions = '<div class="card-actions">' +
+        '<button type="button" class="btn" data-content-action="edit-local" data-content-type="' + escapeHTML(item.type) + '" data-content-id="' + escapeHTML(item.id) + '">Edit</button>' +
+        '<button type="button" class="btn" data-content-action="delete-local" data-content-type="' + escapeHTML(item.type) + '" data-content-id="' + escapeHTML(item.id) + '">Delete</button>' +
+      '</div>';
       cards.push(renderCard(
         "📝",
         item.title || "Untitled",
         item.description || "Created content.",
-        ""
+        localActions
       ));
     });
 
