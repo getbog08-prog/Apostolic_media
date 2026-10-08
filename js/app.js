@@ -778,6 +778,59 @@
           return;
         }
 
+        const profileEdit = event.target.closest("[data-profile-form]");
+        if (profileEdit) {
+          event.preventDefault();
+          if (!requireLogin()) return;
+          const data = new FormData(profileEdit);
+          try {
+            const result = await window.ApostolicSupabase.update("profiles", {
+              full_name: String(data.get("full_name") || "").trim(),
+              username: String(data.get("username") || "").trim() || null,
+              bio: String(data.get("bio") || "").trim()
+            }, { id: currentUser().id });
+            if (result?.error) throw result.error;
+            toast("Profile updated successfully.", "success"); renderPage("profile");
+          } catch (error) { toast(error?.message || "Could not update profile.", "error"); }
+          return;
+        }
+
+        const questionForm = event.target.closest("[data-question-form]");
+        if (questionForm) {
+          event.preventDefault();
+          const data = new FormData(questionForm);
+          try {
+            const result = await window.ApostolicSupabase.insert("questions", { user_id: currentUser().id, title: String(data.get("title") || "").trim(), content: String(data.get("content") || "").trim() });
+            if (result?.error) throw result.error;
+            closeDynamicModal(questionForm.closest(".apostolic-modal")); toast("Question posted.", "success"); renderPage("qa");
+          } catch (error) { toast(error?.message || "Could not post question.", "error"); }
+          return;
+        }
+
+        const answerForm = event.target.closest("[data-answer-form]");
+        if (answerForm) {
+          event.preventDefault();
+          const data = new FormData(answerForm);
+          try {
+            const result = await window.ApostolicSupabase.insert("answers", { question_id: answerForm.dataset.questionId, user_id: currentUser().id, content: String(data.get("content") || "").trim() });
+            if (result?.error) throw result.error;
+            closeDynamicModal(answerForm.closest(".apostolic-modal")); toast("Answer posted.", "success"); renderPage("qa");
+          } catch (error) { toast(error?.message || "Could not post answer.", "error"); }
+          return;
+        }
+
+        const commentForm = event.target.closest("[data-comment-form]");
+        if (commentForm) {
+          event.preventDefault();
+          const data = new FormData(commentForm);
+          try {
+            const result = await window.ApostolicSupabase.insert("comments", { post_id: commentForm.dataset.commentId, user_id: currentUser().id, content: String(data.get("content") || "").trim() });
+            if (result?.error) throw result.error;
+            closeDynamicModal(commentForm.closest(".apostolic-modal")); toast("Comment posted.", "success");
+          } catch (error) { toast(error?.message || "Could not post comment.", "error"); }
+          return;
+        }
+
         const contentAction = event.target.closest("[data-content-action]");
         if (contentAction) {
           event.preventDefault();
@@ -986,6 +1039,31 @@
     const id = element.dataset.contentId;
     if (!action || !id) return;
 
+    if (action === "like" || action === "save") {
+      await toggleUserRelation(action === "like" ? "likes" : "saved_content", type, id, action === "like" ? "Like" : "Save");
+      return;
+    }
+    if (action === "download") {
+      if (!requireLogin()) return;
+      const url = element.dataset.fileUrl;
+      if (url) window.open(url, "_blank", "noopener");
+      try { await window.ApostolicSupabase.insert("downloads", { user_id: currentUser().id, content_type: type, content_id: id }); } catch (error) {}
+      return;
+    }
+    if (action === "comments") {
+      await showComments(type, id, element.dataset.contentTitle || "Content");
+      return;
+    }
+    if (action === "answer") { showAnswerForm(id); return; }
+    if (action === "question-answers") {
+      try {
+        const result = await window.ApostolicSupabase.select("answers", "*", { eq: { question_id: id }, order: { column: "created_at", ascending: true } });
+        const html = (result?.data || []).map(function(a) { return renderCard("💬", "Answer", a.content); }).join("") || renderCard("💬", "No Answers", "No answers yet.");
+        createModal("Answers", '<section class="content-grid">' + html + '</section>');
+      } catch (error) { toast("Could not load answers.", "error"); }
+      return;
+    }
+
     const auth = window.ApostolicAuth;
     const api = window.ApostolicSupabase;
     if (!auth || !auth.isLoggedIn()) {
@@ -1096,6 +1174,10 @@
     action
   ) {
     switch (action) {
+
+      case "ask-question":
+        showQuestionForm();
+        break;
 
       case "create-post":
         requireCreatorAuth(function () {
@@ -1895,6 +1977,124 @@
         ${escapeHTML(label)}
       </button>
     `;
+  }
+
+  /* =========================================================
+     SOCIAL / USER FEATURES
+     ========================================================= */
+
+  function currentUser() {
+    const auth = window.ApostolicAuth;
+    return auth && auth.getUser ? auth.getUser() : null;
+  }
+
+  function requireLogin() {
+    if (!currentUser()) {
+      toast("Please sign in first.", "error");
+      showAuthForm("login");
+      return false;
+    }
+    return true;
+  }
+
+  async function toggleUserRelation(table, contentType, contentId, label) {
+    if (!requireLogin()) return;
+    const api = window.ApostolicSupabase;
+    const user = currentUser();
+    if (!api || !api.isConfigured()) { toast("Supabase is not configured.", "error"); return; }
+    try {
+      const existing = await api.select(table, "*", { eq: { user_id: user.id, content_type: contentType, content_id: contentId } });
+      if (existing?.data?.length) {
+        const result = await api.remove(table, { user_id: user.id, content_type: contentType, content_id: contentId });
+        if (result?.error) throw result.error;
+        toast(label + " removed.", "success");
+      } else {
+        const result = await api.insert(table, { user_id: user.id, content_type: contentType, content_id: contentId });
+        if (result?.error) throw result.error;
+        toast(label + " saved.", "success");
+      }
+      renderPage(window.location.hash.substring(1) || "home");
+    } catch (error) { toast(error?.message || "Could not update " + label.toLowerCase() + ".", "error"); }
+  }
+
+  function renderEngagementActions(contentType, contentId, fileUrl = "") {
+    const id = escapeHTML(contentId), type = escapeHTML(contentType);
+    const download = fileUrl ? '<button type="button" class="btn" data-content-action="download" data-content-type="' + type + '" data-content-id="' + id + '" data-file-url="' + escapeHTML(fileUrl) + '">Download</button>' : "";
+    return '<div class="card-actions">' +
+      '<button type="button" class="btn" data-content-action="like" data-content-type="' + type + '" data-content-id="' + id + '">Like</button>' +
+      '<button type="button" class="btn" data-content-action="save" data-content-type="' + type + '" data-content-id="' + id + '">Save</button>' + download + '</div>';
+  }
+
+  async function showComments(contentType, contentId, title) {
+    const api = window.ApostolicSupabase;
+    if (!api || !api.isConfigured()) { toast("Supabase is not configured.", "error"); return; }
+    try {
+      const result = await api.select("comments", "*", { eq: { post_id: contentId }, order: { column: "created_at", ascending: true }, limit: 100 });
+      const comments = result?.data || [];
+      const list = comments.length ? comments.map(function (item) {
+        return renderCard("💬", "Comment", item.content, "");
+      }).join("") : renderCard("💬", "No Comments", "Be the first to comment.");
+      const form = currentUser() ? '<form class="dynamic-form" data-comment-form data-comment-id="' + escapeHTML(contentId) + '"><textarea name="content" rows="3" required placeholder="Write a comment..."></textarea><button type="submit" class="btn primary">Comment</button></form>' : '<p>Please sign in to comment.</p>';
+      createModal("Comments: " + title, '<section class="content-grid">' + list + '</section>' + form);
+    } catch (error) { toast("Could not load comments.", "error"); }
+  }
+
+  async function loadSavedContent() {
+    const container = $(".page-container"), user = currentUser(), api = window.ApostolicSupabase;
+    if (!container || !user || !api || !api.isConfigured()) return;
+    try {
+      const saved = await api.select("saved_content", "*", { eq: { user_id: user.id }, order: { column: "created_at", ascending: false }, limit: 100 });
+      const cards = [];
+      for (const row of (saved?.data || [])) {
+        const table = row.content_type === "community_post" ? "community_posts" : "media_uploads";
+        const q = await api.select(table, "*", { eq: { id: row.content_id } });
+        const item = q?.data?.[0];
+        if (item) cards.push(renderCard("🔖", item.title || "Saved Content", item.description || item.content || "", renderEngagementActions(row.content_type, row.content_id, item.file_url || "")));
+      }
+      container.insertAdjacentHTML("beforeend", '<section class="content-grid">' + (cards.join("") || renderCard("🔖", "No Saved Content", "Content you save will appear here.")) + '</section>');
+    } catch (error) { console.error("Saved content failed:", error); }
+  }
+
+  async function loadNotifications() {
+    const container = $(".page-container"), user = currentUser(), api = window.ApostolicSupabase;
+    if (!container || !user || !api || !api.isConfigured()) return;
+    try {
+      const result = await api.select("notifications", "*", { eq: { user_id: user.id }, order: { column: "created_at", ascending: false }, limit: 100 });
+      const html = (result?.data || []).map(function(n) { return renderCard(n.is_read ? "🔔" : "🟢", n.title, n.message, n.link ? '<a class="btn" href="' + escapeHTML(n.link) + '">Open</a>' : ""); }).join("");
+      container.insertAdjacentHTML("beforeend", '<section class="content-grid">' + (html || renderCard("🔔", "No Notifications", "You are all caught up.")) + '</section>');
+    } catch (error) { console.error("Notifications failed:", error); }
+  }
+
+  async function loadProfilePage() {
+    const container = $(".page-container"), user = currentUser(), api = window.ApostolicSupabase;
+    if (!container || !user || !api || !api.isConfigured()) return;
+    try {
+      const result = await api.select("profiles", "*", { eq: { id: user.id } });
+      const profile = result?.data?.[0] || {};
+      container.insertAdjacentHTML("beforeend", '<section class="content-grid"><article class="card"><h3>Profile</h3><p>' + escapeHTML(profile.full_name || user.email || "User") + '</p><p>' + escapeHTML(user.email || "") + '</p></article><article class="card"><h3>Edit Profile</h3><form class="dynamic-form" data-profile-form><input name="full_name" value="' + escapeHTML(profile.full_name || "") + '" placeholder="Full name"><input name="username" value="' + escapeHTML(profile.username || "") + '" placeholder="Username"><textarea name="bio" rows="4" placeholder="Bio">' + escapeHTML(profile.bio || "") + '</textarea><button type="submit" class="btn primary">Save Profile</button></form></article></section>');
+    } catch (error) { console.error("Profile failed:", error); }
+  }
+
+  async function loadQA() {
+    const container = $(".page-container"), api = window.ApostolicSupabase;
+    if (!container || !api || !api.isConfigured()) return;
+    try {
+      const result = await api.select("questions", "*", { order: { column: "created_at", ascending: false }, limit: 50 });
+      const html = (result?.data || []).map(function(q) {
+        return renderCard("❓", q.title, q.content, '<button type="button" class="btn" data-content-action="answer" data-content-id="' + escapeHTML(q.id) + '"><b>Answer</b></button><button type="button" class="btn" data-content-action="question-answers" data-content-id="' + escapeHTML(q.id) + '">View Answers</button>');
+      }).join("");
+      container.insertAdjacentHTML("beforeend", '<section class="content-grid">' + (html || renderCard("❓", "No Questions Yet", "Ask a question and let the community help.")) + '</section>');
+    } catch (error) { console.error("Q&A failed:", error); }
+  }
+
+  function showQuestionForm() {
+    if (!requireLogin()) return;
+    createModal("Ask a Question", '<form class="dynamic-form" data-question-form><input name="title" required placeholder="Question title"><textarea name="content" rows="6" required placeholder="Describe your question"></textarea><button type="submit" class="btn primary">Ask Question</button></form>');
+  }
+
+  function showAnswerForm(questionId) {
+    if (!requireLogin()) return;
+    createModal("Answer Question", '<form class="dynamic-form" data-answer-form data-question-id="' + escapeHTML(questionId) + '"><textarea name="content" rows="6" required placeholder="Write your answer"></textarea><button type="submit" class="btn primary">Post Answer</button></form>');
   }
 
   /* =========================================================
@@ -2914,7 +3114,7 @@
       const openAction = item.file_url
         ? `<a class="btn" href="${escapeHTML(item.file_url)}" target="_blank" rel="noopener">Open File</a>`
         : "";
-      const action = openAction + contentActionButtons("media_upload", item.id, item.user_id || null);
+      const action = openAction + renderEngagementActions("media_upload", item.id, item.file_url || "") + contentActionButtons("media_upload", item.id, item.user_id || null);
 
       cards.push(renderCard(
         item.file_name ? "📎" : "📝",
@@ -3006,6 +3206,10 @@
     loadMediaForPage(cleanRoute);
 
     loadCommunityPosts();
+    if (cleanRoute === "saved") loadSavedContent();
+    if (cleanRoute === "notifications") loadNotifications();
+    if (cleanRoute === "profile") loadProfilePage();
+    if (cleanRoute === "qa") loadQA();
 
     /*
       Always bring the newly selected page
