@@ -1196,9 +1196,19 @@
     }
     if (action === "download") {
       if (!requireLogin()) return;
-      const url = element.dataset.fileUrl;
-      if (url) window.open(url, "_blank", "noopener");
-      try { await window.ApostolicSupabase.insert("downloads", { user_id: currentUser().id, content_type: type, content_id: id }); } catch (error) {}
+      const item = (window.__apostolicMediaById || {})[String(id)];
+      if (item) {
+        openMediaViewer(item);
+      } else {
+        toast("Open the content first to view it in the app.", "info");
+      }
+      try {
+        await window.ApostolicSupabase.insert("downloads", {
+          user_id: currentUser().id,
+          content_type: type,
+          content_id: id
+        });
+      } catch (error) {}
       return;
     }
     if (action === "comments") {
@@ -3469,7 +3479,7 @@
         renderCard("📁", "Content Types", String(Object.keys(counts).length) + " types in your library.") +
         '</section>';
       const cards = items.map(function(item) {
-        const actions = (item.file_url ? '<a class="btn" href="' + escapeHTML(item.file_url) + '" target="_blank" rel="noopener">Open</a>' : '') +
+        const actions = (item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : '') +
           contentActionButtons("media_upload", item.id, item.user_id);
         return renderCard("📝", item.title || item.file_name || "Untitled", item.description || "", actions);
       }).join("");
