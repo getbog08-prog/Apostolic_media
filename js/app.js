@@ -2333,24 +2333,16 @@
   }
 
   async function showComments(contentType, contentId, title) {
-    const api = window.ApostolicSupabase;
-    if (!api || !api.isConfigured()) { toast("Supabase is not configured.", "error"); return; }
-    try {
-      const isCommunity = contentType === "community_post";
-      const filter = isCommunity ? { post_id: contentId } : { media_id: contentId };
-      const result = await api.select("comments", "*", { eq: filter, order: { column: "created_at", ascending: true }, limit: 100 });
-      const comments = result?.data || [];
-      const list = comments.length
-        ? comments.map(item => renderCard("💬", "Comment", item.content, "")).join("")
-        : renderCard("💬", "No Comments", "Be the first to comment.");
-      const form = currentUser()
-        ? '<form class="dynamic-form" data-comment-form data-comment-id="' + escapeHTML(contentId) + '" data-comment-type="' + escapeHTML(contentType) + '"><textarea name="content" rows="3" required placeholder="Write a comment..."></textarea><button type="submit" class="btn primary">Comment</button></form>'
-        : '<p>Please sign in to comment.</p>';
-      createModal("Comments: " + title, '<section class="content-grid">' + list + '</section>' + form);
-    } catch (error) {
-      console.error("Comments failed:", error);
-      toast("Could not load comments.", "error");
-    }
+    const api=window.ApostolicSupabase;
+    if(!api?.isConfigured?.()){toast("Supabase is not configured.","error");return;}
+    try{
+      const filter=contentType==="community_post"?{post_id:contentId}:{media_id:contentId};
+      const result=await api.select("comments","*",{eq:filter,order:{column:"created_at",ascending:true},limit:100});
+      const comments=result?.data||[];
+      const list=comments.length?comments.map(item=>renderCard("💬","Comment",item.content,"")).join(""):renderCard("💬","No Comments","Be the first to comment.");
+      const form=currentUser()?'<form class="dynamic-form" data-comment-form data-comment-id="'+escapeHTML(contentId)+'" data-comment-type="'+escapeHTML(contentType)+'"><textarea name="content" rows="3" required placeholder="Write a comment..."></textarea><button type="submit" class="btn primary">Comment</button></form>':'<p>Please sign in to comment.</p>';
+      createModal("Comments: "+title,'<section class="content-grid">'+list+'</section>'+form);
+    }catch(e){console.error("Comments failed:",e);toast("Could not load comments.","error");}
   }
 
   async function loadSavedContent() {
