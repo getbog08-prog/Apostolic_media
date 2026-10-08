@@ -444,3 +444,10 @@
 }
 
 .feed-reactions{display:flex;flex-wrap:wrap;gap:6px}.feed-reactions .btn{min-width:0;padding:8px 11px;border-radius:999px}.upload-status{font-weight:800;text-align:center;font-size:18px;padding:8px}
+
+.creator-tools{margin:18px 0;padding:18px;border:1px solid rgba(124,92,255,.18);border-radius:18px;background:var(--surface,#fff);box-shadow:0 8px 24px rgba(20,20,40,.05)}
+.creator-tools h2{margin:.25rem 0 .35rem;font-size:20px}
+.creator-tools p{margin:0 0 14px;opacity:.72;font-size:13px}
+.creator-tools-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:700px){.creator-tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:460px){.creator-tools{padding:14px}.creator-tools-grid{grid-template-columns:1fr}.creator-tools .btn{width:100%}}
