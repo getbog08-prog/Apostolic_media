@@ -198,6 +198,13 @@
       );
     }
 
+    if (options.in) {
+      Object.keys(options.in).forEach((key) => {
+        const values = Array.isArray(options.in[key]) ? options.in[key] : [];
+        if (values.length) query = query.in(key, values);
+      });
+    }
+
     if (
       Number.isInteger(options.limit) &&
       options.limit > 0
