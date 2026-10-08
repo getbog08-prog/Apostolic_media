@@ -2964,12 +2964,23 @@
         renderCard("✏️", "Editable", "Your own items can be edited or deleted.") +
         renderCard("📁", "Content Types", String(Object.keys(counts).length) + " types in your library.") +
         '</section>';
+      const creatorTools = '<section class="creator-tools"><div><span class="home-section-kicker">CREATOR TOOLS</span><h2>Create or upload</h2><p>Choose a content type. Upload supports up to 12 files at once.</p></div><div class="creator-tools-grid">' +
+        '<button type="button" class="btn primary" data-page-action="create-teaching">✍️ Create Teaching</button>' +
+        '<button type="button" class="btn primary" data-page-action="create-sermon">🎙️ Create Sermon</button>' +
+        '<button type="button" class="btn primary" data-page-action="create-song">🎵 Create Song</button>' +
+        '<button type="button" class="btn primary" data-page-action="create-course">🎓 Create Course</button>' +
+        '<button type="button" class="btn" data-page-action="upload-teaching">⬆️ Upload Teaching</button>' +
+        '<button type="button" class="btn" data-page-action="upload-sermon">⬆️ Upload Sermon</button>' +
+        '<button type="button" class="btn" data-page-action="upload-song">⬆️ Upload Song</button>' +
+        '<button type="button" class="btn" data-page-action="upload-video">⬆️ Upload Video</button>' +
+        '<button type="button" class="btn" data-page-action="upload-document">⬆️ Upload Document</button>' +
+        '</div></section>';
       const cards = items.map(function(item) {
         const actions = (item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : '') +
           contentActionButtons("media_upload", item.id, item.user_id);
         return renderCard("📝", item.title || item.file_name || "Untitled", item.description || "", actions);
       }).join("");
-      container.insertAdjacentHTML("beforeend", summary + '<section class="content-grid">' +
+      container.insertAdjacentHTML("beforeend", summary + creatorTools + '<section class="content-grid">
         (cards || renderCard("📂", "No Content Yet", "Create or upload your first Christian resource.")) + '</section>');
     } catch (error) { console.error("Creator dashboard failed:", error); }
   }
