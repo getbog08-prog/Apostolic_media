@@ -4,7 +4,7 @@
    without serving stale JS/CSS/HTML.
    ========================================================= */
 
-const CACHE = "apostolic-media-v21";
+const CACHE = "apostolic-media-v22";
 
 const CORE = [
   "./",
