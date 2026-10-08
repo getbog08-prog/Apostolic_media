@@ -460,3 +460,5 @@
 .document-download-btn{display:inline-flex;align-items:center;justify-content:center;width:100%;margin-top:6px}
 .document-open-note{font-size:12px!important;opacity:.7}
 @media(max-width:520px){.teaching-post-editor textarea{min-height:240px;font-size:14px}}
+
+.feed-body[data-open-media]{cursor:pointer}.feed-body[data-open-media]:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:14px}
