@@ -764,7 +764,7 @@
   function initPageActionDelegation() {
     document.addEventListener(
       "click",
-      function (event) {
+      async function (event) {
         const actionElement =
           event.target.closest(
             "[data-page-action]"
