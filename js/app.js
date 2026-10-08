@@ -657,6 +657,43 @@
   }
 
   /* =========================================================
+     AUTHENTICATION UI
+     ========================================================= */
+
+  function showAuthForm(mode = "login") {
+    const isLogin = mode === "login";
+    const nameField = isLogin
+      ? ""
+      : '<div class="form-group"><label>Name</label><input name="name" type="text" required></div>';
+    const title = isLogin ? "Sign In" : "Create Account";
+    const submit = isLogin ? "Sign In" : "Create Account";
+    const switchAction = isLogin ? "sign-up" : "sign-in";
+    const switchLabel = isLogin ? "Create an account" : "Already have an account? Sign in";
+
+    return createModal(
+      title,
+      '<form class="dynamic-form" data-auth-form="' + (isLogin ? "login" : "signup") + '">' +
+        nameField +
+        '<div class="form-group"><label>Email</label><input name="email" type="email" required></div>' +
+        '<div class="form-group"><label>Password</label><input name="password" type="password" minlength="6" required></div>' +
+        '<button type="submit" class="btn primary">' + submit + '</button>' +
+        '<button type="button" class="btn" data-page-action="' + switchAction + '">' + switchLabel + '</button>' +
+      '</form>'
+    );
+  }
+
+  function requireCreatorAuth(callback) {
+    const auth = window.ApostolicAuth;
+    if (!auth || !auth.isLoggedIn()) {
+      toast("Please sign in first to create or upload content.", "error");
+      showAuthForm("login");
+      return false;
+    }
+    if (typeof callback === "function") callback();
+    return true;
+  }
+
+  /* =========================================================
      PAGE ACTIONS
      ========================================================= */
 
@@ -761,104 +798,146 @@
   function handlePageAction(
     action
   ) {
-    switch (action) {
+    switch (action) {\n\n      case "sign-in":\n        showAuthForm("login");\n        break;\n\n      case "sign-up":\n        showAuthForm("signup");\n        break;
 
       case "create-teaching":
+        requireCreatorAuth(function () {
         showCreateForm(
           "Create Teaching",
           "teaching"
         );
+
+        });
         break;
 
       case "create-sermon":
+        requireCreatorAuth(function () {
         showCreateForm(
           "Create Sermon",
           "sermon"
         );
+
+        });
         break;
 
       case "create-song":
+        requireCreatorAuth(function () {
         showCreateForm(
           "Create Song",
           "song"
         );
+
+        });
         break;
 
       case "create-lyric":
+        requireCreatorAuth(function () {
         showCreateForm(
           "Create Lyrics",
           "lyric"
         );
+
+        });
         break;
 
       case "create-course":
+        requireCreatorAuth(function () {
         showCreateForm(
           "Create Course",
           "course"
         );
+
+        });
         break;
 
       case "create-event":
+        requireCreatorAuth(function () {
         showCreateForm(
           "Create Event",
           "event"
         );
+
+        });
         break;
 
       case "create-playlist":
+        requireCreatorAuth(function () {
         showCreateForm(
           "Create Playlist",
           "playlist"
         );
+
+        });
         break;
 
       case "upload-teaching":
+        requireCreatorAuth(function () {
         showUploadForm(
           "Upload Teaching",
           "teaching"
         );
+
+        });
         break;
 
       case "upload-sermon":
+        requireCreatorAuth(function () {
         showUploadForm(
           "Upload Sermon",
           "sermon"
         );
+
+        });
         break;
 
       case "upload-song":
+        requireCreatorAuth(function () {
         showUploadForm(
           "Upload Song",
           "song"
         );
+
+        });
         break;
 
       case "upload-video":
+        requireCreatorAuth(function () {
         showUploadForm(
           "Upload Video",
           "video"
         );
+
+        });
         break;
 
       case "upload-bible":
+        requireCreatorAuth(function () {
         showUploadForm(
           "Upload Bible Resource",
           "bible"
         );
+
+        });
         break;
 
       case "upload-course":
+        requireCreatorAuth(function () {
         showUploadForm(
           "Upload Course Material",
           "course"
         );
+
+        });
         break;
 
       case "upload-document":
+        requireCreatorAuth(function () {
         showUploadForm(
           "Upload Document",
           "document"
         );
+
+        });
         break;
 
       default:
