@@ -1454,13 +1454,13 @@
     async function downloadBibleOffline(){
       if(!offlineButton) return;
       offlineButton.disabled=true;
-      let done=0, total=0;
+      let done=0;
+      const total=books.reduce(function(sum,item){ return sum+item[2]; },0)*2;
       try{
         const cache=await caches.open(BIBLE_OFFLINE_CACHE);
         for(const v of ["kjv","amhara"]){
           for(const item of books){
             for(let chapterNo=1;chapterNo<=item[2];chapterNo++){
-              total++;
               const url=bibleSourceUrl(v,item[1],chapterNo);
               const existing=await cache.match(url);
               if(!existing){
@@ -1469,12 +1469,13 @@
                 await cache.put(url,response.clone());
               }
               done++;
-              status.textContent="Downloading Bible for offline reading… "+done+"/"+total;
+              const percent=Math.min(100,Math.round((done/total)*100));
+              status.textContent="⬇️ "+percent+"%";
             }
           }
         }
         storage.set("apostolic_bible_offline_ready",{ready:true,savedAt:Date.now()});
-        status.textContent="✓ መጽሐፍ ቅዱስ በoffline ለማንበብ ተዘጋጅቷል።";
+        status.textContent="✓ 100% — መጽሐፍ ቅዱስ በoffline ለማንበብ ተዘጋጅቷል።";
         toast("ሙሉ መጽሐፍ ቅዱስ offline ተዘጋጅቷል።","success");
       }catch(error){
         console.error("Offline Bible download failed:",error);
