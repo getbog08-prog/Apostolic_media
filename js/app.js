@@ -1337,19 +1337,77 @@
     );
   }
 
+  function openBibleReader() {
+    const books = ["Genesis","Exodus","Psalms","Proverbs","Matthew","Mark","Luke","John","Romans","1 Corinthians","Ephesians","Philippians","Revelation"];
+    const modal = createModal("Bible Reader", `
+      <div class="bible-reader-shell">
+        <div class="bible-reader-toolbar">
+          <select class="bible-select" data-bible-book>${books.map(function(book){ return '<option>'+escapeHTML(book)+'</option>'; }).join("")}</select>
+          <select class="bible-select" data-bible-chapter>${Array.from({length:50},(_,i)=>'<option value="'+(i+1)+'">Chapter '+(i+1)+'</option>').join("")}</select>
+          <button type="button" class="btn primary" data-bible-load>Open</button>
+        </div>
+        <div class="bible-reader-note">Choose a book and chapter to open your Scripture reading space. Your reading position can be continued from this device.</div>
+        <article class="bible-reader-page">
+          <span class="bible-reader-kicker">HOLY SCRIPTURE</span>
+          <h2 data-bible-title>Genesis 1</h2>
+          <p class="bible-reader-placeholder">Bible text can be added to the app's Scripture library as licensed or public-domain content. Uploaded Bible resources remain available below.</p>
+          <div class="bible-reader-lines">
+            <div><b>1</b> In the beginning, God created the heaven and the earth.</div>
+            <div><b>2</b> And the earth was without form, and void; and darkness was upon the face of the deep.</div>
+          </div>
+        </article>
+      </div>`);
+    const load = modal.querySelector("[data-bible-load]");
+    const book = modal.querySelector("[data-bible-book]");
+    const chapter = modal.querySelector("[data-bible-chapter]");
+    const title = modal.querySelector("[data-bible-title]");
+    if (load) load.addEventListener("click", function(){ title.textContent = book.value + " " + chapter.value; storage.set("apostolic_bible_position",{book:book.value,chapter:chapter.value}); });
+    const saved=storage.get("apostolic_bible_position",null);
+    if(saved && book && chapter && title){ book.value=saved.book||book.value; chapter.value=String(saved.chapter||1); title.textContent=book.value+" "+chapter.value; }
+  }
+
+  function openMusicPlayer(item) {
+    if (!item || !item.file_url) { toast("This song does not have a playable file yet.","error"); return; }
+    const modal=createModal("Now Playing", `
+      <div class="music-player-modal">
+        <div class="music-art">🎵</div>
+        <span class="home-section-kicker">APOSTOLIC MUSIC</span>
+        <h2>${escapeHTML(item.title || "Untitled Song")}</h2>
+        <p>${escapeHTML(item.description || "Christian worship music")}</p>
+        <audio controls autoplay preload="metadata" src="${escapeHTML(item.file_url)}"></audio>
+        <div class="card-actions">
+          <button type="button" class="btn" data-content-action="like" data-content-type="media_upload" data-content-id="${escapeHTML(item.id)}">Like</button>
+          <button type="button" class="btn" data-content-action="save" data-content-type="media_upload" data-content-id="${escapeHTML(item.id)}">Save</button>
+        </div>
+      </div>`);
+    const audio=modal.querySelector("audio"); if(audio) audio.focus();
+  }
+
+  function openShortsFeed(items) {
+    const playable=(items||[]).filter(function(item){return item && item.file_url;});
+    if(!playable.length){ toast("No video files are available yet.","info"); return; }
+    const cards=playable.map(function(item,index){
+      return '<article class="shorts-feed-card"><video controls playsinline preload="'+(index===0?"metadata":"none")+'" src="'+escapeHTML(item.file_url)+'"></video><div class="shorts-feed-overlay"><span>SHORT CHRISTIAN VIDEO</span><h3>'+escapeHTML(item.title||"Christian Video")+'</h3><p>'+escapeHTML(item.description||"Watch and grow in faith.")+'</p><div class="card-actions"><button type="button" class="btn" data-content-action="like" data-content-type="media_upload" data-content-id="'+escapeHTML(item.id)+'">♡ Like</button><button type="button" class="btn" data-content-action="save" data-content-type="media_upload" data-content-id="'+escapeHTML(item.id)+'">🔖 Save</button></div></div></article>';
+    }).join("");
+    createModal("Shorts", '<div class="shorts-feed">'+cards+'</div>');
+  }
+
   function handlePageAction(
     action
   ) {
     switch (action) {
 
-      case "ask-question":
-        showQuestionForm();
-        break;
-
+      case "read-bible": openBibleReader(); break;
+      case "open-music": toast("Choose a song below to start the player.","info"); break;
+      case "shorts": openShortsFeed(window.__apostolicShorts || []); break;
       case "create-post":
         requireCreatorAuth(function () {
           showCommunityPostForm();
         });
+        break;
+
+      case "ask-question":
+        showQuestionForm();
         break;
 
       case "sign-in":
@@ -2320,7 +2378,8 @@
       content: `
         ${renderPageHero(
           "Bible",
-          "Explore the Holy Scriptures."
+          "Read, search and continue your Scripture journey.",
+          renderAction("Open Bible Reader","read-bible")
         )}
 
         <section class="content-grid">
@@ -2487,6 +2546,7 @@
         ${renderPageHero(
           "Songs",
           "Christian worship songs and music.",
+          renderAction("Open Music Player","open-music") +
           renderAction(
             "Upload Song",
             "upload-song"
