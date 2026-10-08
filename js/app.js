@@ -709,19 +709,6 @@
           return;
         }
 
-        const roleButton=event.target.closest("[data-admin-role-id]");
-        if(roleButton){
-          event.preventDefault();
-          if(!requireLogin()) return;
-          const role=roleButton.value;
-          if(!["user","creator","minister","admin"].includes(role)) return;
-          try{
-            const result=await window.ApostolicSupabase.update("profiles",{role:role},{id:roleButton.dataset.adminRoleId});
-            if(result?.error) throw result.error;
-            toast("User role updated.","success"); renderPage("admin");
-          }catch(e){toast(e?.message||"Could not update role.","error"); renderPage("admin");}
-          return;
-        }
         const mediaPublishButton=event.target.closest("[data-admin-media-id]");
         if(mediaPublishButton){
           event.preventDefault(); if(!requireLogin()) return;
@@ -3039,7 +3026,7 @@
       }).join("");
 
       container.insertAdjacentHTML("beforeend",
-        '<section class="admin-toolbar"><div><strong>Platform Management</strong><span>Users, community and uploaded content</span></div><button type="button" class="btn" data-page-action="admin-refresh">↻ Refresh</button></section>' +
+        '<section class="admin-hero"><div><span class="admin-hero-kicker">ADMIN CONTROL CENTER</span><h2>Manage Apostolic Media</h2><p>Monitor users, community posts and uploaded resources from one place.</p></div><button type="button" class="btn primary" data-page-action="admin-refresh">↻ Refresh</button></section>' +
         stats +
         '<section class="admin-section"><div class="admin-section-head"><h3>Users</h3><span>' + String(users?.count ?? userRows.length) + '</span></div><div class="admin-list">' + (userCards || '<p class="admin-muted">No users found.</p>') + '</div></section>' +
         '<section class="admin-section"><div class="admin-section-head"><h3>Community moderation</h3><span>' + String(posts?.count ?? postRows.length) + '</span></div><div class="admin-list">' + (postCards || '<p class="admin-muted">No community posts found.</p>') + '</div></section>' +
