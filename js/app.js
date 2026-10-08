@@ -1291,6 +1291,10 @@
       return;
     }
 
+    if (action === "edit" && type === "folder") {
+      try { const r=await api.select("folders","*",{eq:{id:id,created_by:auth.getUser().id}}); const row=r?.data?.[0]; if(!row){toast("Folder not found.","error");return;} showFolderForm(row); } catch(e){toast(e?.message||"Could not load folder.","error");}
+      return;
+    }
     if (action === "edit") {
       try {
         if (type === "community_post") {
@@ -1303,7 +1307,6 @@
           showCommunityPostForm(post);
           return;
         }
-
         if (type === "media_upload") {
           const result = await api.select("media_uploads", "*", { eq: { id } });
           const item = result?.data?.[0];
@@ -1321,10 +1324,6 @@
       return;
     }
 
-    if (action === "edit" && type === "folder") {
-      try { const r=await api.select("folders","*",{eq:{id:id,created_by:auth.getUser().id}}); const row=r?.data?.[0]; if(!row){toast("Folder not found.","error");return;} showFolderForm(row); } catch(e){toast(e?.message||"Could not load folder.","error");}
-      return;
-    }
     if (action === "delete" && type === "folder") {
       if (!window.confirm("Delete this folder?")) return;
       try { const r=await api.remove("folders",{id:id,created_by:auth.getUser().id}); if(r?.error) throw r.error; toast("Folder deleted.","success"); renderPage("folders"); } catch(e){toast(e?.message||"Could not delete folder.","error");}
@@ -1843,6 +1842,10 @@
 
       case "create-playlist":
         requireCreatorAuth(function () { showPlaylistForm(); });
+        break;
+
+      case "create-folder":
+        requireCreatorAuth(function () { showFolderForm(); });
         break;
 
       case "upload-teaching":
@@ -3063,7 +3066,8 @@
       content: `
         ${renderPageHero(
           "Community",
-          "Connect, encourage one another and grow together."
+          "Connect, encourage one another and grow together.",
+          renderAction("Create Post","create-post")
         )}
 
         <section class="content-grid">
@@ -3100,7 +3104,8 @@
       content: `
         ${renderPageHero(
           "Bible Q&A",
-          "Ask questions and explore biblical answers."
+          "Ask questions and explore biblical answers.",
+          renderAction("Ask a Question","ask-question")
         )}
 
         <section class="content-grid">
@@ -3159,6 +3164,20 @@
     /* -------------------------------------------------------
        PLAYLISTS
        ------------------------------------------------------- */
+
+    folders: {
+      title: "Folders",
+      content: `
+        ${renderPageHero(
+          "Folders",
+          "Organize Christian resources into your own collections.",
+          renderAction("Create Folder","create-folder")
+        )}
+        <section class="content-grid">
+          ${renderCard("📁","Resource Folders","Create and manage folders for your Christian resources.")}
+        </section>
+      `
+    },
 
     playlists: {
       title: "Playlists",
