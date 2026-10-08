@@ -885,22 +885,6 @@
           return;
         }
 
-        const commentForm = event.target.closest("[data-comment-form]");
-        if (commentForm) {
-          event.preventDefault();
-          if (!requireLogin()) return;
-          const content=String(new FormData(commentForm).get("content")||"").trim();
-          if(!content){toast("Please write a comment.","error");return;}
-          try {
-            const r=await window.ApostolicSupabase.insert("comments",{post_id:commentForm.dataset.commentId,user_id:currentUser().id,content:content});
-            if(r?.error) throw r.error;
-            closeDynamicModal(commentForm.closest(".apostolic-modal"));
-            toast("Comment added.","success");
-            await showComments("community_post",commentForm.dataset.commentId,"Community Post");
-          } catch(e){toast(e?.message||"Could not add comment.","error");}
-          return;
-        }
-
         const playlistSongsForm = event.target.closest("[data-playlist-songs-form]");
         if (playlistSongsForm) {
           event.preventDefault();
