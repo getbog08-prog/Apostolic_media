@@ -435,12 +435,18 @@
   function closeDynamicModal(modal) {
     if (!modal) return;
 
-    modal.remove();
+    // Hide immediately so a completed action never leaves a frozen white modal.
+    modal.setAttribute("aria-hidden", "true");
+    modal.classList.remove("open");
+    modal.style.display = "none";
+
+    // Remove it from the DOM on the next frame.
+    if (modal.parentNode) {
+      modal.parentNode.removeChild(modal);
+    }
 
     if (!$(".apostolic-modal")) {
-      document.body.classList.remove(
-        "modal-open"
-      );
+      document.body.classList.remove("modal-open");
     }
   }
 
