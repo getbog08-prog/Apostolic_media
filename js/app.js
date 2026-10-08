@@ -657,6 +657,54 @@
   }
 
   /* =========================================================
+     COMMUNITY
+     ========================================================= */
+
+  function showCommunityPostForm() {
+    return createModal(
+      "Create Community Post",
+      '<form class="dynamic-form" data-community-form>' +
+        '<div class="form-group"><label>Title</label><input name="title" type="text"></div>' +
+        '<div class="form-group"><label>Message</label><textarea name="content" rows="6" required></textarea></div>' +
+        '<button type="submit" class="btn primary">Publish</button>' +
+      '</form>'
+    );
+  }
+
+  async function loadCommunityPosts() {
+    const route = (window.location.hash || "").substring(1);
+    if (route !== "community") return;
+    const container = $(".page-container");
+    if (!container) return;
+    const section = document.createElement("section");
+    section.className = "content-grid media-content-grid";
+    section.innerHTML = '<article class="card"><div class="card-icon">⏳</div><h3>Community Posts</h3><p>Loading posts...</p></article>';
+    container.appendChild(section);
+
+    const api = window.ApostolicSupabase;
+    if (!api || !api.isConfigured()) {
+      section.innerHTML = renderCard("💬", "Community Posts", "Supabase is not configured yet.");
+      return;
+    }
+
+    try {
+      const result = await api.select("community_posts", "*", {
+        order: { column: "created_at", ascending: false },
+        limit: 50
+      });
+      const posts = result && Array.isArray(result.data) ? result.data : [];
+      section.innerHTML = posts.length
+        ? posts.map(function (post) {
+            return renderCard("💬", post.title || "Christian Community", post.content || "");
+          }).join("")
+        : renderCard("💬", "No Posts Yet", "Be the first to share encouragement with the community.");
+    } catch (error) {
+      console.error("Community load failed:", error);
+      section.innerHTML = renderCard("⚠️", "Community", "Could not load community posts right now.");
+    }
+  }
+
+  /* =========================================================
      AUTHENTICATION UI
      ========================================================= */
 
@@ -750,6 +798,35 @@
     document.addEventListener(
       "submit",
       async function (event) {
+        const communityForm = event.target.closest("[data-community-form]");
+
+        if (communityForm) {
+          event.preventDefault();
+          const auth = window.ApostolicAuth;
+          const api = window.ApostolicSupabase;
+          if (!auth || !auth.isLoggedIn() || !api || !api.isConfigured()) {
+            toast("Please sign in and make sure Supabase is configured.", "error");
+            return;
+          }
+          const data = new FormData(communityForm);
+          try {
+            const result = await api.insert("community_posts", {
+              user_id: auth.getUser().id,
+              title: String(data.get("title") || "").trim(),
+              content: String(data.get("content") || "").trim(),
+              is_published: true
+            });
+            if (result && result.error) throw result.error;
+            closeDynamicModal(communityForm.closest(".apostolic-modal"));
+            toast("Your community post was published.", "success");
+            renderPage("community");
+          } catch (error) {
+            console.error("Community post failed:", error);
+            toast(error && error.message ? error.message : "Could not publish post.", "error");
+          }
+          return;
+        }
+
         const authForm = event.target.closest("[data-auth-form]");
 
         if (authForm) {
@@ -829,6 +906,12 @@
     action
   ) {
     switch (action) {
+
+      case "create-post":
+        requireCreatorAuth(function () {
+          showCommunityPostForm();
+        });
+        break;
 
       case "sign-in":
         showAuthForm("login");
@@ -2723,7 +2806,7 @@
     initThemeControls();
     initLanguageControls();
 
-    loadMediaForPage(cleanRoute);
+    loadMediaForPage(cleanRoute);\n\n    loadCommunityPosts();
 
     /*
       Always bring the newly selected page
