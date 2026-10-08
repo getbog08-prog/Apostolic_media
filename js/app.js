@@ -808,6 +808,30 @@
     );
 
     document.addEventListener(
+      "change",
+      async function (event) {
+        const roleSelect = event.target.closest("[data-admin-role-id]");
+        if (!roleSelect) return;
+        if (!requireLogin()) return;
+        const role = roleSelect.value;
+        if (!["user","creator","minister","admin"].includes(role)) return;
+        try {
+          const result = await window.ApostolicSupabase.update(
+            "profiles",
+            { role: role },
+            { id: roleSelect.dataset.adminRoleId }
+          );
+          if (result?.error) throw result.error;
+          toast("User role updated.", "success");
+          renderPage("admin");
+        } catch (e) {
+          toast(e?.message || "Could not update role.", "error");
+          renderPage("admin");
+        }
+      }
+    );
+
+    document.addEventListener(
       "submit",
       async function (event) {
         const folderForm = event.target.closest("[data-folder-form]");
@@ -1713,6 +1737,10 @@
 
       case "sign-up":
         showAuthForm("signup");
+        break;
+
+      case "admin-refresh":
+        if (isCurrentRoute("admin")) renderPage("admin");
         break;
 
       case "sign-out":
