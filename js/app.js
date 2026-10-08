@@ -1446,15 +1446,15 @@
       let url="";
       if(v==="kjv"){
         const names={
-          GEN:"Genesis",EXO:"Exodus",LEV:"Leviticus",NUM:"Numbers",DEU:"Deuteronomy",JOS:"Joshua",JDG:"Judges",RUT:"Ruth",
-          "1SA":"1_Samuel","2SA":"2_Samuel","1KI":"1_Kings","2KI":"2_Kings","1CH":"1_Chronicles","2CH":"2_Chronicles",
-          EZR:"Ezra",NEH:"Nehemiah",EST:"Esther",JOB:"Job",PSA:"Psalms",PRO:"Proverbs",ECC:"Ecclesiastes",SNG:"Song_of_Solomon",
-          ISA:"Isaiah",JER:"Jeremiah",LAM:"Lamentations",EZK:"Ezekiel",DAN:"Daniel",HOS:"Hosea",JOL:"Joel",AMO:"Amos",
-          OBA:"Obadiah",JON:"Jonah",MIC:"Micah",NAM:"Nahum",HAB:"Habakkuk",ZEP:"Zephaniah",HAG:"Haggai",ZEC:"Zechariah",
-          MAL:"Malachi",MAT:"Matthew",MRK:"Mark",LUK:"Luke",JHN:"John",ACT:"Acts",ROM:"Romans","1CO":"1_Corinthians",
-          "2CO":"2_Corinthians",GAL:"Galatians",EPH:"Ephesians",PHP:"Philippians",COL:"Colossians","1TH":"1_Thessalonians",
-          "2TH":"2_Thessalonians","1TI":"1_Timothy","2TI":"2_Timothy",TIT:"Titus",PHM:"Philemon",HEB:"Hebrews",JAS:"James",
-          "1PE":"1_Peter","2PE":"2_Peter","1JN":"1_John","2JN":"2_John","3JN":"3_John",JUD:"Jude",REV:"Revelation"
+          GEN:"genesis",EXO:"exodus",LEV:"leviticus",NUM:"numbers",DEU:"deuteronomy",JOS:"joshua",JDG:"judges",RUT:"ruth",
+          "1SA":"1_samuel","2SA":"2_samuel","1KI":"1_kings","2KI":"2_kings","1CH":"1_chronicles","2CH":"2_chronicles",
+          EZR:"ezra",NEH:"nehemiah",EST:"esther",JOB:"job",PSA:"psalms",PRO:"proverbs",ECC:"ecclesiastes",SNG:"song_of_solomon",
+          ISA:"isaiah",JER:"jeremiah",LAM:"lamentations",EZK:"ezekiel",DAN:"daniel",HOS:"hosea",JOL:"joel",AMO:"amos",
+          OBA:"obadiah",JON:"jonah",MIC:"micah",NAM:"nahum",HAB:"habakkuk",ZEP:"zephaniah",HAG:"haggai",ZEC:"zechariah",
+          MAL:"malachi",MAT:"matthew",MRK:"mark",LUK:"luke",JHN:"john",ACT:"acts",ROM:"romans","1CO":"1_corinthians",
+          "2CO":"2_corinthians",GAL:"galatians",EPH:"ephesians",PHP:"philippians",COL:"colossians","1TH":"1_thessalonians",
+          "2TH":"2_thessalonians","1TI":"1_timothy","2TI":"2_timothy",TIT:"titus",PHM:"philemon",HEB:"hebrews",JAS:"james",
+          "1PE":"1_peter","2PE":"2_peter","1JN":"1_john","2JN":"2_john","3JN":"3_john",JUD:"jude",REV:"revelation"
         };
         url="https://raw.githubusercontent.com/nolanbaxter/kjv-bible/main/"+encodeURIComponent(names[b]+".json");
       } else {
