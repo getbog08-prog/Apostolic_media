@@ -520,21 +520,9 @@
           </div>
 
           <div class="form-group teaching-post-editor">
-            <label for="createDescription">
-              Teaching / Post
-            </label>
-
-            <textarea
-              id="createDescription"
-              name="description"
-              rows="14"
-              maxlength="50000"
-              placeholder="Write or paste your teaching here... You can write a long message just like a Facebook post."
-            ></textarea>
-
-            <small class="form-help">
-              You can write or paste a long teaching, with multiple paragraphs.
-            </small>
+            <label for="createDescription">Teaching / Post</label>
+            <textarea id="createDescription" name="description" rows="14" maxlength="50000" placeholder="Write or paste your teaching here... You can write a long message just like a Facebook post."></textarea>
+            <small class="form-help">You can write or paste a long teaching, with multiple paragraphs.</small>
           </div>
 
           <div class="form-group">
@@ -576,13 +564,11 @@
     title,
     type
   ) {
-    const isTeaching = type === "teaching";
-    const accept = isTeaching ? ".pdf,.doc,.docx,.txt,.rtf,.odt,.ppt,.pptx,.xls,.xlsx,.csv,.epub" : "";
     const modal = createModal(title, `
       <form class="dynamic-form" data-upload-form="${escapeHTML(type)}">
         <div class="form-group"><label>Title (optional for batch)</label><input name="title" type="text" placeholder="Enter a title"></div>
-        <div class="form-group"><label>Select files (up to 12)</label><input id="uploadFile" name="file" type="file" multiple required ${accept ? 'accept="' + accept + '"' : ""}><small>You can select up to 12 files at once.${isTeaching ? " PDF, DOC, DOCX, TXT, RTF, ODT, PPT, PPTX, XLS, XLSX, CSV or EPUB are supported." : ""}</small></div>
-        <div class="form-group"><label>Description (optional)</label><textarea name="description" rows="4" placeholder="Write a short description..."></textarea></div>
+        <div class="form-group"><label>Select files (up to 12)</label><input id="uploadFile" name="file" type="file" multiple required${type === "teaching" ? ' accept=".pdf,.doc,.docx,.txt,.rtf,.odt,.ppt,.pptx,.xls,.xlsx,.csv,.epub"' : ""}><small>${type === "teaching" ? "PDF, DOC, DOCX, TXT, RTF, ODT, PPT, PPTX, XLS, XLSX, CSV or EPUB are supported. " : ""}Maximum 12 files.</small></div>
+        <div class="form-group"><label>Description</label><textarea name="description" rows="4" placeholder="Write a description..."></textarea></div>
         <div class="upload-status" hidden role="status" aria-live="polite"></div>
         <button type="button" class="btn primary" data-upload-submit>Upload</button>
       </form>`);
@@ -1587,8 +1573,7 @@
     } else if (isPdf) {
       viewer = '<iframe class="in-app-media-pdf" title="' + escapeHTML(item.title || "PDF document") + '" src="' + escapeHTML(url) + '#toolbar=1&navpanes=0" loading="lazy"></iframe>';
     } else {
-      const safeName = String(item.file_name || item.title || "document").replace(/[^a-zA-Z0-9._-]/g, "_");
-      viewer = '<div class="in-app-media-document"><div class="card-icon">📄</div><h3>' + escapeHTML(item.title || item.file_name || "Document") + '</h3><p>This document format is best opened with a reader on your device.</p><div class="document-file-meta">📎 ' + escapeHTML(item.file_name || safeName) + '</div><a class="btn primary document-download-btn" href="' + escapeHTML(url) + '" download="' + escapeHTML(safeName) + '">⬇️ Download &amp; Open with device</a><p class="document-open-note">After downloading, choose a reader app from your device “Open with” options.</p></div>';
+      viewer = '<div class="in-app-media-document"><div class="card-icon">📄</div><h3>' + escapeHTML(item.title || item.file_name || "Document") + '</h3><p>This file format may not preview in every browser. Try the in-app preview below, or save a copy to your device.</p><iframe class="in-app-media-pdf" title="' + escapeHTML(item.title || "Document preview") + '" src="' + escapeHTML(url) + '" loading="lazy"></iframe><a class="btn primary" href="' + escapeHTML(url) + '" download>Download file</a></div>';
     }
 
     createModal(item.title || item.file_name || "Read content",
@@ -1893,7 +1878,7 @@
         const up=await api.uploadFile(bucket,path,file,{upsert:false});
         if(up?.error) throw up.error;
         const url=api.getPublicUrl(bucket,path); if(!url) throw new Error("Could not create the file URL.");
-        const base=title||file.name.replace(/\.[^.]+$/,"");
+        const base=title||file.name.replace(/.[^.]+$/,"");
         const itemTitle=files.length>1?base+" "+(done+failed+1):base;
         const db=await api.insert("media_uploads",{title:itemTitle,description,type,user_id:user.id,file_name:file.name,file_path:path,file_url:url,file_size:file.size,file_type:file.type||null});
         if(db?.error) throw db.error;
@@ -2544,7 +2529,7 @@
       title: "Teachings",
 
       content: `
-        ${renderPageHero("Teachings", "Christian teachings, Bible lessons and written resources.")}
+        ${renderPageHero("Teachings", "Christian teachings, Bible lessons and written resources.", renderAction("Create Teaching","create-teaching")+renderAction("Upload Teaching","upload-teaching"))}
       `
     },
 
@@ -2556,7 +2541,7 @@
       title: "Sermons",
 
       content: `
-        ${renderPageHero("Sermons", "Listen to Christian sermons and messages.")}
+        ${renderPageHero("Sermons", "Listen to Christian sermons and messages.", renderAction("Upload Sermon","upload-sermon")+renderAction("Create Sermon","create-sermon"))}
       `
     },
 
@@ -2568,7 +2553,7 @@
       title: "Songs",
 
       content: `
-        ${renderPageHero("Songs", "Christian worship songs and music.")}
+        ${renderPageHero("Songs", "Christian worship songs and music.", renderAction("Open Music Player","open-music")+renderAction("Upload Song","upload-song")+renderAction("Create Song","create-song"))}
       `
     },
 
@@ -2580,7 +2565,7 @@
       title: "Lyrics",
 
       content: `
-        ${renderPageHero("Lyrics", "Read Christian song lyrics.")}
+        ${renderPageHero("Lyrics", "Read Christian song lyrics.", renderAction("Create Lyrics","create-lyric"))}
       `
     },
 
@@ -2592,7 +2577,7 @@
       title: "Videos",
 
       content: `
-        ${renderPageHero("Videos", "Watch Christian videos, teachings and sermons.")}
+        ${renderPageHero("Videos", "Watch Christian videos, teachings and sermons.", renderAction("Upload Video","upload-video"))}
       `
     },
 
@@ -2689,7 +2674,7 @@
       title: "Courses",
 
       content: `
-        ${renderPageHero("Courses", "Learn through structured Christian courses.")}
+        ${renderPageHero("Courses", "Learn through structured Christian courses.", renderAction("Create Course","create-course")+renderAction("Upload Course","upload-course"))}
       `
     },
 
@@ -2972,23 +2957,12 @@
         renderCard("✏️", "Editable", "Your own items can be edited or deleted.") +
         renderCard("📁", "Content Types", String(Object.keys(counts).length) + " types in your library.") +
         '</section>';
-      const creatorTools = '<section class="creator-tools"><div><span class="home-section-kicker">CREATOR TOOLS</span><h2>Create or upload</h2><p>Choose a content type. Upload supports up to 12 files at once.</p></div><div class="creator-tools-grid">' +
-        '<button type="button" class="btn primary" data-page-action="create-teaching">✍️ Create Teaching</button>' +
-        '<button type="button" class="btn primary" data-page-action="create-sermon">🎙️ Create Sermon</button>' +
-        '<button type="button" class="btn primary" data-page-action="create-song">🎵 Create Song</button>' +
-        '<button type="button" class="btn primary" data-page-action="create-course">🎓 Create Course</button>' +
-        '<button type="button" class="btn" data-page-action="upload-teaching">⬆️ Upload Teaching</button>' +
-        '<button type="button" class="btn" data-page-action="upload-sermon">⬆️ Upload Sermon</button>' +
-        '<button type="button" class="btn" data-page-action="upload-song">⬆️ Upload Song</button>' +
-        '<button type="button" class="btn" data-page-action="upload-video">⬆️ Upload Video</button>' +
-        '<button type="button" class="btn" data-page-action="upload-document">⬆️ Upload Document</button>' +
-        '</div></section>';
       const cards = items.map(function(item) {
         const actions = (item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : '') +
           contentActionButtons("media_upload", item.id, item.user_id);
         return renderCard("📝", item.title || item.file_name || "Untitled", item.description || "", actions);
       }).join("");
-      container.insertAdjacentHTML("beforeend", summary + creatorTools + '<section class="content-grid">
+      container.insertAdjacentHTML("beforeend", summary + '<section class="content-grid">' +
         (cards || renderCard("📂", "No Content Yet", "Create or upload your first Christian resource.")) + '</section>');
     } catch (error) { console.error("Creator dashboard failed:", error); }
   }
