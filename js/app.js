@@ -2816,27 +2816,7 @@
           )
         )}
 
-        <section class="content-grid">
-
-          ${renderCard(
-            "📖",
-            "Bible Teaching",
-            "Learn biblical principles and Christian doctrine."
-          )}
-
-          ${renderCard(
-            "✍️",
-            "Written Teachings",
-            "Read Christian articles and study materials."
-          )}
-
-          ${renderCard(
-            "🎓",
-            "Learning",
-            "Continue your Christian learning journey."
-          )}
-
-        </section>
+>
       `
     },
 
