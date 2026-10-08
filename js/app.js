@@ -1881,39 +1881,126 @@
      ========================================================= */
 
   async function handleUploadSubmit(form) {
-    const data=new FormData(form), title=String(data.get("title")||"").trim(), description=String(data.get("description")||"").trim();
-    const files=data.getAll("file").filter(f=>f&&f.name), type=form.dataset.uploadForm||"document";
-    const status=form.querySelector(".upload-status"), button=form.querySelector("[data-upload-submit]");
-    const progress=p=>{const n=Math.max(0,Math.min(100,Math.round(p))); if(status){status.hidden=false;status.textContent=n+"%";} if(button) button.textContent=n+"%";};
-    const auth=window.ApostolicAuth, user=auth?.getUser?.();
-    if(!auth?.isLoggedIn?.()||!user){toast("Please sign in before uploading content.","error");return;}
-    if(!files.length){toast("Please select at least one file.","error");return;}
-    if(files.length>12){toast("You can upload a maximum of 12 files at once.","error");return;}
-    const api=window.ApostolicSupabase, config=window.ApostolicConfig||window.APP_CONFIG||{}, bucket=(config.UPLOADS&&config.UPLOADS.BUCKET)||"Apostolic_Media";
-    if(!api?.isConfigured?.()){toast("Supabase is not configured.","error");return;}
-    if(button) button.disabled=true; progress(0);
-    let done=0,failed=0;
-    for(const file of files){
-      try{
-        const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_").replace(/_+/g,"_");
-        const path=type+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"-"+safe;
-        const up=await api.uploadFile(bucket,path,file,{upsert:false});
-        if(up?.error) throw up.error;
-        const url=api.getPublicUrl(bucket,path); if(!url) throw new Error("Could not create the file URL.");
-        const base=title||file.name.replace(/\.[^.]+$/,"");
-        const itemTitle=files.length>1?base+" "+(done+failed+1):base;
-        const db=await api.insert("media_uploads",{title:itemTitle,description,type,user_id:user.id,file_name:file.name,file_path:path,file_url:url,file_size:file.size,file_type:file.type||null});
-        if(db?.error) throw db.error;
-        done++;
-      }catch(e){failed++;console.error("Upload item failed:",e);}
-      progress(((done+failed)/files.length)*100);
+    const data = new FormData(form);
+    const title = String(data.get("title") || "").trim();
+    const description = String(data.get("description") || "").trim();
+    const files = data.getAll("file").filter(f => f && f.name);
+    const type = form.dataset.uploadForm || "document";
+    const status = form.querySelector(".upload-status");
+    const button = form.querySelector("[data-upload-submit]");
+    const auth = window.ApostolicAuth;
+    const user = auth?.getUser?.();
+
+    if (!auth?.isLoggedIn?.() || !user) {
+      toast("Please sign in before uploading content.", "error");
+      return;
     }
-    progress(100);
-    if(!done){toast("Upload failed.","error");if(button){button.disabled=false;button.textContent="Upload";}return;}
+    if (!files.length) {
+      toast("Please select at least one file.", "error");
+      return;
+    }
+    if (files.length > 12) {
+      toast("You can upload a maximum of 12 files at once.", "error");
+      return;
+    }
+
+    const api = window.ApostolicSupabase;
+    const config = window.ApostolicConfig || window.APP_CONFIG || {};
+    const bucket = (config.UPLOADS && config.UPLOADS.BUCKET) || "Apostolic_Media";
+    if (!api?.isConfigured?.()) {
+      toast("Supabase is not configured.", "error");
+      return;
+    }
+
+    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    const progressMap = new Array(files.length).fill(0);
+    const progress = () => {
+      const uploadedBytes = progressMap.reduce((sum, value) => sum + value, 0);
+      const percent = totalBytes ? Math.max(0, Math.min(100, Math.round(uploadedBytes / totalBytes * 100))) : 0;
+      if (status) {
+        status.hidden = false;
+        status.textContent = percent + "%";
+      }
+      if (button) button.textContent = percent + "%";
+    };
+
+    if (button) button.disabled = true;
+    progress();
+
+    let done = 0;
+    let failed = 0;
+    let nextIndex = 0;
+
+    const uploadOne = async (file, index) => {
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_");
+      const path = type + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "-" + safe;
+      const onProgress = (loaded, total) => {
+        progressMap[index] = Math.min(total, loaded);
+        progress();
+      };
+
+      const up = file.size > 6 * 1024 * 1024 && typeof api.uploadFileResumable === "function"
+        ? await api.uploadFileResumable(bucket, path, file, { upsert: false, contentType: file.type || "application/octet-stream" }, onProgress)
+        : await api.uploadFile(bucket, path, file, { upsert: false, contentType: file.type || "application/octet-stream" });
+
+      if (up?.error) throw up.error;
+      progressMap[index] = file.size;
+      progress();
+
+      const url = api.getPublicUrl(bucket, path);
+      if (!url) throw new Error("Could not create the file URL.");
+
+      const base = title || file.name.replace(/.[^.]+$/, "");
+      const itemTitle = files.length > 1 ? base + " " + (index + 1) : base;
+      const db = await api.insert("media_uploads", {
+        title: itemTitle,
+        description,
+        type,
+        user_id: user.id,
+        file_name: file.name,
+        file_path: path,
+        file_url: url,
+        file_size: file.size,
+        file_type: file.type || null
+      });
+      if (db?.error) throw db.error;
+      done++;
+    };
+
+    const worker = async () => {
+      while (true) {
+        const index = nextIndex++;
+        if (index >= files.length) return;
+        try {
+          await uploadOne(files[index], index);
+        } catch (error) {
+          failed++;
+          console.error("Upload item failed:", error);
+        }
+      }
+    };
+
+    // Two simultaneous uploads improve batch speed without overwhelming mobile connections.
+    await Promise.all([worker(), worker()]);
+
+    progress();
+    if (!done) {
+      toast("Upload failed.", "error");
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Upload";
+      }
+      return;
+    }
+
     closeDynamicModal(form.closest(".apostolic-modal"));
-    toast(done+" file"+(done===1?"":"s")+" uploaded successfully"+(failed?". "+failed+" failed.":"."),failed?"info":"success");
+    toast(
+      done + " file" + (done === 1 ? "" : "s") + " uploaded successfully" + (failed ? ". " + failed + " failed." : "."),
+      failed ? "info" : "success"
+    );
     refreshCurrentMediaPage();
   }
+
 
   /* =========================================================
      CREATE
