@@ -177,14 +177,27 @@
 
     let query = supabase
       .from(table)
-      .select(columns);
+      .select(
+        columns,
+        options.count ? { count: options.count } : undefined
+      );
 
     if (options.eq) {
       Object.keys(options.eq).forEach((key) => {
-        query = query.eq(
-          key,
-          options.eq[key]
-        );
+        query = query.eq(key, options.eq[key]);
+      });
+    }
+
+    if (options.in) {
+      Object.keys(options.in).forEach((key) => {
+        const values = Array.isArray(options.in[key]) ? options.in[key] : [];
+        if (values.length) query = query.in(key, values);
+      });
+    }
+
+    if (options.neq) {
+      Object.keys(options.neq).forEach((key) => {
+        query = query.neq(key, options.neq[key]);
       });
     }
 
