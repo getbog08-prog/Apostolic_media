@@ -685,7 +685,7 @@
   }
 
   async function loadCommunityPosts() {
-    const route = (window.location.hash || "").substring(1);
+    const route = (window.location.hash || "").substring(1).split("?")[0];
     if (route !== "community") return;
     const container = $(".page-container");
     if (!container) return;
@@ -705,6 +705,7 @@
         order: { column: "created_at", ascending: false },
         limit: 50
       });
+      if (!isCurrentRoute("community")) return;
       const posts = result && Array.isArray(result.data) ? result.data : [];
       section.innerHTML = posts.length
         ? posts.map(function (post) {
@@ -1760,7 +1761,13 @@
     switch (action) {
 
       case "read-bible": openBibleReader(); break;
-      case "open-music": toast("Choose a song below to start the player.","info"); break;
+      case "open-music":
+        if (window.__apostolicSongs && window.__apostolicSongs.length) {
+          openMusicPlayer(window.__apostolicSongs[0]);
+        } else {
+          toast("No playable songs are available yet. Upload a song first.","info");
+        }
+        break;
       case "shorts": openShortsFeed(window.__apostolicShorts || []); break;
       case "create-post":
         requireCreatorAuth(function () {
@@ -2572,6 +2579,11 @@
     `;
   }
 
+  function isCurrentRoute(route) {
+    const current = (window.location.hash || "#home").replace(/^#/, "").split("?")[0];
+    return current === String(route || "home").replace(/^#/, "").split("?")[0];
+  }
+
   /* =========================================================
      SOCIAL / USER FEATURES
      ========================================================= */
@@ -2637,6 +2649,7 @@
     if (!container || !user || !api || !api.isConfigured()) return;
     try {
       const saved = await api.select("saved_content", "*", { eq: { user_id: user.id }, order: { column: "created_at", ascending: false }, limit: 100 });
+      if (!isCurrentRoute("saved")) return;
       const cards = [];
       for (const row of (saved?.data || [])) {
         const table = row.content_type === "community_post" ? "community_posts" : "media_uploads";
@@ -2653,6 +2666,7 @@
     if (!container || !user || !api || !api.isConfigured()) return;
     try {
       const result = await api.select("notifications", "*", { eq: { user_id: user.id }, order: { column: "created_at", ascending: false }, limit: 100 });
+      if (!isCurrentRoute("notifications")) return;
       const html = (result?.data || []).map(function(n) {
         const readButton = n.is_read ? "" : '<button type="button" class="btn" data-content-action="read-notification" data-content-id="' + escapeHTML(n.id) + '">Mark as read</button>';
         const open = n.link ? '<a class="btn" href="' + escapeHTML(n.link) + '">Open</a>' : "";
@@ -2667,6 +2681,7 @@
     if (!container || !user || !api || !api.isConfigured()) return;
     try {
       const result = await api.select("profiles", "*", { eq: { id: user.id } });
+      if (!isCurrentRoute("profile")) return;
       const profile = result?.data?.[0] || {};
       const avatar = profile.avatar_url
         ? '<img src="' + escapeHTML(profile.avatar_url) + '" alt="Profile photo" style="width:120px;height:120px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 1rem">'
@@ -2696,6 +2711,7 @@
     if (!container || !api || !api.isConfigured()) return;
     try {
       const result = await api.select("questions", "*", { order: { column: "created_at", ascending: false }, limit: 50 });
+      if (!isCurrentRoute("qa")) return;
       const html = (result?.data || []).map(function(q) {
         return renderCard("❓", q.title, q.content, '<button type="button" class="btn" data-content-action="answer" data-content-id="' + escapeHTML(q.id) + '"><b>Answer</b></button><button type="button" class="btn" data-content-action="question-answers" data-content-id="' + escapeHTML(q.id) + '">View Answers</button>');
       }).join("");
@@ -3663,6 +3679,7 @@
     if(!container || !api || !api.isConfigured()) return;
     try {
       const result=await api.select("folders","*",{order:{column:"created_at",ascending:false},limit:100});
+      if (!isCurrentRoute("events")) return;
       const rows=result?.data||[];
       const cards=rows.map(function(row){
         return renderCard("📁",row.name||"Folder",row.description||"Christian resource folder.",
@@ -3678,6 +3695,7 @@
     if(!container || !api || !api.isConfigured() || !user) return;
     try {
       const result=await api.select("playlists","*",{eq:{user_id:user.id},order:{column:"created_at",ascending:false},limit:100});
+      if (!isCurrentRoute("playlists")) return;
       const rows=result?.data||[], cards=[];
       const songsResult=await api.select("media_uploads","*",{eq:{type:"song"},order:{column:"created_at",ascending:false},limit:200});
       const songMap=Object.fromEntries((songsResult?.data||[]).map(s=>[s.id,s]));
@@ -3724,6 +3742,7 @@
     if(!container || !user || !api || !api.isConfigured()) return;
     try {
       const profileResult=await api.select("profiles","*",{eq:{id:user.id}});
+      if (!isCurrentRoute("admin")) return;
       const profile=profileResult?.data?.[0]||{};
       if(!["admin","super_admin"].includes(profile.role||"user")){
         container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+renderCard("🔒","Admin Access","Administrator permission is required.")+'</section>');
@@ -3756,6 +3775,7 @@
         order: { column: "created_at", ascending: false },
         limit: 200
       });
+      if (!isCurrentRoute("creator")) return;
       const items = result?.data || [];
       const counts = {};
       items.forEach(function(item){ counts[item.type] = (counts[item.type] || 0) + 1; });
@@ -3782,6 +3802,7 @@
         eq: { user_id: user.id },
         order: { column: "created_at", ascending: false }, limit: 100
       });
+      if (!isCurrentRoute("downloads")) return;
       const rows = result?.data || [];
       const cards = rows.map(function(row) {
         return renderCard("⇩", row.content_type || "Download", "Downloaded content: " + String(row.content_id || ""));
@@ -3826,6 +3847,7 @@
             limit: 100
           }
         );
+        if (!isCurrentRoute(route)) return;
         uploaded = result && Array.isArray(result.data)
           ? result.data.filter(function (item) {
               return item && types.includes(item.type);
