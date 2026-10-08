@@ -1145,7 +1145,8 @@
       return;
     }
     if (action === "comments") {
-      await showComments(type, id, element.dataset.contentTitle || "Content");
+      if (type !== "community_post") { toast("Comments are available for community posts.", "error"); return; }
+      await showComments(type, id, element.dataset.contentTitle || "Community Post");
       return;
     }
     if (action === "manage-playlist") {
