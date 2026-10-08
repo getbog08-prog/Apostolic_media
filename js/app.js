@@ -1545,6 +1545,14 @@
         !message;
     }
 
+    const auth = window.ApostolicAuth;
+    const currentAuthUser = auth && auth.getUser ? auth.getUser() : null;
+    if (!auth || !auth.isLoggedIn() || !currentAuthUser) {
+      setUploadStatus("Please sign in before uploading content.", "error");
+      toast("Please sign in before uploading content.", "error");
+      return;
+    }
+
     if (!title) {
       setUploadStatus(
         "Please enter a title.",
@@ -1688,7 +1696,7 @@
             title,
             description,
             type,
-            user_id: window.ApostolicAuth?.getUser?.()?.id || null,
+            user_id: currentAuthUser.id,
             file_name: file.name,
             file_path: path,
             file_url: fileUrl,
