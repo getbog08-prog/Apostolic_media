@@ -2952,7 +2952,7 @@
       `
     },
 
-    bible-study: {
+    "bible-study": {
       title: "Bible Study",
       content: `
         ${renderPageHero("Bible Study", "Study the Word through Bible lessons and resources.")}
