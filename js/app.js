@@ -2996,8 +2996,7 @@
       actions=renderEngagementActions("community_post",item.id,"",item.type);
     }else{
       const special=item.type==="song"&&item.file_url?'<button type="button" class="btn primary" data-media-play="'+escapeHTML(item.id)+'">▶ Play</button>':item.type==="video"&&item.file_url?'<button type="button" class="btn primary" data-media-short="'+escapeHTML(item.id)+'">▶ Watch</button>':"";
-      const open=item.file_url?'<button type="button" class="btn" data-open-media="'+escapeHTML(item.id)+'">Open in app</button>':"";
-      actions=special+open+renderEngagementActions("media_upload",item.id,item.file_url||"",item.type)+contentActionButtons("media_upload",item.id,item.user_id||null);
+      actions=special+renderEngagementActions("media_upload",item.id,item.file_url||"",item.type)+contentActionButtons("media_upload",item.id,item.user_id||null);
     }
     return '<article class="social-feed-item"><header class="feed-author">'+avatar+'<div><strong>'+escapeHTML(name)+'</strong><span>'+(item.created_at?new Date(item.created_at).toLocaleDateString():"Apostolic Media")+'</span></div></header><div class="feed-body" data-open-media="'+escapeHTML(item.id)+'" role="button" tabindex="0" aria-label="Open content in app"><div class="feed-type">'+escapeHTML(options.label||item.type||"Christian Content")+'</div><h3>'+escapeHTML(title)+'</h3>'+(description?'<p class="feed-post-text">'+escapeHTML(description)+'</p>':"")+media+'</div><div class="feed-actions">'+actions+'</div></article>';
   }
