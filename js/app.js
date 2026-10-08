@@ -1950,7 +1950,7 @@
       const url = api.getPublicUrl(bucket, path);
       if (!url) throw new Error("Could not create the file URL.");
 
-      const base = title || file.name.replace(/.[^.]+$/, "");
+      const base = title || file.name.replace(/\.[^.]+$/, "");
       const itemTitle = files.length > 1 ? base + " " + (index + 1) : base;
       const db = await api.insert("media_uploads", {
         title: itemTitle,
@@ -1980,8 +1980,10 @@
       }
     };
 
-    // Two simultaneous uploads improve batch speed without overwhelming mobile connections.
-    await Promise.all([worker(), worker()]);
+    // Three workers keep a multi-file upload moving without creating too much
+    // contention on mobile connections. A single large file still uses resumable chunks.
+    const workerCount = Math.min(3, files.length);
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
 
     progress();
     if (!done) {
