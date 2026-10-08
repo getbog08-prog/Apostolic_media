@@ -988,13 +988,38 @@
           event.preventDefault();
           if (!requireLogin()) return;
           const data = new FormData(profileEdit);
+          const user = currentUser();
+          const api = window.ApostolicSupabase;
           try {
-            const result = await window.ApostolicSupabase.update("profiles", {
-              full_name: String(data.get("full_name") || "").trim()
-            }, { id: currentUser().id });
+            const fullName = String(data.get("full_name") || "").trim();
+            const avatarFile = data.get("avatar");
+            const updateData = { full_name: fullName };
+
+            if (avatarFile && avatarFile.size) {
+              if (!String(avatarFile.type || "").startsWith("image/")) throw new Error("Please choose an image file.");
+              if (avatarFile.size > 5 * 1024 * 1024) throw new Error("Profile photo must be 5 MB or smaller.");
+              const extensionMap = {"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"};
+              const extension = extensionMap[avatarFile.type];
+              if (!extension) throw new Error("Use JPG, PNG, WebP, or GIF for the profile photo.");
+
+              const path = user.id + "/profile-avatar." + extension;
+              const upload = await api.uploadFile("Apostolic_Media", path, avatarFile, {upsert:true, contentType:avatarFile.type});
+              if (upload?.error) throw upload.error;
+
+              const avatarUrl = api.getPublicUrl("Apostolic_Media", path);
+              if (!avatarUrl) throw new Error("Could not create the profile photo URL.");
+              updateData.avatar_url = avatarUrl + "?v=" + Date.now();
+            }
+
+            const result = await api.update("profiles", updateData, {id:user.id});
             if (result?.error) throw result.error;
-            toast("Profile updated successfully.", "success"); renderPage("profile");
-          } catch (error) { toast(error?.message || "Could not update profile.", "error"); }
+            toast("Profile updated successfully.", "success");
+            if (window.ApostolicAuth?.syncProfile) await window.ApostolicAuth.syncProfile();
+            renderPage("profile");
+          } catch (error) {
+            console.error("Profile update failed:", error);
+            toast(error?.message || "Could not update profile.", "error");
+          }
           return;
         }
 
@@ -2219,7 +2244,26 @@
     try {
       const result = await api.select("profiles", "*", { eq: { id: user.id } });
       const profile = result?.data?.[0] || {};
-      container.insertAdjacentHTML("beforeend", '<section class="content-grid"><article class="card"><h3>Profile</h3><p>' + escapeHTML(profile.full_name || user.email || "User") + '</p><p>' + escapeHTML(user.email || "") + '</p><p>Role: ' + escapeHTML(profile.role || "user") + '</p><button type="button" class="btn" data-page-action="sign-out">Sign Out</button></article><article class="card"><h3>Edit Profile</h3><form class="dynamic-form" data-profile-form><input name="full_name" value="' + escapeHTML(profile.full_name || "") + '" placeholder="Full name"><button type="submit" class="btn primary">Save Profile</button></form></article></section>');
+      const avatar = profile.avatar_url
+        ? '<img src="' + escapeHTML(profile.avatar_url) + '" alt="Profile photo" style="width:120px;height:120px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 1rem">'
+        : '<div style="width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:3rem;background:var(--surface-2,#eee)">👤</div>';
+      container.insertAdjacentHTML("beforeend",
+        '<section class="content-grid">' +
+          '<article class="card" style="text-align:center">' + avatar +
+            '<h3>' + escapeHTML(profile.full_name || user.email || "User") + '</h3>' +
+            '<p>' + escapeHTML(user.email || "") + '</p>' +
+            '<p>Role: ' + escapeHTML(profile.role || "user") + '</p>' +
+            '<button type="button" class="btn" data-page-action="sign-out">Sign Out</button>' +
+          '</article>' +
+          '<article class="card"><h3>Edit Profile</h3>' +
+            '<form class="dynamic-form" data-profile-form enctype="multipart/form-data">' +
+              '<div class="form-group"><label>Full name</label><input name="full_name" value="' + escapeHTML(profile.full_name || "") + '" placeholder="Full name"></div>' +
+              '<div class="form-group"><label>Profile photo</label><input name="avatar" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></div>' +
+              '<small>JPG, PNG, WebP or GIF. Maximum 5 MB.</small>' +
+              '<button type="submit" class="btn primary">Save Profile</button>' +
+            '</form>' +
+          '</article>' +
+        '</section>');
     } catch (error) { console.error("Profile failed:", error); }
   }
 
