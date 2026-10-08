@@ -324,6 +324,8 @@
 
     playlists: page("playlists"),
 
+    folders: page("folders"),
+
 
     /* =====================================================
        User pages
