@@ -303,6 +303,20 @@
     return storageClient.from(name);
   }
 
+  async function removeFile(
+    bucketName,
+    paths = []
+  ) {
+    const bucketClient = bucket(bucketName);
+    if (!bucketClient) {
+      return {
+        data: null,
+        error: new Error("Supabase Storage is not configured.")
+      };
+    }
+    return await bucketClient.remove(paths);
+  }
+
   async function uploadFile(
     bucketName,
     path,
@@ -432,6 +446,7 @@
     storage,
     bucket,
     uploadFile,
+    removeFile,
     getPublicUrl,
 
     // Realtime
