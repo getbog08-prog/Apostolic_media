@@ -414,3 +414,31 @@
 }
 
 .bible-offline-progress{height:4px;width:100%;overflow:hidden;border-radius:999px;background:var(--surface2)}.bible-offline-progress span{display:block;width:0;height:100%;border-radius:inherit;background:var(--primary);transition:width .2s ease}
+
+/* Social feed layout */
+.social-feed{width:min(760px,100%);margin:0 auto;display:grid;gap:14px}
+.social-feed-item{overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:0 8px 26px rgba(20,28,55,.06)}
+.feed-author{display:flex;align-items:center;gap:11px;padding:14px 15px;border-bottom:1px solid var(--line)}
+.feed-avatar{width:42px;height:42px;flex:0 0 42px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:var(--surface2);font-weight:800;font-size:15px}
+.feed-avatar-fallback{color:var(--primary)}
+.feed-author div{min-width:0;display:grid;gap:2px}
+.feed-author strong{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed-author span{font-size:10px;color:var(--muted)}
+.feed-body{padding:15px 15px 8px}
+.feed-type{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);margin-bottom:7px}
+.feed-body h3{margin:0 0 7px;font-size:18px;letter-spacing:-.02em}
+.feed-body p{margin:0;color:var(--muted);font-size:12px;line-height:1.65;white-space:pre-wrap}
+.feed-video{display:block;width:100%;max-height:520px;margin:13px 0 3px;border-radius:13px;background:#070a12;object-fit:contain}
+.feed-audio{display:block;width:100%;margin:14px 0 4px}
+.feed-actions{padding:5px 15px 13px}
+.feed-actions .card-actions{margin-top:0}
+.feed-loading{min-height:90px}
+@media(max-width:600px){
+ .social-feed{gap:10px}
+ .social-feed-item{border-radius:15px}
+ .feed-author{padding:12px}
+ .feed-body{padding:13px 12px 6px}
+ .feed-body h3{font-size:16px}
+ .feed-avatar{width:38px;height:38px;flex-basis:38px}
+ .feed-actions{padding:4px 12px 11px}
+}
