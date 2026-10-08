@@ -816,6 +816,14 @@
           return;
         }
 
+        const openMedia = event.target.closest("[data-open-media]");
+        if (openMedia) {
+          event.preventDefault();
+          const item = (window.__apostolicMediaById || {})[String(openMedia.dataset.openMedia)];
+          openMediaViewer(item);
+          return;
+        }
+
         const mediaPlay = event.target.closest("[data-media-play]");
         if (mediaPlay) {
           event.preventDefault();
@@ -1379,6 +1387,45 @@
     if (load) load.addEventListener("click", function(){ title.textContent = book.value + " " + chapter.value; storage.set("apostolic_bible_position",{book:book.value,chapter:chapter.value}); });
     const saved=storage.get("apostolic_bible_position",null);
     if(saved && book && chapter && title){ book.value=saved.book||book.value; chapter.value=String(saved.chapter||1); title.textContent=book.value+" "+chapter.value; }
+  }
+
+  function openMediaViewer(item) {
+    if (!item || !item.file_url) {
+      toast("This content has no attached file yet.", "error");
+      return;
+    }
+    let url = "";
+    try {
+      const parsed = new URL(item.file_url, window.location.href);
+      if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Unsupported URL");
+      url = parsed.href;
+    } catch (error) {
+      toast("This file link is not safe or valid.", "error");
+      return;
+    }
+
+    const name = String(item.file_name || item.title || "Content").toLowerCase();
+    const mime = String(item.file_type || "").toLowerCase();
+    const isImage = mime.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(name);
+    const isAudio = mime.startsWith("audio/") || /\.(mp3|m4a|wav|ogg|aac|flac)(\?|#|$)/i.test(name);
+    const isVideo = mime.startsWith("video/") || /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(name);
+    const isPdf = mime === "application/pdf" || /\.pdf(\?|#|$)/i.test(name);
+    let viewer = "";
+
+    if (isImage) {
+      viewer = '<div class="in-app-media-image-wrap"><img class="in-app-media-image" src="' + escapeHTML(url) + '" alt="' + escapeHTML(item.title || "Image") + '"></div>';
+    } else if (isAudio) {
+      viewer = '<audio class="in-app-media-audio" controls autoplay preload="metadata" src="' + escapeHTML(url) + '"></audio>';
+    } else if (isVideo) {
+      viewer = '<video class="in-app-media-video" controls playsinline preload="metadata" src="' + escapeHTML(url) + '"></video>';
+    } else if (isPdf) {
+      viewer = '<iframe class="in-app-media-pdf" title="' + escapeHTML(item.title || "PDF document") + '" src="' + escapeHTML(url) + '#toolbar=1&navpanes=0" loading="lazy"></iframe>';
+    } else {
+      viewer = '<div class="in-app-media-document"><div class="card-icon">📄</div><h3>' + escapeHTML(item.title || item.file_name || "Document") + '</h3><p>This file format may not preview in every browser. Try the in-app preview below, or save a copy to your device.</p><iframe class="in-app-media-pdf" title="' + escapeHTML(item.title || "Document preview") + '" src="' + escapeHTML(url) + '" loading="lazy"></iframe><a class="btn primary" href="' + escapeHTML(url) + '" download>Download file</a></div>';
+    }
+
+    createModal(item.title || item.file_name || "Read content",
+      '<div class="in-app-media-viewer"><p class="in-app-media-description">' + escapeHTML(item.description || "") + '</p>' + viewer + '</div>');
   }
 
   function openMusicPlayer(item) {
@@ -3515,7 +3562,7 @@
     uploaded.forEach(function (item) {
       const title = item.title || item.file_name || "Untitled";
       const description = item.description || (item.file_name ? "Uploaded media file." : "Saved media content.");
-      const openAction = item.file_url ? `<a class="btn" href="${escapeHTML(item.file_url)}" target="_blank" rel="noopener">Open File</a>` : "";
+      window.__apostolicMediaById = window.__apostolicMediaById || {};\n      window.__apostolicMediaById[String(item.id)] = item;\n      const openAction = item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : "";
       let specialAction = "";
       if (route === "songs" && item.file_url) specialAction = '<button type="button" class="btn primary" data-media-play="' + escapeHTML(item.id) + '">▶ Play</button>';
       if (route === "videos" && item.file_url) specialAction = '<button type="button" class="btn primary" data-media-short="' + escapeHTML(item.id) + '">▶ Watch</button>';
