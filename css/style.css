@@ -412,3 +412,5 @@
   .bible-reader-lines{font-size:17px;line-height:2.05}
   .bible-reader-lines div{padding:7px 0}
 }
+
+.bible-offline-progress{height:4px;width:100%;overflow:hidden;border-radius:999px;background:var(--surface2)}.bible-offline-progress span{display:block;width:0;height:100%;border-radius:inherit;background:var(--primary);transition:width .2s ease}
