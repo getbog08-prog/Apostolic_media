@@ -850,14 +850,43 @@
         if (folderForm) {
           event.preventDefault();
           if (!requireLogin()) return;
-          const data=new FormData(folderForm), api=window.ApostolicSupabase, user=currentUser();
+          const data=new FormData(folderForm), api=window.ApostolicSupabase, user=currentUser(), editId=folderForm.dataset.editId||"";
           try {
-            const result=await api.insert("folders",{name:String(data.get("name")||"").trim(),description:String(data.get("description")||"").trim(),created_by:user.id});
+            const payload={name:String(data.get("name")||"").trim(),description:String(data.get("description")||"").trim()};
+            const result=editId ? await api.update("folders",payload,{id:editId,created_by:user.id}) : await api.insert("folders",{...payload,created_by:user.id});
             if(result?.error) throw result.error;
-            closeDynamicModal(folderForm.closest(".apostolic-modal"));
-            toast("Folder created successfully.","success");
-            renderPage("folders");
-          } catch(e){toast(e?.message||"Could not create folder.","error");}
+            closeDynamicModal(folderForm.closest(".apostolic-modal")); toast(editId ? "Folder updated." : "Folder created.","success"); renderPage("folders");
+          } catch(e){toast(e?.message||"Could not save folder.","error");}
+          return;
+        }
+
+        const playlistForm = event.target.closest("[data-playlist-form]");
+        if (playlistForm) {
+          event.preventDefault();
+          if (!requireLogin()) return;
+          const data=new FormData(playlistForm), api=window.ApostolicSupabase, user=currentUser(), editId=playlistForm.dataset.editId||"";
+          try {
+            const payload={name:String(data.get("name")||"").trim(),description:String(data.get("description")||"").trim(),is_public:data.get("is_public")==="on"};
+            const result=editId ? await api.update("playlists",payload,{id:editId,user_id:user.id}) : await api.insert("playlists",{...payload,user_id:user.id});
+            if(result?.error) throw result.error;
+            closeDynamicModal(playlistForm.closest(".apostolic-modal")); toast(editId ? "Playlist updated." : "Playlist created.","success"); renderPage("playlists");
+          } catch(e){toast(e?.message||"Could not save playlist.","error");}
+          return;
+        }
+
+        const eventForm = event.target.closest("[data-event-form]");
+        if (eventForm) {
+          event.preventDefault();
+          if (!requireLogin()) return;
+          const data=new FormData(eventForm), api=window.ApostolicSupabase, user=currentUser(), editId=eventForm.dataset.editId||"";
+          try {
+            const starts=String(data.get("starts_at")||""); if(!starts) throw new Error("Please choose the event start time.");
+            const ends=String(data.get("ends_at")||"");
+            const payload={title:String(data.get("title")||"").trim(),description:String(data.get("description")||"").trim(),location:String(data.get("location")||"").trim(),event_url:String(data.get("event_url")||"").trim()||null,starts_at:new Date(starts).toISOString(),ends_at:ends?new Date(ends).toISOString():null};
+            const result=editId ? await api.update("events",payload,{id:editId,organizer_id:user.id}) : await api.insert("events",{...payload,organizer_id:user.id});
+            if(result?.error) throw result.error;
+            closeDynamicModal(eventForm.closest(".apostolic-modal")); toast(editId ? "Event updated." : "Event created.","success"); renderPage("events");
+          } catch(e){toast(e?.message||"Could not save event.","error");}
           return;
         }
 
@@ -1096,6 +1125,19 @@
       await showComments(type, id, element.dataset.contentTitle || "Content");
       return;
     }
+    if (action === "edit-playlist") {
+      try { const r=await window.ApostolicSupabase.select("playlists","*",{eq:{id:id,user_id:currentUser().id}}); const row=r?.data?.[0]; if(!row){toast("Playlist not found.","error");return;} showPlaylistForm(row); } catch(e){toast(e?.message||"Could not load playlist.","error");}
+      return;
+    }
+    if (action === "edit-event") {
+      try { const r=await window.ApostolicSupabase.select("events","*",{eq:{id:id,organizer_id:currentUser().id}}); const row=r?.data?.[0]; if(!row){toast("Event not found.","error");return;} showEventForm(row); } catch(e){toast(e?.message||"Could not load event.","error");}
+      return;
+    }
+    if (action === "delete-event") {
+      if(!requireLogin() || !window.confirm("Delete this event?")) return;
+      try { const r=await window.ApostolicSupabase.remove("events",{id:id,organizer_id:currentUser().id}); if(r?.error) throw r.error; toast("Event deleted.","success"); renderPage("events"); } catch(e){toast(e?.message||"Could not delete event.","error");}
+      return;
+    }
     if (action === "delete-playlist") {
       if (!requireLogin()) return;
       if (!window.confirm("Delete this playlist?")) return;
@@ -1319,23 +1361,11 @@
         break;
 
       case "create-event":
-        requireCreatorAuth(function () {
-        showCreateForm(
-          "Create Event",
-          "event"
-        );
-
-        });
+        requireCreatorAuth(function () { showEventForm(); });
         break;
 
       case "create-playlist":
-        requireCreatorAuth(function () {
-        showCreateForm(
-          "Create Playlist",
-          "playlist"
-        );
-
-        });
+        requireCreatorAuth(function () { showPlaylistForm(); });
         break;
 
       case "upload-teaching":
@@ -3111,12 +3141,38 @@
     creator: ["document", "teaching", "sermon", "song", "video", "lyric", "bible", "course"]
   };
 
-  function showFolderForm() {
-    return createModal("Create Folder",
-      '<form class="dynamic-form" data-folder-form>' +
-      '<div class="form-group"><label>Folder name</label><input name="name" required></div>' +
-      '<div class="form-group"><label>Description</label><textarea name="description" rows="4"></textarea></div>' +
-      '<button type="submit" class="btn primary">Create Folder</button></form>');
+  function showFolderForm(folder = null) {
+    const editing = !!folder;
+    return createModal(editing ? "Edit Folder" : "Create Folder",
+      '<form class="dynamic-form" data-folder-form' + (editing ? ' data-edit-id="' + escapeHTML(folder.id) + '"' : '') + '>' +
+      '<div class="form-group"><label>Folder name</label><input name="name" required value="' + escapeHTML(folder?.name || "") + '"></div>' +
+      '<div class="form-group"><label>Description</label><textarea name="description" rows="4">' + escapeHTML(folder?.description || "") + '</textarea></div>' +
+      '<button type="submit" class="btn primary">' + (editing ? "Save Changes" : "Create Folder") + '</button></form>');
+  }
+
+  function showPlaylistForm(playlist = null) {
+    const editing = !!playlist;
+    return createModal(editing ? "Edit Playlist" : "Create Playlist",
+      '<form class="dynamic-form" data-playlist-form' + (editing ? ' data-edit-id="' + escapeHTML(playlist.id) + '"' : '') + '>' +
+      '<div class="form-group"><label>Playlist name</label><input name="name" required value="' + escapeHTML(playlist?.name || "") + '"></div>' +
+      '<div class="form-group"><label>Description</label><textarea name="description" rows="4">' + escapeHTML(playlist?.description || "") + '</textarea></div>' +
+      '<label><input type="checkbox" name="is_public" ' + (playlist?.is_public ? 'checked' : '') + '> Public playlist</label>' +
+      '<button type="submit" class="btn primary">' + (editing ? "Save Changes" : "Create Playlist") + '</button></form>');
+  }
+
+  function showEventForm(item = null) {
+    const editing = !!item;
+    const start = item?.starts_at ? new Date(item.starts_at).toISOString().slice(0,16) : "";
+    const end = item?.ends_at ? new Date(item.ends_at).toISOString().slice(0,16) : "";
+    return createModal(editing ? "Edit Event" : "Create Event",
+      '<form class="dynamic-form" data-event-form' + (editing ? ' data-edit-id="' + escapeHTML(item.id) + '"' : '') + '>' +
+      '<div class="form-group"><label>Event title</label><input name="title" required value="' + escapeHTML(item?.title || "") + '"></div>' +
+      '<div class="form-group"><label>Description</label><textarea name="description" rows="4">' + escapeHTML(item?.description || "") + '</textarea></div>' +
+      '<div class="form-group"><label>Location</label><input name="location" value="' + escapeHTML(item?.location || "") + '"></div>' +
+      '<div class="form-group"><label>Event URL</label><input name="event_url" type="url" value="' + escapeHTML(item?.event_url || "") + '"></div>' +
+      '<div class="form-group"><label>Starts</label><input name="starts_at" type="datetime-local" required value="' + escapeHTML(start) + '"></div>' +
+      '<div class="form-group"><label>Ends</label><input name="ends_at" type="datetime-local" value="' + escapeHTML(end) + '"></div>' +
+      '<button type="submit" class="btn primary">' + (editing ? "Save Changes" : "Create Event") + '</button></form>');
   }
 
   async function loadFoldersPage() {
@@ -3141,12 +3197,26 @@
       const result=await api.select("playlists","*",{eq:{user_id:user.id},order:{column:"created_at",ascending:false},limit:100});
       const rows=result?.data||[];
       const cards=rows.map(function(row){
-        return renderCard("🎵",row.name||"Playlist",row.description||"Your Christian playlist.",
-          '<button type="button" class="btn" data-content-action="delete-playlist" data-content-id="'+escapeHTML(row.id)+'">Delete</button>');
+        const actions='<button type="button" class="btn" data-content-action="edit-playlist" data-content-id="'+escapeHTML(row.id)+'">Edit</button><button type="button" class="btn" data-content-action="delete-playlist" data-content-id="'+escapeHTML(row.id)+'">Delete</button>';
+        return renderCard("🎵",row.name||"Playlist",row.description||"Your Christian playlist.",actions);
       }).join("");
-      container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+
-        (cards||renderCard("🎵","No Playlists Yet","Create your first playlist."))+'</section>');
+      container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+(cards||renderCard("🎵","No Playlists Yet","Create your first playlist."))+'</section>');
     } catch(e){console.error("Playlists load failed:",e);}
+  }
+
+  async function loadEventsPage() {
+    const container=$(".page-container"), api=window.ApostolicSupabase, user=currentUser();
+    if(!container || !api || !api.isConfigured()) return;
+    try {
+      const result=await api.select("events","*",{order:{column:"starts_at",ascending:true},limit:100});
+      const rows=result?.data||[];
+      const cards=rows.map(function(row){
+        const own=user && row.organizer_id===user.id;
+        const actions=own?'<button type="button" class="btn" data-content-action="edit-event" data-content-id="'+escapeHTML(row.id)+'">Edit</button><button type="button" class="btn" data-content-action="delete-event" data-content-id="'+escapeHTML(row.id)+'">Delete</button>':"";
+        return renderCard("📅",row.title||"Event",(row.starts_at?new Date(row.starts_at).toLocaleString()+" — ":"")+(row.location||"")+(row.description?"<br>"+escapeHTML(row.description):""),actions);
+      }).join("");
+      container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+(cards||renderCard("📅","No Events Yet","Create your first Christian event."))+'</section>');
+    } catch(e){console.error("Events load failed:",e);}
   }
 
   async function loadAdminDashboard() {
@@ -3410,6 +3480,7 @@
     if (cleanRoute === "downloads") loadDownloadsPage();
     if (cleanRoute === "folders") loadFoldersPage();
     if (cleanRoute === "playlists") loadPlaylistsPage();
+    if (cleanRoute === "events") loadEventsPage();
     if (cleanRoute === "admin") loadAdminDashboard();
 
     /*
