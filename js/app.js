@@ -1447,39 +1447,63 @@
       page.dataset.readerTheme=settings.theme;
       $$("[data-bible-theme]",modal).forEach(function(btn){btn.classList.toggle("active",btn.dataset.bibleTheme===settings.theme);});
     }
-    const BIBLE_OFFLINE_CACHE="apostolic-bible-offline-v1";
+    const BIBLE_OFFLINE_CACHE="apostolic-bible-offline-v2";
+    function bibleBookSlug(name){
+      return String(name||"").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");
+    }
     function bibleSourceUrl(v,b,c){
-      return "https://bible-api-kappa.vercel.app/api/v1/verses/"+encodeURIComponent(v)+"/"+encodeURIComponent(b)+"/"+encodeURIComponent(c||1);
+      const index=books.findIndex(function(item){return item[1]===b;});
+      const number=String(index+1).padStart(2,"0");
+      const slug=bibleBookSlug(books[index]?.[0]||b);
+      if(v==="kjv"){
+        return "https://raw.githubusercontent.com/nolanbaxter/kjv-bible/main/"+slug+".json";
+      }
+      const folder=index<39?"old-testament":"new-testament";
+      return "https://raw.githubusercontent.com/biniama/ethiopic-bible-data/main/data/"+folder+"/"+number+"-"+slug+".json";
+    }
+    function chapterDataFromJson(v,json,c){
+      if(v==="kjv"){
+        const chapter=json&&json.chapters&&json.chapters[String(c)];
+        if(!chapter) return [];
+        return Object.keys(chapter).map(function(verseNum){
+          return {verseNum:verseNum,verse:String(chapter[verseNum]??"")};
+        });
+      }
+      const chapter=Array.isArray(json?.chapters)
+        ? json.chapters.find(function(item){return Number(item.chapter)===Number(c);})
+        : null;
+      return chapter&&Array.isArray(chapter.verses)
+        ? chapter.verses.map(function(item){
+            return {verseNum:item.verse??"",verse:String(item.text?.am??item.text?.en??"")};
+          }).filter(function(item){return item.verse!=="";})
+        : [];
     }
     async function downloadBibleOffline(){
       if(!offlineButton) return;
       offlineButton.disabled=true;
       let done=0;
-      const total=books.reduce(function(sum,item){ return sum+item[2]; },0)*2;
+      const total=books.length*2;
       try{
         const cache=await caches.open(BIBLE_OFFLINE_CACHE);
         for(const v of ["kjv","amhara"]){
           for(const item of books){
-            for(let chapterNo=1;chapterNo<=item[2];chapterNo++){
-              const url=bibleSourceUrl(v,item[1],chapterNo);
-              const existing=await cache.match(url);
-              if(!existing){
-                const response=await fetch(url,{headers:{"Accept":"application/json"},cache:"no-store"});
-                if(!response.ok) throw new Error("Download failed for "+item[1]+" "+chapterNo);
-                await cache.put(url,response.clone());
-              }
-              done++;
-              const percent=Math.min(100,Math.round((done/total)*100));
-              status.textContent="⬇️ "+percent+"%";
+            const url=bibleSourceUrl(v,item[1],1);
+            const existing=await cache.match(url);
+            if(!existing){
+              const response=await fetch(url,{headers:{"Accept":"application/json"},cache:"no-store"});
+              if(!response.ok) throw new Error("Download failed for "+item[0]);
+              await cache.put(url,response.clone());
             }
+            done++;
+            status.textContent=Math.min(100,Math.round((done/total)*100))+"%";
           }
         }
         storage.set("apostolic_bible_offline_ready",{ready:true,savedAt:Date.now()});
-        status.textContent="✓ 100% — መጽሐፍ ቅዱስ በoffline ለማንበብ ተዘጋጅቷል።";
+        status.textContent="100%";
         toast("ሙሉ መጽሐፍ ቅዱስ offline ተዘጋጅቷል።","success");
       }catch(error){
         console.error("Offline Bible download failed:",error);
-        status.textContent="Offline download stopped. Please reconnect and try again.";
+        status.textContent=Math.min(99,Math.round((done/total)*100))+"%";
         toast("የoffline ማውረድ አልተጠናቀቀም።","error");
       }finally{
         offlineButton.disabled=false;
@@ -1500,9 +1524,7 @@
       }
       if(!response.ok) throw new Error("Bible data unavailable");
       const json=await response.json();
-      const data=Array.isArray(json.data)
-        ? json.data.map(function(x){return {verseNum:x.verseNum??x.number??"",verse:x.verse??x.text??""};})
-        : (Array.isArray(json) ? json.map(function(x){return {verseNum:x.verseNum??x.number??"",verse:x.verse??x.text??""};}) : []);
+      const data=chapterDataFromJson(v,json,c);
       if(!data.length) throw new Error("No verses were returned");
       const result={data:data,savedAt:Date.now()};
       storage.set(key,result);
