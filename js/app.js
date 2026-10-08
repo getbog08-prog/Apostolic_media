@@ -1542,7 +1542,14 @@
         const file=amhFiles[books.findIndex(function(item){return item[1]===b;})]||amhFiles[0];
         url="https://raw.githubusercontent.com/magna25/amharic-bible-json/main/individual_books/"+encodeURIComponent(file);
       }
-      let response;\n      try {\n        response=await fetch(url,{headers:{"Accept":"application/json"}});\n      } catch(networkError) {\n        const offlineCache=await caches.open(BIBLE_OFFLINE_CACHE);\n        response=await offlineCache.match(url);\n        if(!response) throw networkError;\n      }
+      let response;
+      try {
+        response=await fetch(url,{headers:{"Accept":"application/json"}});
+      } catch(networkError) {
+        const offlineCache=await caches.open(BIBLE_OFFLINE_CACHE);
+        response=await offlineCache.match(url);
+        if(!response) throw networkError;
+      }
       if(!response.ok) throw new Error("Bible data unavailable");
       const json=await response.json();
       let data=[];
@@ -1587,7 +1594,8 @@
     book.value=savedBook[1]; updateChapters(state.chapter||1); applySettings();
     book.addEventListener("change",function(){updateChapters(1);});
     version.addEventListener("change",function(){status.textContent="Translation changed. Press Read.";});
-    load.addEventListener("click",loadChapter);\n    if(offlineButton) offlineButton.addEventListener("click",downloadBibleOffline);
+    load.addEventListener("click",loadChapter);
+    if(offlineButton) offlineButton.addEventListener("click",downloadBibleOffline);
     const fontDown=modal.querySelector("[data-bible-font-down]"), fontUp=modal.querySelector("[data-bible-font-up]");
     if(fontDown) fontDown.addEventListener("click",function(){settings.fontSize=Math.max(14,settings.fontSize-1);storage.set("apostolic_bible_settings",settings);applySettings();});
     if(fontUp) fontUp.addEventListener("click",function(){settings.fontSize=Math.min(26,settings.fontSize+1);storage.set("apostolic_bible_settings",settings);applySettings();});
