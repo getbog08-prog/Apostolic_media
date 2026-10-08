@@ -828,7 +828,15 @@
   function handlePageAction(
     action
   ) {
-    switch (action) {\n\n      case "sign-in":\n        showAuthForm("login");\n        break;\n\n      case "sign-up":\n        showAuthForm("signup");\n        break;
+    switch (action) {
+
+      case "sign-in":
+        showAuthForm("login");
+        break;
+
+      case "sign-up":
+        showAuthForm("signup");
+        break;
 
       case "create-teaching":
         requireCreatorAuth(function () {
