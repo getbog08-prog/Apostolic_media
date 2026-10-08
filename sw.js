@@ -4,7 +4,7 @@
    without serving stale JS/CSS/HTML.
    ========================================================= */
 
-const CACHE = "apostolic-media-v27";
+const CACHE = "apostolic-media-v28";
 
 const CORE = [
   "./",
@@ -43,7 +43,7 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key !== CACHE)
+             .filter((key) => key !== CACHE && key !== "apostolic-bible-offline-v1")
             .map((key) => caches.delete(key))
         )
       )
