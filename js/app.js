@@ -1588,7 +1588,7 @@
       viewer = '<iframe class="in-app-media-pdf" title="' + escapeHTML(item.title || "PDF document") + '" src="' + escapeHTML(url) + '#toolbar=1&navpanes=0" loading="lazy"></iframe>';
     } else {
       const safeName = String(item.file_name || item.title || "document").replace(/[^a-zA-Z0-9._-]/g, "_");
-      viewer = '<div class="in-app-media-document"><div class="card-icon">📄</div><h3>' + escapeHTML(item.title || item.file_name || "Document") + '</h3><p>This document format is best opened with a reader on your device.</p><div class="document-file-meta">📎 ' + escapeHTML(item.file_name || safeName) + '</div><a class="btn primary document-download-btn" href="' + escapeHTML(url) + '" download="' + escapeHTML(safeName) + '">⬇️ Download &amp; Open with device</a><p class="document-open-note">After downloading, choose the reader app you want from your device's “Open with” options.</p></div>';
+      viewer = '<div class="in-app-media-document"><div class="card-icon">📄</div><h3>' + escapeHTML(item.title || item.file_name || "Document") + '</h3><p>This document format is best opened with a reader on your device.</p><div class="document-file-meta">📎 ' + escapeHTML(item.file_name || safeName) + '</div><a class="btn primary document-download-btn" href="' + escapeHTML(url) + '" download="' + escapeHTML(safeName) + '">⬇️ Download &amp; Open with device</a><p class="document-open-note">After downloading, choose a reader app from your device “Open with” options.</p></div>';
     }
 
     createModal(item.title || item.file_name || "Read content",
