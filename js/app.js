@@ -749,7 +749,37 @@
 
     document.addEventListener(
       "submit",
-      function (event) {
+      async function (event) {
+        const authForm = event.target.closest("[data-auth-form]");
+
+        if (authForm) {
+          event.preventDefault();
+          const auth = window.ApostolicAuth;
+          if (!auth) {
+            toast("Authentication is not available.", "error");
+            return;
+          }
+          const formData = new FormData(authForm);
+          const email = String(formData.get("email") || "").trim();
+          const password = String(formData.get("password") || "");
+          const name = String(formData.get("name") || "").trim();
+          try {
+            if (authForm.dataset.authForm === "signup") {
+              await auth.signUp(email, password, { full_name: name, role: "user" });
+              toast("Account created successfully.", "success");
+            } else {
+              await auth.signIn(email, password);
+              toast("Signed in successfully.", "success");
+            }
+            closeDynamicModal(authForm.closest(".apostolic-modal"));
+            renderPage(window.location.hash.substring(1) || "home");
+          } catch (error) {
+            console.error("Authentication failed:", error);
+            toast(error && error.message ? error.message : "Authentication failed.", "error");
+          }
+          return;
+        }
+
         const uploadForm =
           event.target.closest(
             "[data-upload-form]"
@@ -2202,7 +2232,8 @@
           ${renderCard(
             "👤",
             "My Profile",
-            "View and manage your profile information."
+            "View and manage your profile information.",
+            `<button class="btn" type="button" data-page-action="sign-in">Sign In / Create Account</button>`
           )}
 
           ${renderCard(
