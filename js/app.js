@@ -571,45 +571,17 @@
     title,
     type
   ) {
-    const modal = createModal(
-      title,
-      `
-        <form class="dynamic-form" data-upload-form="${escapeHTML(type)}">
-          <div class="form-group">
-            <label for="uploadTitle">Title (optional for batch)</label>
-            <input id="uploadTitle" name="title" type="text" placeholder="Enter a title">
-          </div>
-          <div class="form-group">
-            <label for="uploadFile">Select files (up to 12)</label>
-            <input id="uploadFile" name="file" type="file" multiple required>
-            <small>You can select up to 12 files at once.</small>
-          </div>
-          <div class="form-group">
-            <label for="uploadDescription">Description</label>
-            <textarea id="uploadDescription" name="description" rows="4" placeholder="Write a description..."></textarea>
-          </div>
-          <div class="upload-status" hidden role="status" aria-live="polite"></div>
-          <button type="button" class="btn primary" data-upload-submit>Upload</button>
-        </form>
-      `
-    );
-    const uploadButton = modal.querySelector("[data-upload-submit]");
-    const uploadForm = modal.querySelector("[data-upload-form]");
-    const fileInput = modal.querySelector("#uploadFile");
-    if (fileInput) {
-      fileInput.addEventListener("change", function () {
-        if (fileInput.files.length > 12) {
-          fileInput.value = "";
-          toast("You can select a maximum of 12 files at once.", "error");
-        }
-      });
-    }
-    if (uploadButton && uploadForm) {
-      uploadButton.addEventListener("click", function (event) {
-        event.preventDefault();
-        handleUploadSubmit(uploadForm);
-      });
-    }
+    const modal = createModal(title, `
+      <form class="dynamic-form" data-upload-form="${escapeHTML(type)}">
+        <div class="form-group"><label>Title (optional for batch)</label><input name="title" type="text" placeholder="Enter a title"></div>
+        <div class="form-group"><label>Select files (up to 12)</label><input id="uploadFile" name="file" type="file" multiple required><small>You can select up to 12 files at once.</small></div>
+        <div class="form-group"><label>Description</label><textarea name="description" rows="4" placeholder="Write a description..."></textarea></div>
+        <div class="upload-status" hidden role="status" aria-live="polite"></div>
+        <button type="button" class="btn primary" data-upload-submit>Upload</button>
+      </form>`);
+    const button=modal.querySelector("[data-upload-submit]"), form=modal.querySelector("[data-upload-form]"), input=modal.querySelector("#uploadFile");
+    if(input) input.addEventListener("change",()=>{ if(input.files.length>12){input.value="";toast("You can select a maximum of 12 files at once.","error");} });
+    if(button&&form) button.addEventListener("click",e=>{e.preventDefault();handleUploadSubmit(form);});
     return modal;
   }
 
