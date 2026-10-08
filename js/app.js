@@ -990,9 +990,7 @@
           const data = new FormData(profileEdit);
           try {
             const result = await window.ApostolicSupabase.update("profiles", {
-              full_name: String(data.get("full_name") || "").trim(),
-              username: String(data.get("username") || "").trim() || null,
-              bio: String(data.get("bio") || "").trim()
+              full_name: String(data.get("full_name") || "").trim()
             }, { id: currentUser().id });
             if (result?.error) throw result.error;
             toast("Profile updated successfully.", "success"); renderPage("profile");
@@ -2221,7 +2219,7 @@
     try {
       const result = await api.select("profiles", "*", { eq: { id: user.id } });
       const profile = result?.data?.[0] || {};
-      container.insertAdjacentHTML("beforeend", '<section class="content-grid"><article class="card"><h3>Profile</h3><p>' + escapeHTML(profile.full_name || user.email || "User") + '</p><p>' + escapeHTML(user.email || "") + '</p><p>Role: ' + escapeHTML(profile.role || "user") + '</p><button type="button" class="btn" data-page-action="sign-out">Sign Out</button></article><article class="card"><h3>Edit Profile</h3><form class="dynamic-form" data-profile-form><input name="full_name" value="' + escapeHTML(profile.full_name || "") + '" placeholder="Full name"><input name="username" value="' + escapeHTML(profile.username || "") + '" placeholder="Username"><textarea name="bio" rows="4" placeholder="Bio">' + escapeHTML(profile.bio || "") + '</textarea><button type="submit" class="btn primary">Save Profile</button></form></article></section>');
+      container.insertAdjacentHTML("beforeend", '<section class="content-grid"><article class="card"><h3>Profile</h3><p>' + escapeHTML(profile.full_name || user.email || "User") + '</p><p>' + escapeHTML(user.email || "") + '</p><p>Role: ' + escapeHTML(profile.role || "user") + '</p><button type="button" class="btn" data-page-action="sign-out">Sign Out</button></article><article class="card"><h3>Edit Profile</h3><form class="dynamic-form" data-profile-form><input name="full_name" value="' + escapeHTML(profile.full_name || "") + '" placeholder="Full name"><button type="submit" class="btn primary">Save Profile</button></form></article></section>');
     } catch (error) { console.error("Profile failed:", error); }
   }
 
