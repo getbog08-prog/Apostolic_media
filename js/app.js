@@ -2324,17 +2324,12 @@
   }
 
   function renderEngagementActions(contentType, contentId, fileUrl = "", contentKind = "") {
-    const id = escapeHTML(contentId), type = escapeHTML(contentType);
-    const isSong = contentKind === "song";
-    const comment = !isSong
-      ? '<button type="button" class="btn" data-content-action="comments" data-content-type="' + type + '" data-content-id="' + id + '" data-content-title="Content">💬 Comment</button>'
-      : "";
-    const love = !isSong
-      ? '<button type="button" class="btn" data-content-action="love" data-content-type="' + type + '" data-content-id="' + id + '">❤️ Love</button>'
-      : "";
-    const share = '<button type="button" class="btn" data-content-action="share" data-content-type="' + type + '" data-content-id="' + id + '">↗ Share</button>';
-    const like = '<button type="button" class="btn" data-content-action="like" data-content-type="' + type + '" data-content-id="' + id + '">👍 Like</button>';
-    return '<div class="card-actions feed-reactions">' + comment + like + love + share + '</div>';
+    const id=escapeHTML(contentId), type=escapeHTML(contentType), song=contentKind==="song";
+    const comment=song?"":'<button type="button" class="btn" data-content-action="comments" data-content-type="'+type+'" data-content-id="'+id+'" data-content-title="Content">💬 Comment</button>';
+    const love=song?"":'<button type="button" class="btn" data-content-action="love" data-content-type="'+type+'" data-content-id="'+id+'">❤️ Love</button>';
+    const share='<button type="button" class="btn" data-content-action="share" data-content-type="'+type+'" data-content-id="'+id+'">↗ Share</button>';
+    const like='<button type="button" class="btn" data-content-action="like" data-content-type="'+type+'" data-content-id="'+id+'">👍 Like</button>';
+    return '<div class="card-actions feed-reactions">'+comment+like+love+share+'</div>';
   }
 
   async function showComments(contentType, contentId, title) {
