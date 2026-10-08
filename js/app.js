@@ -676,7 +676,7 @@
   function contentActionButtons(type, id, ownerId = null) {
     const auth = window.ApostolicAuth;
     const user = auth && auth.getUser ? auth.getUser() : null;
-    const canManage = !!user && (!ownerId || user.id === ownerId || auth.hasAnyRole?.(["admin", "super_admin"]));
+    const canManage = !!user && !!ownerId && user.id === ownerId;
     if (!canManage) return "";
     return '<div class="card-actions">' +
       '<button type="button" class="btn" data-content-action="edit" data-content-type="' + escapeHTML(type) + '" data-content-id="' + escapeHTML(id) + '">Edit</button>' +
