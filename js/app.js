@@ -1371,34 +1371,123 @@
   }
 
   function openBibleReader() {
-    const books = ["Genesis","Exodus","Psalms","Proverbs","Matthew","Mark","Luke","John","Romans","1 Corinthians","Ephesians","Philippians","Revelation"];
+    const books = [
+      ["Genesis","GEN",50],["Exodus","EXO",40],["Leviticus","LEV",27],["Numbers","NUM",36],["Deuteronomy","DEU",34],
+      ["Joshua","JOS",24],["Judges","JDG",21],["Ruth","RUT",4],["1 Samuel","1SA",31],["2 Samuel","2SA",24],
+      ["1 Kings","1KI",22],["2 Kings","2KI",25],["1 Chronicles","1CH",29],["2 Chronicles","2CH",36],["Ezra","EZR",10],
+      ["Nehemiah","NEH",13],["Esther","EST",10],["Job","JOB",42],["Psalms","PSA",150],["Proverbs","PRO",31],
+      ["Ecclesiastes","ECC",12],["Song of Solomon","SNG",8],["Isaiah","ISA",66],["Jeremiah","JER",52],["Lamentations","LAM",5],
+      ["Ezekiel","EZK",48],["Daniel","DAN",12],["Hosea","HOS",14],["Joel","JOL",3],["Amos","AMO",9],
+      ["Obadiah","OBA",1],["Jonah","JON",4],["Micah","MIC",7],["Nahum","NAM",3],["Habakkuk","HAB",3],
+      ["Zephaniah","ZEP",3],["Haggai","HAG",2],["Zechariah","ZEC",14],["Malachi","MAL",4],
+      ["Matthew","MAT",28],["Mark","MRK",16],["Luke","LUK",24],["John","JHN",21],["Acts","ACT",28],
+      ["Romans","ROM",16],["1 Corinthians","1CO",16],["2 Corinthians","2CO",13],["Galatians","GAL",6],
+      ["Ephesians","EPH",6],["Philippians","PHP",4],["Colossians","COL",4],["1 Thessalonians","1TH",5],
+      ["2 Thessalonians","2TH",3],["1 Timothy","1TI",6],["2 Timothy","2TI",4],["Titus","TIT",3],
+      ["Philemon","PHM",1],["Hebrews","HEB",13],["James","JAS",5],["1 Peter","1PE",5],["2 Peter","2PE",3],
+      ["1 John","1JN",5],["2 John","2JN",1],["3 John","3JN",1],["Jude","JUD",1],["Revelation","REV",22]
+    ];
+    const state = storage.get("apostolic_bible_position",{version:"kjv",book:"Genesis",chapter:1});
+    const settings = storage.get("apostolic_bible_settings",{fontSize:18,theme:"light"});
+    const bookmarks = storage.get("apostolic_bible_bookmarks",[]);
     const modal = createModal("Bible Reader", `
-      <div class="bible-reader-shell">
+      <div class="bible-reader-shell" data-bible-reader>
         <div class="bible-reader-toolbar">
-          <select class="bible-select" data-bible-book>${books.map(function(book){ return '<option>'+escapeHTML(book)+'</option>'; }).join("")}</select>
-          <select class="bible-select" data-bible-chapter>${Array.from({length:50},(_,i)=>'<option value="'+(i+1)+'">Chapter '+(i+1)+'</option>').join("")}</select>
-          <button type="button" class="btn primary" data-bible-load>Open</button>
+          <select class="bible-select" data-bible-version aria-label="Bible version">
+            <option value="kjv">King James Version (English)</option>
+            <option value="amhara">አማርኛ መጽሐፍ ቅዱስ</option>
+          </select>
+          <select class="bible-select" data-bible-book aria-label="Bible book">
+            ${books.map(function(item){ return '<option value="'+item[1]+'">'+escapeHTML(item[0])+'</option>'; }).join("")}
+          </select>
+          <select class="bible-select" data-bible-chapter aria-label="Bible chapter"></select>
+          <button type="button" class="btn primary" data-bible-load>Read</button>
         </div>
-        <div class="bible-reader-note">Choose a book and chapter to open your Scripture reading space. Your reading position can be continued from this device.</div>
-        <article class="bible-reader-page">
-          <span class="bible-reader-kicker">HOLY SCRIPTURE</span>
+        <div class="bible-reader-tools">
+          <button type="button" class="btn" data-bible-font-down>A−</button>
+          <button type="button" class="btn" data-bible-font-up>A+</button>
+          <button type="button" class="btn" data-bible-theme="light">☀️</button>
+          <button type="button" class="btn" data-bible-theme="sepia">📖</button>
+          <button type="button" class="btn" data-bible-theme="dark">🌙</button>
+          <button type="button" class="btn" data-bible-bookmark>🔖 Bookmark</button>
+        </div>
+        <div class="bible-reader-note" data-bible-status>Choose a translation, book and chapter. Your position, bookmarks and reading settings are saved on this device.</div>
+        <article class="bible-reader-page" data-bible-page>
+          <span class="bible-reader-kicker" data-bible-kicker>KING JAMES VERSION</span>
           <h2 data-bible-title>Genesis 1</h2>
-          <p class="bible-reader-placeholder">Bible text can be added to the app's Scripture library as licensed or public-domain content. Uploaded Bible resources remain available below.</p>
-          <div class="bible-reader-lines">
-            <div><b>1</b> In the beginning, God created the heaven and the earth.</div>
-            <div><b>2</b> And the earth was without form, and void; and darkness was upon the face of the deep.</div>
-          </div>
+          <p class="bible-reader-placeholder" data-bible-placeholder>Loading Scripture…</p>
+          <div class="bible-reader-lines" data-bible-lines aria-live="polite"></div>
         </article>
       </div>`);
-    const load = modal.querySelector("[data-bible-load]");
-    const book = modal.querySelector("[data-bible-book]");
-    const chapter = modal.querySelector("[data-bible-chapter]");
-    const title = modal.querySelector("[data-bible-title]");
-    if (load) load.addEventListener("click", function(){ title.textContent = book.value + " " + chapter.value; storage.set("apostolic_bible_position",{book:book.value,chapter:chapter.value}); });
-    const saved=storage.get("apostolic_bible_position",null);
-    if(saved && book && chapter && title){ book.value=saved.book||book.value; chapter.value=String(saved.chapter||1); title.textContent=book.value+" "+chapter.value; }
-  }
+    const version=modal.querySelector("[data-bible-version]"), book=modal.querySelector("[data-bible-book]");
+    const chapter=modal.querySelector("[data-bible-chapter]"), load=modal.querySelector("[data-bible-load]");
+    const title=modal.querySelector("[data-bible-title]"), kicker=modal.querySelector("[data-bible-kicker]");
+    const lines=modal.querySelector("[data-bible-lines]"), placeholder=modal.querySelector("[data-bible-placeholder]");
+    const status=modal.querySelector("[data-bible-status]"), page=modal.querySelector("[data-bible-page]");
+    if(!version||!book||!chapter||!load||!title||!lines) return;
 
+    function selectedBook(){return books.find(function(item){return item[1]===book.value;})||books[0];}
+    function updateChapters(selectedChapter){
+      const info=selectedBook();
+      chapter.innerHTML=Array.from({length:info[2]},function(_,i){return '<option value="'+(i+1)+'">Chapter '+(i+1)+'</option>';}).join("");
+      chapter.value=String(Math.min(Number(selectedChapter)||1,info[2]));
+    }
+    function applySettings(){
+      page.style.fontSize=String(settings.fontSize)+"px";
+      page.dataset.readerTheme=settings.theme;
+      $$("[data-bible-theme]",modal).forEach(function(btn){btn.classList.toggle("active",btn.dataset.bibleTheme===settings.theme);});
+    }
+    function cacheKey(v,b,c){return "apostolic_bible_chapter_"+v+"_"+b+"_"+c;}
+    async function fetchChapter(v,b,c){
+      const key=cacheKey(v,b,c), cached=storage.get(key,null);
+      if(cached&&Array.isArray(cached.data)) return cached;
+      const url="https://bible-api-kappa.vercel.app/api/v1/verses/"+encodeURIComponent(v)+"/"+encodeURIComponent(b)+"/"+c;
+      const response=await fetch(url,{headers:{"Accept":"application/json"}});
+      if(!response.ok) throw new Error("Bible service unavailable");
+      const json=await response.json(), data=Array.isArray(json.data)?json.data:[];
+      if(!data.length) throw new Error("No verses were returned");
+      const result={data:data,savedAt:Date.now()};
+      storage.set(key,result);
+      return result;
+    }
+    async function loadChapter(){
+      const selected=selectedBook(), v=version.value, c=Number(chapter.value)||1, name=selected[0];
+      title.textContent=name+" "+c;
+      kicker.textContent=v==="kjv"?"KING JAMES VERSION · ENGLISH":"አማርኛ መጽሐፍ ቅዱስ";
+      placeholder.textContent="Loading Scripture…"; lines.innerHTML=""; status.textContent="Opening "+name+" "+c+"…"; applySettings();
+      try{
+        const result=await fetchChapter(v,selected[1],c);
+        lines.innerHTML=result.data.map(function(item){
+          const n=escapeHTML(item.verseNum??item.verse??""), textValue=escapeHTML(item.verse??item.text??item.content??"");
+          return '<div><b>'+n+'</b> <span>'+textValue+'</span></div>';
+        }).join("");
+        placeholder.textContent=v==="kjv"?"King James Version · Public-domain English text.":"አማርኛ ትርጉም · በአፕ ውስጥ ለማንበብ የተጫነ።";
+        status.textContent="Saved reading position: "+name+" "+c;
+        storage.set("apostolic_bible_position",{version:v,book:name,bookId:selected[1],chapter:c});
+      }catch(error){
+        console.error("Bible chapter load failed:",error);
+        placeholder.textContent="The chapter could not be loaded right now. Previously cached chapters remain available offline.";
+        status.textContent="Please check your internet connection and try again.";
+      }
+    }
+    version.value=state.version||"kjv";
+    const savedBook=books.find(function(item){return item[0]===(state.book||"Genesis")||item[1]===state.bookId;})||books[0];
+    book.value=savedBook[1]; updateChapters(state.chapter||1); applySettings();
+    book.addEventListener("change",function(){updateChapters(1);});
+    version.addEventListener("change",function(){status.textContent="Translation changed. Press Read.";});
+    load.addEventListener("click",loadChapter);
+    const fontDown=modal.querySelector("[data-bible-font-down]"), fontUp=modal.querySelector("[data-bible-font-up]");
+    if(fontDown) fontDown.addEventListener("click",function(){settings.fontSize=Math.max(14,settings.fontSize-1);storage.set("apostolic_bible_settings",settings);applySettings();});
+    if(fontUp) fontUp.addEventListener("click",function(){settings.fontSize=Math.min(26,settings.fontSize+1);storage.set("apostolic_bible_settings",settings);applySettings();});
+    $$("[data-bible-theme]",modal).forEach(function(btn){btn.addEventListener("click",function(){settings.theme=btn.dataset.bibleTheme;storage.set("apostolic_bible_settings",settings);applySettings();});});
+    const bookmark=modal.querySelector("[data-bible-bookmark]");
+    if(bookmark) bookmark.addEventListener("click",function(){
+      const selected=selectedBook(), item={version:version.value,book:selected[0],bookId:selected[1],chapter:Number(chapter.value)||1};
+      const key=item.version+"|"+item.bookId+"|"+item.chapter, next=bookmarks.filter(function(x){return x.version+"|"+x.bookId+"|"+x.chapter!==key;});
+      next.unshift(item); storage.set("apostolic_bible_bookmarks",next.slice(0,20)); toast("Bible chapter bookmarked.","success");
+    });
+    loadChapter();
+  }
   function openMediaViewer(item) {
     if (!item) {
       toast("This content could not be opened.", "error");
