@@ -2301,61 +2301,15 @@
 
     home: {
       title: "Home",
-
       content: `
-        ${renderPageHero(
-          "Welcome to Apostolic Media",
-          "A place for Bible study, Christian teachings, worship, sermons and community."
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "📖",
-            "Bible",
-            "Read and explore the Word of God.",
-            `<a class="btn" href="#bible">Open Bible</a>`
-          )}
-
-          ${renderCard(
-            "🎓",
-            "Teachings",
-            "Christian teachings and Bible studies.",
-            `<a class="btn" href="#teachings">Explore Teachings</a>`
-          )}
-
-          ${renderCard(
-            "🎙️",
-            "Sermons",
-            "Listen to Christian sermons and messages.",
-            `<a class="btn" href="#sermons">View Sermons</a>`
-          )}
-
-          ${renderCard(
-            "🎵",
-            "Songs",
-            "Discover worship songs and Christian music.",
-            `<a class="btn" href="#songs">Browse Songs</a>`
-          )}
-
-          ${renderCard(
-            "🎬",
-            "Videos",
-            "Watch Christian videos and media.",
-            `<a class="btn" href="#videos">Watch Videos</a>`
-          )}
-
-          ${renderCard(
-            "👥",
-            "Community",
-            "Connect with the Apostolic Christian community.",
-            `<a class="btn" href="#community">Join Community</a>`
-          )}
-
-        </section>
-      `
+<section class="home-hero"><div class="home-hero-copy"><span class="home-kicker">✦ APOSTOLIC MEDIA</span><h1>Grow in the Word.<br><span>Worship. Learn. Connect.</span></h1><p>Your Christian home for Scripture, worship music, sermons, teachings and a growing Apostolic community.</p><div class="home-hero-actions"><a class="home-primary-btn" href="#bible">📖 Read the Bible</a><a class="home-secondary-btn" href="#songs">▶ Start Listening</a></div></div><div class="home-hero-art"><div class="home-orbit home-orbit-one"></div><div class="home-orbit home-orbit-two"></div><div class="home-cross">✝</div></div></section>
+<section class="home-quick-row"><a href="#bible" class="home-quick-card"><span>📖</span><strong>Bible</strong><small>Read Scripture</small></a><a href="#songs" class="home-quick-card"><span>🎵</span><strong>Music</strong><small>Worship &amp; praise</small></a><a href="#sermons" class="home-quick-card"><span>🎙️</span><strong>Sermons</strong><small>Listen &amp; grow</small></a><a href="#videos" class="home-quick-card"><span>▶</span><strong>Short Videos</strong><small>Watch &amp; discover</small></a><a href="#bible-study" class="home-quick-card"><span>📚</span><strong>Study</strong><small>Go deeper</small></a><a href="#community" class="home-quick-card"><span>👥</span><strong>Community</strong><small>Connect together</small></a></section>
+<section class="home-section"><div class="home-section-head"><div><span class="home-section-kicker">FOR YOU</span><h2>Continue your journey</h2></div><a href="#bible">See all →</a></div><div class="home-continue"><article class="home-continue-card"><div class="home-continue-icon">📖</div><div><span class="home-label">BIBLE READING</span><h3>Continue in the Word</h3><p>Pick up where your Scripture journey begins.</p></div><a class="home-round-btn" href="#bible">▶</a></article><article class="home-continue-card music"><div class="home-continue-icon">🎧</div><div><span class="home-label">WORSHIP MUSIC</span><h3>Listen and worship</h3><p>Discover songs that lift your heart to God.</p></div><a class="home-round-btn" href="#songs">▶</a></article></div></section>
+<section class="home-section"><div class="home-section-head"><div><span class="home-section-kicker">DISCOVER</span><h2>Featured today</h2></div><a href="#teachings">Explore →</a></div><div class="home-feature-grid"><a class="home-feature-card feature-bible" href="#bible"><span class="home-feature-icon">📖</span><div><span>HOLY SCRIPTURE</span><h3>Read the Bible</h3><p>Find truth, hope and life in Gods Word.</p></div></a><a class="home-feature-card feature-music" href="#songs"><span class="home-feature-icon">🎵</span><div><span>WORSHIP</span><h3>Christian Music</h3><p>Sing, listen and worship wherever you are.</p></div></a><a class="home-feature-card feature-teaching" href="#teachings"><span class="home-feature-icon">🎓</span><div><span>LEARN</span><h3>Teachings</h3><p>Build your faith through Christian teaching.</p></div></a></div></section>
+<section class="home-section"><div class="home-section-head"><div><span class="home-section-kicker">WATCH</span><h2>Short Christian videos</h2></div><a href="#videos">View all →</a></div><div class="home-shorts-row"><a href="#videos" class="home-short-card short-one"><span>▶</span><div><b>Faith for today</b><small>Watch a short message</small></div></a><a href="#videos" class="home-short-card short-two"><span>▶</span><div><b>Word of encouragement</b><small>1 minute • Christian</small></div></a><a href="#videos" class="home-short-card short-three"><span>▶</span><div><b>Worship moment</b><small>Listen • Pray • Worship</small></div></a><a href="#videos" class="home-short-card short-four"><span>▶</span><div><b>Bible truth</b><small>Scripture in focus</small></div></a></div></section>
+<section class="home-section home-community-banner"><div><span class="home-section-kicker">COMMUNITY</span><h2>Faith grows better together.</h2><p>Share, ask questions, learn from one another and stay connected with the Apostolic community.</p></div><a class="home-primary-btn" href="#community">Join Community →</a></section>
+`
     },
-
     /* -------------------------------------------------------
        BIBLE
        ------------------------------------------------------- */
