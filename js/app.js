@@ -1410,6 +1410,7 @@
           <button type="button" class="btn" data-bible-theme="sepia">📖</button>
           <button type="button" class="btn" data-bible-theme="dark">🌙</button>
           <button type="button" class="btn" data-bible-bookmark>🔖 Bookmark</button>
+          <button type="button" class="btn" data-bible-offline>⬇️ Offline</button>
         </div>
         <div class="bible-reader-note" data-bible-status>Choose a translation, book and chapter. Your position, bookmarks and reading settings are saved on this device.</div>
         <article class="bible-reader-page" data-bible-page>
@@ -1424,6 +1425,7 @@
     const title=modal.querySelector("[data-bible-title]"), kicker=modal.querySelector("[data-bible-kicker]");
     const lines=modal.querySelector("[data-bible-lines]"), placeholder=modal.querySelector("[data-bible-placeholder]");
     const status=modal.querySelector("[data-bible-status]"), page=modal.querySelector("[data-bible-page]");
+    const offlineButton=modal.querySelector("[data-bible-offline]");
     if(!version||!book||!chapter||!load||!title||!lines) return;
 
     function selectedBook(){return books.find(function(item){return item[1]===book.value;})||books[0];}
@@ -1436,6 +1438,69 @@
       page.style.fontSize=String(settings.fontSize)+"px";
       page.dataset.readerTheme=settings.theme;
       $$("[data-bible-theme]",modal).forEach(function(btn){btn.classList.toggle("active",btn.dataset.bibleTheme===settings.theme);});
+    }
+    const BIBLE_OFFLINE_CACHE="apostolic-bible-offline-v1";
+    function bibleSourceUrl(v,b){
+      const names={
+        GEN:"genesis",EXO:"exodus",LEV:"leviticus",NUM:"numbers",DEU:"deuteronomy",JOS:"joshua",JDG:"judges",RUT:"ruth",
+        "1SA":"1_samuel","2SA":"2_samuel","1KI":"1_kings","2KI":"2_kings","1CH":"1_chronicles","2CH":"2_chronicles",
+        EZR:"ezra",NEH:"nehemiah",EST:"esther",JOB:"job",PSA:"psalms",PRO:"proverbs",ECC:"ecclesiastes",SNG:"song_of_solomon",
+        ISA:"isaiah",JER:"jeremiah",LAM:"lamentations",EZK:"ezekiel",DAN:"daniel",HOS:"hosea",JOL:"joel",AMO:"amos",
+        OBA:"obadiah",JON:"jonah",MIC:"micah",NAM:"nahum",HAB:"habakkuk",ZEP:"zephaniah",HAG:"haggai",ZEC:"zechariah",
+        MAL:"malachi",MAT:"matthew",MRK:"mark",LUK:"luke",JHN:"john",ACT:"acts",ROM:"romans","1CO":"1_corinthians",
+        "2CO":"2_corinthians",GAL:"galatians",EPH:"ephesians",PHP:"philippians",COL:"colossians","1TH":"1_thessalonians",
+        "2TH":"2_thessalonians","1TI":"1_timothy","2TI":"2_timothy",TIT:"titus",PHM:"philemon",HEB:"hebrews",JAS:"james",
+        "1PE":"1_peter","2PE":"2_peter","1JN":"1_john","2JN":"2_john","3JN":"3_john",JUD:"jude",REV:"revelation"
+      };
+      const amhFiles=[
+        "01_ኦሪት ዘፍጥረት.json","02_ኦሪት ዘጸአት.json","03_ኦሪት ዘሌዋውያን.json","04_ኦሪት ዘኍልቍ.json","05_ኦሪት ዘዳግም.json",
+        "06_መጽሐፈ ኢያሱ ወልደ ነዌ.json","07_መጽሐፈ መሣፍንት.json","08_መጽሐፈ ሩት.json","09_መጽሐፈ ሳሙኤል ቀዳማዊ.json","10_መጽሐፈ ሳሙኤል ካል.json",
+        "11_መጽሐፈ ነገሥት ቀዳማዊ።.json","12_መጽሐፈ ነገሥት ካልዕ።.json","13_መጽሐፈ ዜና መዋዕል ቀዳማዊ።.json","14_መጽሐፈ ዜና መዋዕል ካልዕ።.json",
+        "15_መጽሐፈ ዕዝራ።.json","16_መጽሐፈ ነህምያ።.json","17_መጽሐፈ አስቴር።.json","18_መጽሐፈ ኢዮብ።.json","19_መዝሙረ ዳዊት.json",
+        "20_መጽሐፈ ምሳሌ.json","21_መጽሐፈ መክብብ.json","22_መኃልየ መኃልይ ዘሰሎሞን.json","23_ትንቢተ ኢሳይያስ.json","24_ትንቢተ ኤርምያስ.json",
+        "25_ሰቆቃው ኤርምያስ.json","26_ትንቢተ ሕዝቅኤል.json","27_ትንቢተ ዳንኤል.json","28_ትንቢተ ሆሴዕ.json","29_ትንቢተ ኢዮኤል.json",
+        "30_ትንቢተ አሞጽ.json","31_ትንቢተ አብድዩ.json","32_ትንቢተ ዮናስ.json","33_ትንቢተ ሚክያስ.json","34_ትንቢተ ናሆም.json",
+        "35_ትንቢተ ዕንባቆም.json","36_ትንቢተ ሶፎንያስ.json","37_ትንቢተ ሐጌ.json","38_ትንቢተ ዘካርያስ.json","39_ትንቢተ ሚልክያ.json",
+        "40_የማቴዎስ ወንጌል.json","41_የማርቆስ ወንጌል.json","42_የሉቃስ ወንጌል.json","43_የዮሐንስ ወንጌል.json","44_የሐዋርያት ሥራ.json",
+        "45_ወደ ሮሜ ሰዎች.json","46_1ኛ ወደ ቆሮንቶስ ሰዎች.json","47_2ኛ ወደ ቆሮንቶስ ሰዎች.json","48_ወደ ገላትያ ሰዎች.json","49_ወደ ኤፌሶን ሰዎች.json",
+        "50_ወደ ፊልጵስዩስ ሰዎች.json","51_ወደ ቆላስይስ ሰዎች.json","52_1ኛ ወደ ተሰሎንቄ ሰዎች.json","53_2ኛ ወደ ተሰሎንቄ ሰዎች.json",
+        "54_1ኛ ወደ ጢሞቴዎስ.json","55_2ኛ ወደ ጢሞቴዎስ.json","56_ወደ ቲቶ.json","57_ወደ ፊልሞና.json","58_ወደ ዕብራውያን.json",
+        "59_የያዕቆብ መልእክት.json","60_1ኛ የጴጥሮስ መልእክት.json","61_2ኛ የጴጥሮስ መልእክት.json","62_1ኛ የዮሐንስ መልእክት.json",
+        "63_2ኛ የዮሐንስ መልእክት.json","64_3ኛ የዮሐንስ መልእክት.json","65_የይሁዳ መልእክት.json","66_የዮሐንስ ራእይ.json"
+      ];
+      if(v==="kjv") return "https://raw.githubusercontent.com/nolanbaxter/kjv-bible/main/"+encodeURIComponent(names[b]+".json");
+      const i=books.findIndex(function(item){return item[1]===b;});
+      return "https://raw.githubusercontent.com/magna25/amharic-bible-json/main/individual_books/"+encodeURIComponent(amhFiles[i<0?0:i]);
+    }
+    async function downloadBibleOffline(){
+      if(!offlineButton) return;
+      offlineButton.disabled=true;
+      let done=0, total=books.length*2;
+      try{
+        const cache=await caches.open(BIBLE_OFFLINE_CACHE);
+        for(const v of ["kjv","amhara"]){
+          for(const item of books){
+            const url=bibleSourceUrl(v,item[1]);
+            const existing=await cache.match(url);
+            if(!existing){
+              const response=await fetch(url,{mode:"cors",cache:"no-store"});
+              if(!response.ok) throw new Error("Download failed");
+              await cache.put(url,response.clone());
+            }
+            done++;
+            status.textContent="Downloading Bible for offline reading… "+done+"/"+total;
+          }
+        }
+        storage.set("apostolic_bible_offline_ready",{ready:true,savedAt:Date.now()});
+        status.textContent="✓ መጽሐፍ ቅዱስ በoffline ለማንበብ ተዘጋጅቷል።";
+        toast("ሙሉ መጽሐፍ ቅዱስ offline ተዘጋጅቷል።","success");
+      }catch(error){
+        console.error("Offline Bible download failed:",error);
+        status.textContent="Offline download stopped. Please reconnect and try again.";
+        toast("የoffline ማውረድ አልተጠናቀቀም።","error");
+      }finally{
+        offlineButton.disabled=false;
+      }
     }
     function cacheKey(v,b,c){return "apostolic_bible_chapter_"+v+"_"+b+"_"+c;}
     async function fetchChapter(v,b,c){
@@ -1477,7 +1542,7 @@
         const file=amhFiles[books.findIndex(function(item){return item[1]===b;})]||amhFiles[0];
         url="https://raw.githubusercontent.com/magna25/amharic-bible-json/main/individual_books/"+encodeURIComponent(file);
       }
-      const response=await fetch(url,{headers:{"Accept":"application/json"}});
+      let response;\n      try {\n        response=await fetch(url,{headers:{"Accept":"application/json"}});\n      } catch(networkError) {\n        const offlineCache=await caches.open(BIBLE_OFFLINE_CACHE);\n        response=await offlineCache.match(url);\n        if(!response) throw networkError;\n      }
       if(!response.ok) throw new Error("Bible data unavailable");
       const json=await response.json();
       let data=[];
@@ -1522,7 +1587,7 @@
     book.value=savedBook[1]; updateChapters(state.chapter||1); applySettings();
     book.addEventListener("change",function(){updateChapters(1);});
     version.addEventListener("change",function(){status.textContent="Translation changed. Press Read.";});
-    load.addEventListener("click",loadChapter);
+    load.addEventListener("click",loadChapter);\n    if(offlineButton) offlineButton.addEventListener("click",downloadBibleOffline);
     const fontDown=modal.querySelector("[data-bible-font-down]"), fontUp=modal.querySelector("[data-bible-font-up]");
     if(fontDown) fontDown.addEventListener("click",function(){settings.fontSize=Math.max(14,settings.fontSize-1);storage.set("apostolic_bible_settings",settings);applySettings();});
     if(fontUp) fontUp.addEventListener("click",function(){settings.fontSize=Math.min(26,settings.fontSize+1);storage.set("apostolic_bible_settings",settings);applySettings();});
