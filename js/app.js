@@ -1071,6 +1071,17 @@
       await showComments(type, id, element.dataset.contentTitle || "Content");
       return;
     }
+    if (action === "delete-playlist") {
+      if (!requireLogin()) return;
+      if (!window.confirm("Delete this playlist?")) return;
+      try {
+        const result = await window.ApostolicSupabase.remove("playlists", { id: id, user_id: currentUser().id });
+        if (result?.error) throw result.error;
+        toast("Playlist deleted.", "success");
+        renderPage("playlists");
+      } catch (e) { toast(e?.message || "Could not delete playlist.", "error"); }
+      return;
+    }
     if (action === "edit-local" || action === "delete-local") {
       const items = storage.get("apostolic_created_items", []);
       const index = items.findIndex(function(item) {
