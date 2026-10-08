@@ -885,6 +885,22 @@
           return;
         }
 
+        const commentForm = event.target.closest("[data-comment-form]");
+        if (commentForm) {
+          event.preventDefault();
+          if (!requireLogin()) return;
+          const content=String(new FormData(commentForm).get("content")||"").trim();
+          if(!content){toast("Please write a comment.","error");return;}
+          try {
+            const r=await window.ApostolicSupabase.insert("comments",{post_id:commentForm.dataset.commentId,user_id:currentUser().id,content:content});
+            if(r?.error) throw r.error;
+            closeDynamicModal(commentForm.closest(".apostolic-modal"));
+            toast("Comment added.","success");
+            await showComments("community_post",commentForm.dataset.commentId,"Community Post");
+          } catch(e){toast(e?.message||"Could not add comment.","error");}
+          return;
+        }
+
         const playlistSongsForm = event.target.closest("[data-playlist-songs-form]");
         if (playlistSongsForm) {
           event.preventDefault();
@@ -1229,37 +1245,6 @@
       return;
     }
 
-    const auth = window.ApostolicAuth;
-    const api = window.ApostolicSupabase;
-    if (!auth || !auth.isLoggedIn()) {
-      toast("Please sign in first.", "error");
-      return;
-    }
-    if (action === "edit-local" || action === "delete-local") {
-      const items = storage.get("apostolic_created_items", []);
-      const index = items.findIndex(function (item) {
-        return String(item.id) === String(id) && String(item.type) === String(type);
-      });
-      if (index < 0) {
-        toast("Local content was not found.", "error");
-        return;
-      }
-      if (action === "delete-local") {
-        if (!window.confirm("Delete this content? This action cannot be undone.")) return;
-        items.splice(index, 1);
-        storage.set("apostolic_created_items", items);
-        toast("Content deleted successfully.", "success");
-        renderPage(window.location.hash.substring(1) || "home");
-        return;
-      }
-      const item = items[index];
-      createModal("Edit Content",
-        '<form class="dynamic-form" data-local-edit-form data-edit-id="' + escapeHTML(item.id) + '" data-edit-type="' + escapeHTML(item.type) + '">' +
-        '<div class="form-group"><label>Title</label><input name="title" type="text" value="' + escapeHTML(item.title || '') + '" required></div>' +
-        '<div class="form-group"><label>Description</label><textarea name="description" rows="5">' + escapeHTML(item.description || '') + '</textarea></div>' +
-        '<button type="submit" class="btn primary">Save Changes</button></form>');
-      return;
-    }
 
     if (!api || !api.isConfigured()) {
       toast("Supabase is not configured.", "error");
