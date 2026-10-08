@@ -1885,7 +1885,7 @@
         const up=await api.uploadFile(bucket,path,file,{upsert:false});
         if(up?.error) throw up.error;
         const url=api.getPublicUrl(bucket,path); if(!url) throw new Error("Could not create the file URL.");
-        const base=title||file.name.replace(/.[^.]+$/,"");
+        const base=title||file.name.replace(/\.[^.]+$/,"");
         const itemTitle=files.length>1?base+" "+(done+failed+1):base;
         const db=await api.insert("media_uploads",{title:itemTitle,description,type,user_id:user.id,file_name:file.name,file_path:path,file_url:url,file_size:file.size,file_type:file.type||null});
         if(db?.error) throw db.error;
@@ -2536,7 +2536,7 @@
       title: "Teachings",
 
       content: `
-        ${renderPageHero("Teachings", "Christian teachings, Bible lessons and written resources.", renderAction("Create Teaching","create-teaching")+renderAction("Upload Teaching","upload-teaching"))}
+        ${renderPageHero("Teachings", "Christian teachings, Bible lessons and written resources.")}
       `
     },
 
@@ -2548,7 +2548,7 @@
       title: "Sermons",
 
       content: `
-        ${renderPageHero("Sermons", "Listen to Christian sermons and messages.", renderAction("Upload Sermon","upload-sermon")+renderAction("Create Sermon","create-sermon"))}
+        ${renderPageHero("Sermons", "Listen to Christian sermons and messages.")}
       `
     },
 
@@ -2560,7 +2560,7 @@
       title: "Songs",
 
       content: `
-        ${renderPageHero("Songs", "Christian worship songs and music.", renderAction("Open Music Player","open-music")+renderAction("Upload Song","upload-song")+renderAction("Create Song","create-song"))}
+        ${renderPageHero("Songs", "Christian worship songs and music.")}
       `
     },
 
@@ -2572,7 +2572,7 @@
       title: "Lyrics",
 
       content: `
-        ${renderPageHero("Lyrics", "Read Christian song lyrics.", renderAction("Create Lyrics","create-lyric"))}
+        ${renderPageHero("Lyrics", "Read Christian song lyrics.")}
       `
     },
 
@@ -2584,7 +2584,7 @@
       title: "Videos",
 
       content: `
-        ${renderPageHero("Videos", "Watch Christian videos, teachings and sermons.", renderAction("Upload Video","upload-video"))}
+        ${renderPageHero("Videos", "Watch Christian videos, teachings and sermons.")}
       `
     },
 
@@ -2681,7 +2681,7 @@
       title: "Courses",
 
       content: `
-        ${renderPageHero("Courses", "Learn through structured Christian courses.", renderAction("Create Course","create-course")+renderAction("Upload Course","upload-course"))}
+        ${renderPageHero("Courses", "Learn through structured Christian courses.")}
       `
     },
 
