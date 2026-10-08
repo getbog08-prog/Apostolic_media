@@ -780,6 +780,31 @@
           return;
         }
 
+        const roleButton=event.target.closest("[data-admin-role-id]");
+        if(roleButton){
+          event.preventDefault();
+          if(!requireLogin()) return;
+          const role=window.prompt("Enter role: user, creator, minister, admin", "creator");
+          if(!["user","creator","minister","admin"].includes(role)) return;
+          try{
+            const result=await window.ApostolicSupabase.update("profiles",{role:role},{id:roleButton.dataset.adminRoleId});
+            if(result?.error) throw result.error;
+            toast("User role updated.","success"); renderPage("admin");
+          }catch(e){toast(e?.message||"Could not update role.","error");}
+          return;
+        }
+        const publishButton=event.target.closest("[data-admin-post-id]");
+        if(publishButton){
+          event.preventDefault();
+          if(!requireLogin()) return;
+          try{
+            const result=await window.ApostolicSupabase.update("community_posts",{is_published:publishButton.dataset.adminPublish==="true"},{id:publishButton.dataset.adminPostId});
+            if(result?.error) throw result.error;
+            toast("Post moderation updated.","success"); renderPage("admin");
+          }catch(e){toast(e?.message||"Could not moderate post.","error");}
+          return;
+        }
+
         const contentAction = event.target.closest("[data-content-action]");
         if (contentAction) {
           event.preventDefault();
@@ -3124,6 +3149,43 @@
     } catch(e){console.error("Playlists load failed:",e);}
   }
 
+  async function loadAdminDashboard() {
+    const container=$(".page-container"), api=window.ApostolicSupabase, user=currentUser();
+    if(!container || !user || !api || !api.isConfigured()) return;
+    try {
+      const profileResult=await api.select("profiles","*",{eq:{id:user.id}});
+      const profile=profileResult?.data?.[0]||{};
+      const role=profile.role||"user";
+      if(!["admin","super_admin"].includes(role)){
+        container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+renderCard("🔒","Admin Access","Administrator permission is required to manage the platform.")+'</section>');
+        return;
+      }
+      const users=await api.select("profiles","*",{order:{column:"created_at",ascending:false},limit:200});
+      const posts=await api.select("community_posts","*",{order:{column:"created_at",ascending:false},limit:100});
+      const media=await api.select("media_uploads","*",{order:{column:"created_at",ascending:false},limit:100});
+      const userRows=users?.data||[], postRows=posts?.data||[], mediaRows=media?.data||[];
+      const stats='<section class="content-grid">'+
+        renderCard("👥","Users",String(userRows.length))+
+        renderCard("💬","Community Posts",String(postRows.length))+
+        renderCard("📁","Uploaded Media",String(mediaRows.length))+
+        '</section>';
+      const userCards=userRows.map(function(p){
+        const actions=p.id===user.id?"":"<button type=\"button\" class=\"btn\" data-admin-role-id=\""+escapeHTML(p.id)+"\">Change Role</button>";
+        return renderCard("👤",p.full_name||p.username||"User",String(p.role||"user"),actions);
+      }).join("");
+      const postCards=postRows.map(function(p){
+        const toggle=p.is_published?"Unpublish":"Publish";
+        return renderCard("💬",p.title||"Community Post",p.content||"",'<button type="button" class="btn" data-admin-post-id="'+escapeHTML(p.id)+'" data-admin-publish="'+String(!p.is_published)+'">'+toggle+'</button>');
+      }).join("");
+      container.insertAdjacentHTML("beforeend",stats+
+        '<section class="content-grid">'+
+        (userCards||renderCard("👥","No Users",""))+
+        '</section><section class="content-grid">'+
+        (postCards||renderCard("💬","No Posts",""))+
+        '</section>');
+    } catch(e){console.error("Admin dashboard failed:",e);toast("Could not load admin dashboard.","error");}
+  }
+
   async function loadCreatorDashboard() {
     const container = $(".page-container");
     const user = currentUser();
@@ -3348,6 +3410,7 @@
     if (cleanRoute === "downloads") loadDownloadsPage();
     if (cleanRoute === "folders") loadFoldersPage();
     if (cleanRoute === "playlists") loadPlaylistsPage();
+    if (cleanRoute === "admin") loadAdminDashboard();
 
     /*
       Always bring the newly selected page
