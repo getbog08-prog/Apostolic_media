@@ -1390,8 +1390,13 @@
   }
 
   function openMediaViewer(item) {
-    if (!item || !item.file_url) {
-      toast("This content has no attached file yet.", "error");
+    if (!item) {
+      toast("This content could not be opened.", "error");
+      return;
+    }
+    if (!item.file_url) {
+      createModal(item.title || "Read content",
+        '<article class="in-app-text-reader"><p>' + escapeHTML(item.description || "No written content is available.") + '</p></article>');
       return;
     }
     let url = "";
@@ -3571,7 +3576,10 @@
     });
 
     localItems.forEach(function (item) {
+      window.__apostolicMediaById = window.__apostolicMediaById || {};
+      window.__apostolicMediaById[String(item.id)] = item;
       const localActions = '<div class="card-actions">' +
+        '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Read in app</button>' +
         '<button type="button" class="btn" data-content-action="edit-local" data-content-type="' + escapeHTML(item.type) + '" data-content-id="' + escapeHTML(item.id) + '">Edit</button>' +
         '<button type="button" class="btn" data-content-action="delete-local" data-content-type="' + escapeHTML(item.type) + '" data-content-id="' + escapeHTML(item.id) + '">Delete</button>' +
       '</div>';
