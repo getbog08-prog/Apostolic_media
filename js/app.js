@@ -3038,6 +3038,52 @@
     creator: ["document", "teaching", "sermon", "song", "video", "lyric", "bible", "course"]
   };
 
+  async function loadCreatorDashboard() {
+    const container = $(".page-container");
+    const user = currentUser();
+    const api = window.ApostolicSupabase;
+    if (!container || !user || !api || !api.isConfigured()) return;
+    try {
+      const result = await api.select("media_uploads", "*", {
+        eq: { user_id: user.id },
+        order: { column: "created_at", ascending: false },
+        limit: 200
+      });
+      const items = result?.data || [];
+      const counts = {};
+      items.forEach(function(item){ counts[item.type] = (counts[item.type] || 0) + 1; });
+      const summary = '<section class="content-grid">' +
+        renderCard("📊", "My Content", String(items.length) + " published/uploaded items.") +
+        renderCard("✏️", "Editable", "Your own items can be edited or deleted.") +
+        renderCard("📁", "Content Types", String(Object.keys(counts).length) + " types in your library.") +
+        '</section>';
+      const cards = items.map(function(item) {
+        const actions = (item.file_url ? '<a class="btn" href="' + escapeHTML(item.file_url) + '" target="_blank" rel="noopener">Open</a>' : '') +
+          contentActionButtons("media_upload", item.id, item.user_id);
+        return renderCard("📝", item.title || item.file_name || "Untitled", item.description || "", actions);
+      }).join("");
+      container.insertAdjacentHTML("beforeend", summary + '<section class="content-grid">' +
+        (cards || renderCard("📂", "No Content Yet", "Create or upload your first Christian resource.")) + '</section>');
+    } catch (error) { console.error("Creator dashboard failed:", error); }
+  }
+
+  async function loadDownloadsPage() {
+    const container = $(".page-container"), user = currentUser(), api = window.ApostolicSupabase;
+    if (!container || !user || !api || !api.isConfigured()) return;
+    try {
+      const result = await api.select("downloads", "*", {
+        eq: { user_id: user.id },
+        order: { column: "created_at", ascending: false }, limit: 100
+      });
+      const rows = result?.data || [];
+      const cards = rows.map(function(row) {
+        return renderCard("⇩", row.content_type || "Download", "Downloaded content: " + String(row.content_id || ""));
+      }).join("");
+      container.insertAdjacentHTML("beforeend", '<section class="content-grid">' +
+        (cards || renderCard("⇩", "No Downloads Yet", "Your downloaded resources will appear here.")) + '</section>');
+    } catch(error) { console.error("Downloads failed:", error); }
+  }
+
   async function loadMediaForPage(route) {
     const types = mediaRouteTypes[route];
     if (!Array.isArray(types) || !types.length) return;
@@ -3212,6 +3258,8 @@
     if (cleanRoute === "notifications") loadNotifications();
     if (cleanRoute === "profile") loadProfilePage();
     if (cleanRoute === "qa") loadQA();
+    if (cleanRoute === "creator") loadCreatorDashboard();
+    if (cleanRoute === "downloads") loadDownloadsPage();
 
     /*
       Always bring the newly selected page
