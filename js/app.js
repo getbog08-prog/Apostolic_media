@@ -574,85 +574,42 @@
     const modal = createModal(
       title,
       `
-        <form
-          class="dynamic-form"
-          data-upload-form="${escapeHTML(type)}"
-        >
-
+        <form class="dynamic-form" data-upload-form="${escapeHTML(type)}">
           <div class="form-group">
-            <label for="uploadTitle">
-              Title
-            </label>
-
-            <input
-              id="uploadTitle"
-              name="title"
-              type="text"
-              placeholder="Enter title"
-              required
-            />
+            <label for="uploadTitle">Title (optional for batch)</label>
+            <input id="uploadTitle" name="title" type="text" placeholder="Enter a title">
           </div>
-
           <div class="form-group">
-            <label for="uploadFile">
-              Select file
-            </label>
-
-            <input
-              id="uploadFile"
-              name="file"
-              type="file"
-              required
-            />
+            <label for="uploadFile">Select files (up to 12)</label>
+            <input id="uploadFile" name="file" type="file" multiple required>
+            <small>You can select up to 12 files at once.</small>
           </div>
-
           <div class="form-group">
-            <label for="uploadDescription">
-              Description
-            </label>
-
-            <textarea
-              id="uploadDescription"
-              name="description"
-              rows="4"
-              placeholder="Write a description..."
-            ></textarea>
+            <label for="uploadDescription">Description</label>
+            <textarea id="uploadDescription" name="description" rows="4" placeholder="Write a description..."></textarea>
           </div>
-
-          <div
-            class="upload-status"
-            hidden
-            role="status"
-            aria-live="polite"
-          ></div>
-
-          <button
-            type="button"
-            class="btn primary"
-            data-upload-submit
-          >
-            Upload
-          </button>
-
+          <div class="upload-status" hidden role="status" aria-live="polite"></div>
+          <button type="button" class="btn primary" data-upload-submit>Upload</button>
         </form>
       `
     );
-
-    const uploadButton = modal.querySelector(
-      "[data-upload-submit]"
-    );
-
-    const uploadForm = modal.querySelector(
-      "[data-upload-form]"
-    );
-
+    const uploadButton = modal.querySelector("[data-upload-submit]");
+    const uploadForm = modal.querySelector("[data-upload-form]");
+    const fileInput = modal.querySelector("#uploadFile");
+    if (fileInput) {
+      fileInput.addEventListener("change", function () {
+        if (fileInput.files.length > 12) {
+          fileInput.value = "";
+          toast("You can select a maximum of 12 files at once.", "error");
+        }
+      });
+    }
     if (uploadButton && uploadForm) {
       uploadButton.addEventListener("click", function (event) {
         event.preventDefault();
         handleUploadSubmit(uploadForm);
       });
     }
-
     return modal;
   }
 
@@ -1076,7 +1033,10 @@
           event.preventDefault();
           const data = new FormData(commentForm);
           try {
-            const result = await window.ApostolicSupabase.insert("comments", { post_id: commentForm.dataset.commentId, user_id: currentUser().id, content: String(data.get("content") || "").trim() });
+            const commentPayload = { user_id: currentUser().id, content: String(data.get("content") || "").trim() };
+            if (commentForm.dataset.commentType === "community_post") commentPayload.post_id = commentForm.dataset.commentId;
+            else commentPayload.media_id = commentForm.dataset.commentId;
+            const result = await window.ApostolicSupabase.insert("comments", commentPayload);
             if (result?.error) throw result.error;
             closeDynamicModal(commentForm.closest(".apostolic-modal")); toast("Comment posted.", "success");
           } catch (error) { toast(error?.message || "Could not post comment.", "error"); }
@@ -1195,6 +1155,35 @@
       await toggleUserRelation(action === "like" ? "likes" : "saved_content", type, id, action === "like" ? "Like" : "Save");
       return;
     }
+    if (action === "love") {
+      if (!requireLogin()) return;
+      const api = window.ApostolicSupabase, user = currentUser();
+      try {
+        const existing = await api.select("reactions", "*", { eq: { user_id: user.id, content_type: type, content_id: id, reaction: "love" } });
+        if (existing?.data?.length) {
+          await api.remove("reactions", { user_id: user.id, content_type: type, content_id: id, reaction: "love" });
+          toast("Love removed.", "info");
+        } else {
+          const result = await api.insert("reactions", { user_id: user.id, content_type: type, content_id: id, reaction: "love" });
+          if (result?.error) throw result.error;
+          toast("❤️ Loved.", "success");
+        }
+      } catch (e) { toast(e?.message || "Could not update love.", "error"); }
+      return;
+    }
+    if (action === "share") {
+      const item = (window.__apostolicMediaById || {})[String(id)];
+      const shareText = item?.title || "Apostolic Media";
+      const shareUrl = window.location.href;
+      try {
+        if (navigator.share) await navigator.share({ title: shareText, text: shareText, url: shareUrl });
+        else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(shareUrl); toast("Share link copied.", "success"); }
+        else toast("Share is not supported on this device.", "info");
+      } catch (e) {
+        if (e?.name !== "AbortError") toast("Could not share this content.", "error");
+      }
+      return;
+    }
     if (action === "download") {
       if (!requireLogin()) return;
       const item = (window.__apostolicMediaById || {})[String(id)];
@@ -1213,8 +1202,7 @@
       return;
     }
     if (action === "comments") {
-      if (type !== "community_post") { toast("Comments are available for community posts.", "error"); return; }
-      await showComments(type, id, element.dataset.contentTitle || "Community Post");
+      await showComments(type, id, element.dataset.contentTitle || "Content");
       return;
     }
     if (action === "manage-playlist") {
@@ -1908,262 +1896,97 @@
   async function handleUploadSubmit(
     form
   ) {
-    const formData =
-      new FormData(form);
-
-    const title =
-      String(
-        formData.get("title") || ""
-      ).trim();
-
-    const description =
-      String(
-        formData.get("description") || ""
-      ).trim();
-
-    const file =
-      formData.get("file");
-
-    const type =
-      form.dataset.uploadForm ||
-      "document";
-
-    const statusElement =
-      form.querySelector(".upload-status");
-
-    function setUploadStatus(
-      message,
-      status = "info"
-    ) {
-      if (!statusElement) return;
-
-      statusElement.textContent =
-        message || "";
-
-      statusElement.dataset.status =
-        status;
-
-      statusElement.hidden =
-        !message;
-    }
+    const formData = new FormData(form);
+    const title = String(formData.get("title") || "").trim();
+    const description = String(formData.get("description") || "").trim();
+    const files = formData.getAll("file").filter(file => file && file.name);
+    const type = form.dataset.uploadForm || "document";
+    const statusElement = form.querySelector(".upload-status");
+    const submitButton = form.querySelector("[data-upload-submit]");
+    const setProgress = percent => {
+      const value = Math.max(0, Math.min(100, Math.round(percent)));
+      if (statusElement) {
+        statusElement.hidden = false;
+        statusElement.textContent = value + "%";
+      }
+      if (submitButton) submitButton.textContent = value + "%";
+    };
 
     const auth = window.ApostolicAuth;
-    const currentAuthUser = auth && auth.getUser ? auth.getUser() : null;
-    if (!auth || !auth.isLoggedIn() || !currentAuthUser) {
-      setUploadStatus("Please sign in before uploading content.", "error");
+    const user = auth && auth.getUser ? auth.getUser() : null;
+    if (!auth || !auth.isLoggedIn() || !user) {
       toast("Please sign in before uploading content.", "error");
       return;
     }
-
-    if (!title) {
-      setUploadStatus(
-        "Please enter a title.",
-        "error"
-      );
-      toast(
-        "Please enter a title.",
-        "error"
-      );
+    if (!files.length) {
+      toast("Please select at least one file.", "error");
+      return;
+    }
+    if (files.length > 12) {
+      toast("You can upload a maximum of 12 files at once.", "error");
       return;
     }
 
-    if (
-      !file ||
-      !file.name
-    ) {
-      setUploadStatus(
-        "Please select a file.",
-        "error"
-      );
-      toast(
-        "Please select a file.",
-        "error"
-      );
+    const api = window.ApostolicSupabase;
+    const config = window.ApostolicConfig || window.APP_CONFIG || {};
+    const bucketName = (config.UPLOADS && config.UPLOADS.BUCKET) || "Apostolic_Media";
+    if (!api || !api.isConfigured()) {
+      toast("Supabase is not configured.", "error");
       return;
     }
 
-    const submitButton =
-      form.querySelector(
-        "[data-upload-submit]"
-      );
+    if (submitButton) submitButton.disabled = true;
+    setProgress(0);
 
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent =
-        "Uploading...";
-    }
-
-    setUploadStatus(
-      "Preparing upload...",
-      "info"
-    );
+    let completed = 0;
+    let failed = 0;
 
     try {
-      const api =
-        window.ApostolicSupabase;
+      for (const file of files) {
+        try {
+          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_");
+          const path = `${type}/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
+          const uploadResult = await api.uploadFile(bucketName, path, file, { upsert: false });
+          if (!uploadResult || uploadResult.error) throw (uploadResult && uploadResult.error) || new Error("Storage upload failed.");
 
-      const config =
-        window.ApostolicConfig ||
-        window.APP_CONFIG || {};
+          const fileUrl = api.getPublicUrl(bucketName, path);
+          if (!fileUrl) throw new Error("Could not create the file URL.");
 
-      const bucketName =
-        (config.UPLOADS &&
-          config.UPLOADS.BUCKET) ||
-        "Apostolic_Media";
-
-      if (!api || !api.isConfigured()) {
-        throw new Error(
-          "Supabase is not configured. Please check js/config.js."
-        );
-      }
-
-      const safeName =
-        file.name
-          .replace(
-            /[^a-zA-Z0-9._-]/g,
-            "_"
-          )
-          .replace(
-            /_+/g,
-            "_"
-          );
-
-      const path =
-        `${type}/${Date.now()}-${safeName}`;
-
-      setUploadStatus(
-        "Uploading file to Supabase Storage...",
-        "info"
-      );
-
-      const uploadPromise =
-        api.uploadFile(
-          bucketName,
-          path,
-          file,
-          {
-            upsert: false
-          }
-        );
-
-      const uploadResult =
-        await Promise.race([
-          uploadPromise,
-          new Promise((_, reject) =>
-            setTimeout(
-              () =>
-                reject(
-                  new Error(
-                    "Upload timed out after 60 seconds. Please check your internet connection and Supabase Storage policy."
-                  )
-                ),
-              60000
-            )
-          )
-        ]);
-
-      if (
-        !uploadResult ||
-        uploadResult.error
-      ) {
-        throw (
-          uploadResult &&
-          uploadResult.error
-        ) || new Error(
-          "Supabase Storage upload failed."
-        );
-      }
-
-      setUploadStatus(
-        "File uploaded. Saving file information...",
-        "info"
-      );
-
-      const fileUrl =
-        api.getPublicUrl(
-          bucketName,
-          path
-        );
-
-      if (!fileUrl) {
-        throw new Error(
-          "The file uploaded, but its public URL could not be created."
-        );
-      }
-
-      const dbResult =
-        await api.insert(
-          "media_uploads",
-          {
-            title,
+          const baseTitle = title || file.name.replace(/.[^.]+$/, "");
+          const itemTitle = files.length > 1 ? `${baseTitle} ${completed + failed + 1}` : baseTitle;
+          const dbResult = await api.insert("media_uploads", {
+            title: itemTitle,
             description,
             type,
-            user_id: currentAuthUser.id,
+            user_id: user.id,
             file_name: file.name,
             file_path: path,
             file_url: fileUrl,
             file_size: file.size,
-            file_type:
-              file.type || null
-          }
-        );
-
-      if (
-        !dbResult ||
-        dbResult.error
-      ) {
-        throw (
-          dbResult &&
-          dbResult.error
-        ) || new Error(
-          "The file uploaded, but its database record could not be saved."
-        );
+            file_type: file.type || null
+          });
+          if (!dbResult || dbResult.error) throw (dbResult && dbResult.error) || new Error("Database save failed.");
+          completed++;
+        } catch (error) {
+          failed++;
+          console.error("Batch upload item failed:", error);
+        }
+        setProgress(((completed + failed) / files.length) * 100);
       }
 
-      setUploadStatus(
-        "Upload completed successfully.",
-        "success"
-      );
-
-      closeDynamicModal(
-        form.closest(
-          ".apostolic-modal"
-        )
-      );
-
-      toast(
-        `"${title}" uploaded successfully to Apostolic Media.`,
-        "success"
-      );
-
+      setProgress(100);
+      if (failed && !completed) {
+        toast("Upload failed.", "error");
+        if (submitButton) { submitButton.disabled = false; submitButton.textContent = "Upload"; }
+        return;
+      }
+      closeDynamicModal(form.closest(".apostolic-modal"));
+      toast(`${completed} file${completed === 1 ? "" : "s"} uploaded successfully.${failed ? ` ${failed} failed.` : ""}`, failed ? "info" : "success");
       refreshCurrentMediaPage();
-
     } catch (error) {
-      console.error(
-        "Supabase upload failed:",
-        error
-      );
-
-      const message =
-        error && error.message
-          ? error.message
-          : "Unknown upload error.";
-
-      setUploadStatus(
-        `Upload failed: ${message}`,
-        "error"
-      );
-
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent =
-          "Upload";
-      }
-
-      toast(
-        `Upload failed: ${message}`,
-        "error"
-      );
+      console.error("Batch upload failed:", error);
+      toast(error?.message || "Upload failed.", "error");
+      if (submitButton) { submitButton.disabled = false; submitButton.textContent = "Upload"; }
     }
   }
 
@@ -2590,26 +2413,39 @@
     } catch (error) { toast(error?.message || "Could not update " + label.toLowerCase() + ".", "error"); }
   }
 
-  function renderEngagementActions(contentType, contentId, fileUrl = "") {
+  function renderEngagementActions(contentType, contentId, fileUrl = "", contentKind = "") {
     const id = escapeHTML(contentId), type = escapeHTML(contentType);
-    const download = fileUrl ? '<button type="button" class="btn" data-content-action="download" data-content-type="' + type + '" data-content-id="' + id + '" data-file-url="' + escapeHTML(fileUrl) + '">Download</button>' : "";
-    return '<div class="card-actions">' +
-      '<button type="button" class="btn" data-content-action="like" data-content-type="' + type + '" data-content-id="' + id + '">Like</button>' +
-      '<button type="button" class="btn" data-content-action="save" data-content-type="' + type + '" data-content-id="' + id + '">Save</button>' + download + '</div>';
+    const isSong = contentKind === "song";
+    const comment = !isSong
+      ? '<button type="button" class="btn" data-content-action="comments" data-content-type="' + type + '" data-content-id="' + id + '" data-content-title="Content">💬 Comment</button>'
+      : "";
+    const love = !isSong
+      ? '<button type="button" class="btn" data-content-action="love" data-content-type="' + type + '" data-content-id="' + id + '">❤️ Love</button>'
+      : "";
+    const share = '<button type="button" class="btn" data-content-action="share" data-content-type="' + type + '" data-content-id="' + id + '">↗ Share</button>';
+    const like = '<button type="button" class="btn" data-content-action="like" data-content-type="' + type + '" data-content-id="' + id + '">👍 Like</button>';
+    return '<div class="card-actions feed-reactions">' + comment + like + love + share + '</div>';
   }
 
   async function showComments(contentType, contentId, title) {
     const api = window.ApostolicSupabase;
     if (!api || !api.isConfigured()) { toast("Supabase is not configured.", "error"); return; }
     try {
-      const result = await api.select("comments", "*", { eq: { post_id: contentId }, order: { column: "created_at", ascending: true }, limit: 100 });
+      const isCommunity = contentType === "community_post";
+      const filter = isCommunity ? { post_id: contentId } : { media_id: contentId };
+      const result = await api.select("comments", "*", { eq: filter, order: { column: "created_at", ascending: true }, limit: 100 });
       const comments = result?.data || [];
-      const list = comments.length ? comments.map(function (item) {
-        return renderCard("💬", "Comment", item.content, "");
-      }).join("") : renderCard("💬", "No Comments", "Be the first to comment.");
-      const form = currentUser() ? '<form class="dynamic-form" data-comment-form data-comment-id="' + escapeHTML(contentId) + '"><textarea name="content" rows="3" required placeholder="Write a comment..."></textarea><button type="submit" class="btn primary">Comment</button></form>' : '<p>Please sign in to comment.</p>';
+      const list = comments.length
+        ? comments.map(item => renderCard("💬", "Comment", item.content, "")).join("")
+        : renderCard("💬", "No Comments", "Be the first to comment.");
+      const form = currentUser()
+        ? '<form class="dynamic-form" data-comment-form data-comment-id="' + escapeHTML(contentId) + '" data-comment-type="' + escapeHTML(contentType) + '"><textarea name="content" rows="3" required placeholder="Write a comment..."></textarea><button type="submit" class="btn primary">Comment</button></form>'
+        : '<p>Please sign in to comment.</p>';
       createModal("Comments: " + title, '<section class="content-grid">' + list + '</section>' + form);
-    } catch (error) { toast("Could not load comments.", "error"); }
+    } catch (error) {
+      console.error("Comments failed:", error);
+      toast("Could not load comments.", "error");
+    }
   }
 
   async function loadSavedContent() {
@@ -3276,9 +3112,7 @@
       : "";
     let actions = "";
     if (options.community) {
-      actions = renderEngagementActions("community_post", item.id) +
-        '<button type="button" class="btn" data-content-action="comments" data-content-type="community_post" data-content-id="' + escapeHTML(item.id) + '" data-content-title="' + escapeHTML(title) + '">Comments</button>' +
-        contentActionButtons("community_post", item.id, item.user_id);
+      actions = renderEngagementActions("community_post", item.id, "", item.type);
     } else {
       const special = item.type === "song" && item.file_url
         ? '<button type="button" class="btn primary" data-media-play="' + escapeHTML(item.id) + '">▶ Play</button>'
@@ -3286,7 +3120,7 @@
           ? '<button type="button" class="btn primary" data-media-short="' + escapeHTML(item.id) + '">▶ Watch</button>'
           : "";
       const open = item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : "";
-      actions = special + open + renderEngagementActions("media_upload", item.id, item.file_url || "") + contentActionButtons("media_upload", item.id, item.user_id || null);
+      actions = special + open + renderEngagementActions("media_upload", item.id, item.file_url || "", item.type) + contentActionButtons("media_upload", item.id, item.user_id || null);
     }
     return '<article class="social-feed-item">' +
       '<header class="feed-author">' + avatar + '<div><strong>' + escapeHTML(name) + '</strong><span>' +
