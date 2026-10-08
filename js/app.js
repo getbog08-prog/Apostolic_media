@@ -1419,7 +1419,7 @@
           <button type="button" class="btn" data-bible-bookmark>🔖 Bookmark</button>
           <button type="button" class="btn" data-bible-offline>⬇️ Offline</button>
         </div>
-        <div class="bible-reader-note" data-bible-status>Choose a translation, book and chapter. Your position, bookmarks and reading settings are saved on this device.</div>
+        <div class="bible-reader-note" data-bible-status>Choose a translation, book and chapter. Your position, bookmarks and reading settings are saved on this device.</div><div class="bible-offline-progress" aria-hidden="true"><span data-bible-progress></span></div>
         <article class="bible-reader-page" data-bible-page>
           <span class="bible-reader-kicker" data-bible-kicker>KING JAMES VERSION</span>
           <h2 data-bible-title>Genesis 1</h2>
@@ -1447,9 +1447,9 @@
       page.dataset.readerTheme=settings.theme;
       $$("[data-bible-theme]",modal).forEach(function(btn){btn.classList.toggle("active",btn.dataset.bibleTheme===settings.theme);});
     }
-    const BIBLE_OFFLINE_CACHE="apostolic-bible-offline-v2";
+    const BIBLE_OFFLINE_CACHE="apostolic-bible-offline-v3";
     function bibleBookSlug(name){
-      return String(name||"").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");
+      return String(name||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
     }
     function bibleSourceUrl(v,b,c){
       const index=books.findIndex(function(item){return item[1]===b;});
@@ -1467,16 +1467,26 @@
         if(!chapter) return [];
         return Object.keys(chapter).map(function(verseNum){
           return {verseNum:verseNum,verse:String(chapter[verseNum]??"")};
-        });
+        }).filter(function(item){return item.verse!=="";});
       }
-      const chapter=Array.isArray(json?.chapters)
-        ? json.chapters.find(function(item){return Number(item.chapter)===Number(c);})
-        : null;
-      return chapter&&Array.isArray(chapter.verses)
-        ? chapter.verses.map(function(item){
-            return {verseNum:item.verse??"",verse:String(item.text?.am??item.text?.en??"")};
-          }).filter(function(item){return item.verse!=="";})
-        : [];
+      let chapter=null;
+      if(Array.isArray(json?.chapters)){
+        chapter=json.chapters.find(function(item){
+          return Number(item.chapter??item.number)===Number(c);
+        });
+      }else if(json?.chapters && typeof json.chapters==="object"){
+        chapter=json.chapters[String(c)];
+      }else if(json && json[String(c)]){
+        chapter=json[String(c)];
+      }
+      const verses=Array.isArray(chapter) ? chapter : (chapter&&Array.isArray(chapter.verses) ? chapter.verses : []);
+      return verses.map(function(item,index){
+        const rawText=item?.text;
+        const textValue=typeof rawText==="string"
+          ? rawText
+          : String(rawText?.am??rawText?.en??rawText?.gez??item?.am??item?.text_am??item?.content??"");
+        return {verseNum:item?.verse??item?.verseNum??item?.number??(index+1),verse:textValue};
+      }).filter(function(item){return item.verse.trim()!=="";});
     }
     async function downloadBibleOffline(){
       if(!offlineButton) return;
@@ -1495,7 +1505,9 @@
               await cache.put(url,response.clone());
             }
             done++;
-            status.textContent=Math.min(100,Math.round((done/total)*100))+"%";
+            const percent=Math.min(100,Math.round((done/total)*100));
+            status.textContent=percent+"%";
+            if(offlineProgress) offlineProgress.style.width=percent+"%";
           }
         }
         storage.set("apostolic_bible_offline_ready",{ready:true,savedAt:Date.now()});
@@ -1503,7 +1515,9 @@
         toast("ሙሉ መጽሐፍ ቅዱስ offline ተዘጋጅቷል።","success");
       }catch(error){
         console.error("Offline Bible download failed:",error);
-        status.textContent=Math.min(99,Math.round((done/total)*100))+"%";
+        const percent=Math.min(99,Math.round((done/total)*100));
+        status.textContent=percent+"%";
+        if(offlineProgress) offlineProgress.style.width=percent+"%";
         toast("የoffline ማውረድ አልተጠናቀቀም።","error");
       }finally{
         offlineButton.disabled=false;
@@ -1517,12 +1531,12 @@
       let response;
       try{
         response=await fetch(url,{headers:{"Accept":"application/json"}});
+        if(!response.ok) throw new Error("HTTP "+response.status);
       }catch(networkError){
         const offlineCache=await caches.open(BIBLE_OFFLINE_CACHE);
         response=await offlineCache.match(url);
         if(!response) throw networkError;
       }
-      if(!response.ok) throw new Error("Bible data unavailable");
       const json=await response.json();
       const data=chapterDataFromJson(v,json,c);
       if(!data.length) throw new Error("No verses were returned");
@@ -2996,37 +3010,6 @@
     },
 
     /* -------------------------------------------------------
-       LIVE
-       ------------------------------------------------------- */
-
-    live: {
-      title: "Live",
-
-      content: `
-        ${renderPageHero(
-          "Live",
-          "Watch live Christian programs and events."
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "🔴",
-            "Live Now",
-            "Live broadcasts will appear here."
-          )}
-
-          ${renderCard(
-            "📅",
-            "Upcoming",
-            "See upcoming live Christian programs."
-          )}
-
-        </section>
-      `
-    },
-
-    /* -------------------------------------------------------
        COMMUNITY
        ------------------------------------------------------- */
 
@@ -3434,37 +3417,6 @@
     },
 
     /* -------------------------------------------------------
-       WALLET
-       ------------------------------------------------------- */
-
-    wallet: {
-      title: "Wallet",
-
-      content: `
-        ${renderPageHero(
-          "Wallet",
-          "Manage your support and creator transactions."
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "◇",
-            "Wallet Balance",
-            "Your wallet balance will appear here."
-          )}
-
-          ${renderCard(
-            "💳",
-            "Transactions",
-            "View your transaction history."
-          )}
-
-        </section>
-      `
-    },
-
-    /* -------------------------------------------------------
        ADMIN
        ------------------------------------------------------- */
 
@@ -3495,43 +3447,6 @@
             "📊",
             "Analytics",
             "View platform activity and statistics."
-          )}
-
-        </section>
-      `
-    },
-
-    /* -------------------------------------------------------
-       SETTINGS
-       ------------------------------------------------------- */
-
-    settings: {
-      title: "Settings",
-
-      content: `
-        ${renderPageHero(
-          "Settings",
-          "Customize your Apostolic Media experience."
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "◐",
-            "Theme",
-            "Change between light, dark and system themes."
-          )}
-
-          ${renderCard(
-            "文",
-            "Language",
-            "Choose your preferred language."
-          )}
-
-          ${renderCard(
-            "🔔",
-            "Notifications",
-            "Manage notification preferences."
           )}
 
         </section>
