@@ -354,3 +354,6 @@
   .in-app-media-video{max-height:60vh}
   .in-app-media-image-wrap{max-height:65vh}
 }
+
+.in-app-text-reader{font-size:1.05rem;line-height:1.85;overflow-wrap:anywhere;white-space:pre-wrap;padding:clamp(12px,3vw,24px);background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.in-app-text-reader p{margin:0}
