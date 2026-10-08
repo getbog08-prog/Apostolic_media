@@ -341,40 +341,83 @@
     return await bucketClient.remove(paths);
   }
 
-  async function uploadFile(
-    bucketName,
-    path,
-    file,
-    options = {}
-  ) {
-    const bucketClient =
-      bucket(bucketName);
+  async function uploadFileResumable(bucketName, path, file, options = {}, onProgress) {
+    const supabase = getClient();
+    if (!supabase) throw new Error("Supabase is not configured.");
+    const sessionResult = await supabase.auth.getSession();
+    const token = sessionResult?.data?.session?.access_token;
+    if (!token) throw new Error("Please sign in again before uploading.");
 
-    if (!bucketClient) {
-      return {
-        data: null,
-        error: new Error(
-          "Supabase Storage is not configured."
-        )
+    const projectUrl = String(supabaseConfig.URL || "").replace(/\/$/, "");
+    const directUrl = projectUrl.replace(".supabase.co", ".storage.supabase.co");
+    const endpoint = directUrl + "/storage/v1/upload/resumable";
+    const chunkSize = 6 * 1024 * 1024;
+    const metadata = [
+      "bucketName " + btoa(unescape(encodeURIComponent(bucketName))),
+      "objectName " + btoa(unescape(encodeURIComponent(path))),
+      "contentType " + btoa(unescape(encodeURIComponent(options.contentType || file.type || "application/octet-stream"))),
+      "cacheControl " + btoa(unescape(encodeURIComponent(options.cacheControl || "3600")))
+    ].join(",");
+
+    const createUpload = () => new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", endpoint, true);
+      xhr.setRequestHeader("Authorization", "Bearer " + token);
+      xhr.setRequestHeader("Tus-Resumable", "1.0.0");
+      xhr.setRequestHeader("Upload-Length", String(file.size));
+      xhr.setRequestHeader("Upload-Metadata", metadata);
+      xhr.setRequestHeader("x-upsert", options.upsert ? "true" : "false");
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.getResponseHeader("Location"));
+        else reject(new Error(xhr.responseText || "Could not start resumable upload."));
       };
+      xhr.onerror = () => reject(new Error("Network error while starting upload."));
+      xhr.send();
+    });
+
+    const location = await createUpload();
+    if (!location) throw new Error("Upload session was not created.");
+
+    let offset = 0;
+    while (offset < file.size) {
+      const chunk = file.slice(offset, Math.min(offset + chunkSize, file.size));
+      let attempts = 0;
+      while (true) {
+        try {
+          const nextOffset = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("PATCH", location, true);
+            xhr.setRequestHeader("Authorization", "Bearer " + token);
+            xhr.setRequestHeader("Tus-Resumable", "1.0.0");
+            xhr.setRequestHeader("Content-Type", "application/offset+octet-stream");
+            xhr.setRequestHeader("Upload-Offset", String(offset));
+            xhr.upload.onprogress = event => {
+              if (event.lengthComputable && typeof onProgress === "function") {
+                onProgress(offset + event.loaded, file.size);
+              }
+            };
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                const serverOffset = Number(xhr.getResponseHeader("Upload-Offset"));
+                resolve(Number.isFinite(serverOffset) ? serverOffset : offset + chunk.size);
+              } else reject(new Error(xhr.responseText || "Chunk upload failed."));
+            };
+            xhr.onerror = () => reject(new Error("Network error while uploading chunk."));
+            xhr.send(chunk);
+          });
+          offset = nextOffset;
+          if (typeof onProgress === "function") onProgress(offset, file.size);
+          break;
+        } catch (error) {
+          attempts++;
+          if (attempts >= 3) throw error;
+          await new Promise(resolve => setTimeout(resolve, attempts * 1500));
+        }
+      }
     }
-
-    const fileOptions = {
-      upsert:
-        options.upsert === true
-    };
-
-    if (options.contentType) {
-      fileOptions.contentType =
-        options.contentType;
-    }
-
-    return await bucketClient.upload(
-      path,
-      file,
-      fileOptions
-    );
+    return { data: { path }, error: null };
   }
+
 
   function getPublicUrl(
     bucketName,
@@ -470,6 +513,7 @@
     storage,
     bucket,
     uploadFile,
+    uploadFileResumable,
     removeFile,
     getPublicUrl,
 
