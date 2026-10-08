@@ -780,59 +780,6 @@
           return;
         }
 
-        const profileEdit = event.target.closest("[data-profile-form]");
-        if (profileEdit) {
-          event.preventDefault();
-          if (!requireLogin()) return;
-          const data = new FormData(profileEdit);
-          try {
-            const result = await window.ApostolicSupabase.update("profiles", {
-              full_name: String(data.get("full_name") || "").trim(),
-              username: String(data.get("username") || "").trim() || null,
-              bio: String(data.get("bio") || "").trim()
-            }, { id: currentUser().id });
-            if (result?.error) throw result.error;
-            toast("Profile updated successfully.", "success"); renderPage("profile");
-          } catch (error) { toast(error?.message || "Could not update profile.", "error"); }
-          return;
-        }
-
-        const questionForm = event.target.closest("[data-question-form]");
-        if (questionForm) {
-          event.preventDefault();
-          const data = new FormData(questionForm);
-          try {
-            const result = await window.ApostolicSupabase.insert("questions", { user_id: currentUser().id, title: String(data.get("title") || "").trim(), content: String(data.get("content") || "").trim() });
-            if (result?.error) throw result.error;
-            closeDynamicModal(questionForm.closest(".apostolic-modal")); toast("Question posted.", "success"); renderPage("qa");
-          } catch (error) { toast(error?.message || "Could not post question.", "error"); }
-          return;
-        }
-
-        const answerForm = event.target.closest("[data-answer-form]");
-        if (answerForm) {
-          event.preventDefault();
-          const data = new FormData(answerForm);
-          try {
-            const result = await window.ApostolicSupabase.insert("answers", { question_id: answerForm.dataset.questionId, user_id: currentUser().id, content: String(data.get("content") || "").trim() });
-            if (result?.error) throw result.error;
-            closeDynamicModal(answerForm.closest(".apostolic-modal")); toast("Answer posted.", "success"); renderPage("qa");
-          } catch (error) { toast(error?.message || "Could not post answer.", "error"); }
-          return;
-        }
-
-        const commentForm = event.target.closest("[data-comment-form]");
-        if (commentForm) {
-          event.preventDefault();
-          const data = new FormData(commentForm);
-          try {
-            const result = await window.ApostolicSupabase.insert("comments", { post_id: commentForm.dataset.commentId, user_id: currentUser().id, content: String(data.get("content") || "").trim() });
-            if (result?.error) throw result.error;
-            closeDynamicModal(commentForm.closest(".apostolic-modal")); toast("Comment posted.", "success");
-          } catch (error) { toast(error?.message || "Could not post comment.", "error"); }
-          return;
-        }
-
         const contentAction = event.target.closest("[data-content-action]");
         if (contentAction) {
           event.preventDefault();
@@ -939,6 +886,59 @@
             console.error("Authentication failed:", error);
             toast(error && error.message ? error.message : "Authentication failed.", "error");
           }
+          return;
+        }
+
+        const profileEdit = event.target.closest("[data-profile-form]");
+        if (profileEdit) {
+          event.preventDefault();
+          if (!requireLogin()) return;
+          const data = new FormData(profileEdit);
+          try {
+            const result = await window.ApostolicSupabase.update("profiles", {
+              full_name: String(data.get("full_name") || "").trim(),
+              username: String(data.get("username") || "").trim() || null,
+              bio: String(data.get("bio") || "").trim()
+            }, { id: currentUser().id });
+            if (result?.error) throw result.error;
+            toast("Profile updated successfully.", "success"); renderPage("profile");
+          } catch (error) { toast(error?.message || "Could not update profile.", "error"); }
+          return;
+        }
+
+        const questionForm = event.target.closest("[data-question-form]");
+        if (questionForm) {
+          event.preventDefault();
+          const data = new FormData(questionForm);
+          try {
+            const result = await window.ApostolicSupabase.insert("questions", { user_id: currentUser().id, title: String(data.get("title") || "").trim(), content: String(data.get("content") || "").trim() });
+            if (result?.error) throw result.error;
+            closeDynamicModal(questionForm.closest(".apostolic-modal")); toast("Question posted.", "success"); renderPage("qa");
+          } catch (error) { toast(error?.message || "Could not post question.", "error"); }
+          return;
+        }
+
+        const answerForm = event.target.closest("[data-answer-form]");
+        if (answerForm) {
+          event.preventDefault();
+          const data = new FormData(answerForm);
+          try {
+            const result = await window.ApostolicSupabase.insert("answers", { question_id: answerForm.dataset.questionId, user_id: currentUser().id, content: String(data.get("content") || "").trim() });
+            if (result?.error) throw result.error;
+            closeDynamicModal(answerForm.closest(".apostolic-modal")); toast("Answer posted.", "success"); renderPage("qa");
+          } catch (error) { toast(error?.message || "Could not post answer.", "error"); }
+          return;
+        }
+
+        const commentForm = event.target.closest("[data-comment-form]");
+        if (commentForm) {
+          event.preventDefault();
+          const data = new FormData(commentForm);
+          try {
+            const result = await window.ApostolicSupabase.insert("comments", { post_id: commentForm.dataset.commentId, user_id: currentUser().id, content: String(data.get("content") || "").trim() });
+            if (result?.error) throw result.error;
+            closeDynamicModal(commentForm.closest(".apostolic-modal")); toast("Comment posted.", "success");
+          } catch (error) { toast(error?.message || "Could not post comment.", "error"); }
           return;
         }
 
