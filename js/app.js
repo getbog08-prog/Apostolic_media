@@ -2875,27 +2875,7 @@
       title: "Bible Q&A",
 
       content: `
-        ${renderPageHero(
-          "Bible Q&A",
-          "Ask questions and explore biblical answers.",
-          renderAction("Ask a Question","ask-question")
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "❓",
-            "Ask a Question",
-            "Submit a Bible-related question."
-          )}
-
-          ${renderCard(
-            "📖",
-            "Answers",
-            "Explore answers to common Bible questions."
-          )}
-
-        </section>
+        ${renderPageHero("Bible Q&A", "Ask questions and explore biblical answers.", renderAction("Ask a Question","ask-question"))}
       `
     },
 
@@ -2907,30 +2887,7 @@
       title: "Events",
 
       content: `
-        ${renderPageHero(
-          "Events",
-          "Christian events, meetings and programs.",
-          renderAction(
-            "Create Event",
-            "create-event"
-          )
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "📅",
-            "Upcoming Events",
-            "See upcoming Christian events."
-          )}
-
-          ${renderCard(
-            "⛪",
-            "Church Programs",
-            "Discover Christian programs and gatherings."
-          )}
-
-        </section>
+        ${renderPageHero("Events", "Christian events, meetings and programs.", renderAction("Create Event","create-event"))}
       `
     },
 
@@ -2941,14 +2898,7 @@
     folders: {
       title: "Folders",
       content: `
-        ${renderPageHero(
-          "Folders",
-          "Organize Christian resources into your own collections.",
-          renderAction("Create Folder","create-folder")
-        )}
-        <section class="content-grid">
-          ${renderCard("📁","Resource Folders","Create and manage folders for your Christian resources.")}
-        </section>
+        ${renderPageHero("Folders", "Organize Christian resources into your own collections.", renderAction("Create Folder","create-folder"))}
       `
     },
 
@@ -2956,36 +2906,7 @@
       title: "Playlists",
 
       content: `
-        ${renderPageHero(
-          "Playlists",
-          "Create and organize your favorite Christian media.",
-          renderAction(
-            "Create Playlist",
-            "create-playlist"
-          )
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "☷",
-            "My Playlists",
-            "Your personal playlists will appear here."
-          )}
-
-          ${renderCard(
-            "🎵",
-            "Worship Playlist",
-            "Organize worship songs for listening."
-          )}
-
-          ${renderCard(
-            "🎙️",
-            "Sermon Playlist",
-            "Keep your favorite sermons together."
-          )}
-
-        </section>
+        ${renderPageHero("Playlists", "Create and organize your favorite Christian media.", renderAction("Create Playlist","create-playlist"))}
       `
     },
          /* -------------------------------------------------------
@@ -3031,6 +2952,13 @@
       `
     },
 
+    bible-study: {
+      title: "Bible Study",
+      content: `
+        ${renderPageHero("Bible Study", "Study the Word through Bible lessons and resources.")}
+      `
+    },
+
     /* -------------------------------------------------------
        PROFILE
        ------------------------------------------------------- */
@@ -3039,35 +2967,7 @@
       title: "Profile",
 
       content: `
-        ${renderPageHero(
-          "Profile",
-          "Manage your Apostolic Media profile."
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "👤",
-            "My Profile",
-            "View and manage your profile information.",
-            `<button class="btn" type="button" data-page-action="sign-in">Sign In / Create Account</button>`
-          )}
-
-          ${renderCard(
-            "♡",
-            "Saved",
-            "Access your saved Christian content.",
-            `<a class="btn" href="#saved">Open Saved</a>`
-          )}
-
-          ${renderCard(
-            "⇩",
-            "Downloads",
-            "Access your downloaded content.",
-            `<a class="btn" href="#downloads">Downloads</a>`
-          )}
-
-        </section>
+        ${renderPageHero("Profile", "Manage your Apostolic Media profile.", renderAction("Sign In / Create Account","sign-in"))}
       `
     },
 
@@ -3079,26 +2979,7 @@
       title: "Notifications",
 
       content: `
-        ${renderPageHero(
-          "Notifications",
-          "Stay informed about new Christian content and activity."
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "♧",
-            "Recent Notifications",
-            "Your recent notifications will appear here."
-          )}
-
-          ${renderCard(
-            "🔔",
-            "Updates",
-            "Receive important updates from Apostolic Media."
-          )}
-
-        </section>
+        ${renderPageHero("Notifications", "Stay informed about new Christian content and activity.", "")}
       `
     },
 
@@ -3110,26 +2991,7 @@
       title: "Downloads",
 
       content: `
-        ${renderPageHero(
-          "Downloads",
-          "Access content you have downloaded."
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "⇩",
-            "Downloaded Content",
-            "Your downloaded songs, videos and documents will appear here."
-          )}
-
-          ${renderCard(
-            "📁",
-            "Files",
-            "Manage your downloaded Christian resources."
-          )}
-
-        </section>
+        ${renderPageHero("Downloads", "Access content you have downloaded.", "")}
       `
     },
 
@@ -3141,26 +3003,7 @@
       title: "Saved",
 
       content: `
-        ${renderPageHero(
-          "Saved",
-          "Keep your favorite Christian content in one place."
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "♡",
-            "Saved Content",
-            "Your saved content will appear here."
-          )}
-
-          ${renderCard(
-            "📖",
-            "Saved Bible Verses",
-            "Keep important Bible verses for later."
-          )}
-
-        </section>
+        ${renderPageHero("Saved", "Access the Christian content you saved.", "")}
       `
     },
 
@@ -3172,40 +3015,7 @@
       title: "Creator Studio",
 
       content: `
-        ${renderPageHero(
-          "Creator Studio",
-          "Create and manage Christian media content.",
-          renderAction(
-            "Upload Document",
-            "upload-document"
-          ) +
-          renderAction(
-            "Create Teaching",
-            "create-teaching"
-          )
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "◈",
-            "Content",
-            "Manage your Christian content."
-          )}
-
-          ${renderCard(
-            "📊",
-            "Creator Dashboard",
-            "Monitor your content activity."
-          )}
-
-          ${renderCard(
-            "📤",
-            "Uploads",
-            "Upload new Christian media."
-          )}
-
-        </section>
+        ${renderPageHero("Creator Studio", "Create, upload and manage your Christian content.", "")}
       `
     },
 
@@ -3217,32 +3027,7 @@
       title: "Admin",
 
       content: `
-        ${renderPageHero(
-          "Admin",
-          "Manage the Apostolic Media platform."
-        )}
-
-        <section class="content-grid">
-
-          ${renderCard(
-            "⚙️",
-            "Platform Management",
-            "Manage platform settings and content."
-          )}
-
-          ${renderCard(
-            "👥",
-            "Users",
-            "Manage platform users."
-          )}
-
-          ${renderCard(
-            "📊",
-            "Analytics",
-            "View platform activity and statistics."
-          )}
-
-        </section>
+        ${renderPageHero("Admin", "Manage content and platform activity.", "")}
       `
     },
 
