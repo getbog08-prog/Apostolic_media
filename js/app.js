@@ -2806,7 +2806,9 @@
     initThemeControls();
     initLanguageControls();
 
-    loadMediaForPage(cleanRoute);\n\n    loadCommunityPosts();
+    loadMediaForPage(cleanRoute);
+
+    loadCommunityPosts();
 
     /*
       Always bring the newly selected page
