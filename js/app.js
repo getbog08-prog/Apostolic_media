@@ -816,6 +816,21 @@
           return;
         }
 
+        const mediaPlay = event.target.closest("[data-media-play]");
+        if (mediaPlay) {
+          event.preventDefault();
+          const item = (window.__apostolicSongs || []).find(function(x){ return String(x.id) === String(mediaPlay.dataset.mediaPlay); });
+          openMusicPlayer(item);
+          return;
+        }
+        const mediaShort = event.target.closest("[data-media-short]");
+        if (mediaShort) {
+          event.preventDefault();
+          const item = (window.__apostolicShorts || []).find(function(x){ return String(x.id) === String(mediaShort.dataset.mediaShort); });
+          if (item) openShortsFeed([item]);
+          return;
+        }
+
         const contentAction = event.target.closest("[data-content-action]");
         if (contentAction) {
           event.preventDefault();
@@ -3475,26 +3490,18 @@
     });
 
     const cards = [];
+    if (route === "videos") window.__apostolicShorts = uploaded.filter(function(item){ return item && item.file_url; });
+    if (route === "songs") window.__apostolicSongs = uploaded.filter(function(item){ return item && item.file_url; });
 
     uploaded.forEach(function (item) {
       const title = item.title || item.file_name || "Untitled";
-      const description =
-        item.description ||
-        (item.file_name
-          ? "Uploaded media file."
-          : "Saved media content.");
-
-      const openAction = item.file_url
-        ? `<a class="btn" href="${escapeHTML(item.file_url)}" target="_blank" rel="noopener">Open File</a>`
-        : "";
-      const action = openAction + renderEngagementActions("media_upload", item.id, item.file_url || "") + contentActionButtons("media_upload", item.id, item.user_id || null);
-
-      cards.push(renderCard(
-        item.file_name ? "📎" : "📝",
-        title,
-        description,
-        action
-      ));
+      const description = item.description || (item.file_name ? "Uploaded media file." : "Saved media content.");
+      const openAction = item.file_url ? `<a class="btn" href="${escapeHTML(item.file_url)}" target="_blank" rel="noopener">Open File</a>` : "";
+      let specialAction = "";
+      if (route === "songs" && item.file_url) specialAction = '<button type="button" class="btn primary" data-media-play="' + escapeHTML(item.id) + '">▶ Play</button>';
+      if (route === "videos" && item.file_url) specialAction = '<button type="button" class="btn primary" data-media-short="' + escapeHTML(item.id) + '">▶ Watch</button>';
+      const action = specialAction + openAction + renderEngagementActions("media_upload", item.id, item.file_url || "") + contentActionButtons("media_upload", item.id, item.user_id || null);
+      cards.push(renderCard(route === "songs" ? "🎵" : route === "videos" ? "▶" : (item.file_name ? "📎" : "📝"), title, description, action));
     });
 
     localItems.forEach(function (item) {
