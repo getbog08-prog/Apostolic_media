@@ -1056,6 +1056,28 @@
       await showComments(type, id, element.dataset.contentTitle || "Content");
       return;
     }
+    if (action === "edit-local" || action === "delete-local") {
+      const items = storage.get("apostolic_created_items", []);
+      const index = items.findIndex(function(item) {
+        return String(item.id) === String(id) && String(item.type) === String(type);
+      });
+      if (index < 0) { toast("Local content was not found.", "error"); return; }
+      if (action === "delete-local") {
+        if (!window.confirm("Delete this content? This action cannot be undone.")) return;
+        items.splice(index, 1);
+        storage.set("apostolic_created_items", items);
+        toast("Content deleted successfully.", "success");
+        renderPage(window.location.hash.substring(1) || "home");
+        return;
+      }
+      const item = items[index];
+      createModal("Edit Content",
+        '<form class="dynamic-form" data-local-edit-form data-edit-id="' + escapeHTML(item.id) + '" data-edit-type="' + escapeHTML(item.type) + '">' +
+        '<div class="form-group"><label>Title</label><input name="title" type="text" value="' + escapeHTML(item.title || "") + '" required></div>' +
+        '<div class="form-group"><label>Description</label><textarea name="description" rows="5">' + escapeHTML(item.description || "") + '</textarea></div>' +
+        '<button type="submit" class="btn primary">Save Changes</button></form>');
+      return;
+    }
     if (action === "answer") { showAnswerForm(id); return; }
     if (action === "question-answers") {
       try {
