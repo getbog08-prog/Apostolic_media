@@ -708,7 +708,9 @@
       const posts = result && Array.isArray(result.data) ? result.data : [];
       section.innerHTML = posts.length
         ? posts.map(function (post) {
-            const actions = contentActionButtons("community_post", post.id, post.user_id);
+            const actions = renderEngagementActions("community_post", post.id) +
+              '<button type="button" class="btn" data-content-action="comments" data-content-type="community_post" data-content-id="' + escapeHTML(post.id) + '" data-content-title="' + escapeHTML(post.title || "Community Post") + '">Comments</button>' +
+              contentActionButtons("community_post", post.id, post.user_id);
             return renderCard("💬", post.title || "Christian Community", post.content || "", actions);
           }).join("")
         : renderCard("💬", "No Posts Yet", "Be the first to share encouragement with the community.");
