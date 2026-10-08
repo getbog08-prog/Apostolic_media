@@ -1573,7 +1573,7 @@
     } else if (isPdf) {
       viewer = '<iframe class="in-app-media-pdf" title="' + escapeHTML(item.title || "PDF document") + '" src="' + escapeHTML(url) + '#toolbar=1&navpanes=0" loading="lazy"></iframe>';
     } else {
-      viewer = '<div class="in-app-media-document"><div class="card-icon">📄</div><h3>' + escapeHTML(item.title || item.file_name || "Document") + '</h3><p>This file format may not preview in every browser. Try the in-app preview below, or save a copy to your device.</p><iframe class="in-app-media-pdf" title="' + escapeHTML(item.title || "Document preview") + '" src="' + escapeHTML(url) + '" loading="lazy"></iframe><a class="btn primary" href="' + escapeHTML(url) + '" download>Download file</a></div>';
+      viewer = '<div class="in-app-media-document"><div class="card-icon">📄</div><h3>' + escapeHTML(item.title || item.file_name || "Document") + '</h3><p>This document format is best opened with a reader app on your device.</p><div class="document-file-meta">📎 ' + escapeHTML(item.file_name || "Document file") + '</div><a class="btn primary document-download-btn" href="' + escapeHTML(url) + '" download>⬇️ Download file</a><p class="document-open-note">After downloading, choose a reader app from your device Open with options.</p></div>';
     }
 
     createModal(item.title || item.file_name || "Read content",
