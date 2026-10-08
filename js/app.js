@@ -1383,19 +1383,38 @@
 
   function openMusicPlayer(item) {
     if (!item || !item.file_url) { toast("This song does not have a playable file yet.","error"); return; }
-    const modal=createModal("Now Playing", `
-      <div class="music-player-modal">
-        <div class="music-art">🎵</div>
-        <span class="home-section-kicker">APOSTOLIC MUSIC</span>
-        <h2>${escapeHTML(item.title || "Untitled Song")}</h2>
-        <p>${escapeHTML(item.description || "Christian worship music")}</p>
-        <audio controls autoplay preload="metadata" src="${escapeHTML(item.file_url)}"></audio>
-        <div class="card-actions">
-          <button type="button" class="btn" data-content-action="like" data-content-type="media_upload" data-content-id="${escapeHTML(item.id)}">Like</button>
-          <button type="button" class="btn" data-content-action="save" data-content-type="media_upload" data-content-id="${escapeHTML(item.id)}">Save</button>
-        </div>
-      </div>`);
-    const audio=modal.querySelector("audio"); if(audio) audio.focus();
+    let player = document.querySelector(".apostolic-mini-player");
+    if (!player) {
+      player = document.createElement("aside");
+      player.className = "apostolic-mini-player";
+      document.body.appendChild(player);
+    }
+    player.innerHTML = `
+      <div class="mini-player-art">🎵</div>
+      <div class="mini-player-info"><strong>${escapeHTML(item.title || "Untitled Song")}</strong><span>${escapeHTML(item.description || "Christian worship")}</span></div>
+      <audio controls autoplay preload="metadata" src="${escapeHTML(item.file_url)}"></audio>
+      <button type="button" class="mini-player-close" aria-label="Close player">×</button>`;
+    player.hidden = false;
+    const audio = player.querySelector("audio");
+    const close = player.querySelector(".mini-player-close");
+    if (close) close.addEventListener("click", function(){ audio.pause(); player.remove(); });
+    storage.set("apostolic_last_song",{id:item.id,title:item.title||"",file_url:item.file_url});
+    toast("Now playing: " + (item.title || "Song"), "success");
+  }
+
+  function initMiniPlayer() {
+    const saved = storage.get("apostolic_last_song", null);
+    if (!saved || !saved.file_url || document.querySelector(".apostolic-mini-player")) return;
+    const player = document.createElement("aside");
+    player.className = "apostolic-mini-player";
+    player.innerHTML = `
+      <div class="mini-player-art">🎵</div>
+      <div class="mini-player-info"><strong>${escapeHTML(saved.title || "Last Song")}</strong><span>Ready to continue</span></div>
+      <audio controls preload="metadata" src="${escapeHTML(saved.file_url)}"></audio>
+      <button type="button" class="mini-player-close" aria-label="Close player">×</button>`;
+    document.body.appendChild(player);
+    const audio=player.querySelector("audio"), close=player.querySelector(".mini-player-close");
+    if(close) close.addEventListener("click",function(){audio.pause();player.remove();});
   }
 
   function openShortsFeed(items) {
@@ -3780,6 +3799,8 @@
     initErrorHandling();
 
     initRouter();
+
+    initMiniPlayer();
 
     window.dispatchEvent(
       new CustomEvent(
