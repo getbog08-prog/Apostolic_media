@@ -1110,6 +1110,15 @@
     const id = element.dataset.contentId;
     if (!action || !id) return;
 
+    if (action === "read-notification") {
+      if(!requireLogin()) return;
+      try {
+        const r=await window.ApostolicSupabase.update("notifications",{is_read:true},{id:id,user_id:currentUser().id});
+        if(r?.error) throw r.error;
+        toast("Notification marked as read.","success"); renderPage("notifications");
+      } catch(e){toast(e?.message||"Could not update notification.","error");}
+      return;
+    }
     if (action === "like" || action === "save") {
       await toggleUserRelation(action === "like" ? "likes" : "saved_content", type, id, action === "like" ? "Like" : "Save");
       return;
@@ -1318,6 +1327,12 @@
 
       case "sign-up":
         showAuthForm("signup");
+        break;
+
+      case "sign-out":
+        if (window.ApostolicAuth?.signOut) {
+          window.ApostolicAuth.signOut().then(function(){ toast("Signed out successfully.","success"); renderPage("home"); });
+        }
         break;
 
       case "create-teaching":
@@ -2175,7 +2190,11 @@
     if (!container || !user || !api || !api.isConfigured()) return;
     try {
       const result = await api.select("notifications", "*", { eq: { user_id: user.id }, order: { column: "created_at", ascending: false }, limit: 100 });
-      const html = (result?.data || []).map(function(n) { return renderCard(n.is_read ? "🔔" : "🟢", n.title, n.message, n.link ? '<a class="btn" href="' + escapeHTML(n.link) + '">Open</a>' : ""); }).join("");
+      const html = (result?.data || []).map(function(n) {
+        const readButton = n.is_read ? "" : '<button type="button" class="btn" data-content-action="read-notification" data-content-id="' + escapeHTML(n.id) + '">Mark as read</button>';
+        const open = n.link ? '<a class="btn" href="' + escapeHTML(n.link) + '">Open</a>' : "";
+        return renderCard(n.is_read ? "🔔" : "🟢", n.title, n.message, open + readButton);
+      }).join("");
       container.insertAdjacentHTML("beforeend", '<section class="content-grid">' + (html || renderCard("🔔", "No Notifications", "You are all caught up.")) + '</section>');
     } catch (error) { console.error("Notifications failed:", error); }
   }
@@ -2186,7 +2205,7 @@
     try {
       const result = await api.select("profiles", "*", { eq: { id: user.id } });
       const profile = result?.data?.[0] || {};
-      container.insertAdjacentHTML("beforeend", '<section class="content-grid"><article class="card"><h3>Profile</h3><p>' + escapeHTML(profile.full_name || user.email || "User") + '</p><p>' + escapeHTML(user.email || "") + '</p></article><article class="card"><h3>Edit Profile</h3><form class="dynamic-form" data-profile-form><input name="full_name" value="' + escapeHTML(profile.full_name || "") + '" placeholder="Full name"><input name="username" value="' + escapeHTML(profile.username || "") + '" placeholder="Username"><textarea name="bio" rows="4" placeholder="Bio">' + escapeHTML(profile.bio || "") + '</textarea><button type="submit" class="btn primary">Save Profile</button></form></article></section>');
+      container.insertAdjacentHTML("beforeend", '<section class="content-grid"><article class="card"><h3>Profile</h3><p>' + escapeHTML(profile.full_name || user.email || "User") + '</p><p>' + escapeHTML(user.email || "") + '</p><p>Role: ' + escapeHTML(profile.role || "user") + '</p><button type="button" class="btn" data-page-action="sign-out">Sign Out</button></article><article class="card"><h3>Edit Profile</h3><form class="dynamic-form" data-profile-form><input name="full_name" value="' + escapeHTML(profile.full_name || "") + '" placeholder="Full name"><input name="username" value="' + escapeHTML(profile.username || "") + '" placeholder="Username"><textarea name="bio" rows="4" placeholder="Bio">' + escapeHTML(profile.bio || "") + '</textarea><button type="submit" class="btn primary">Save Profile</button></form></article></section>');
     } catch (error) { console.error("Profile failed:", error); }
   }
 
