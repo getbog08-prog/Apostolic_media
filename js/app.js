@@ -1248,6 +1248,16 @@
       return;
     }
 
+    if (action === "edit" && type === "folder") {
+      try { const r=await api.select("folders","*",{eq:{id:id,created_by:auth.getUser().id}}); const row=r?.data?.[0]; if(!row){toast("Folder not found.","error");return;} showFolderForm(row); } catch(e){toast(e?.message||"Could not load folder.","error");}
+      return;
+    }
+    if (action === "delete" && type === "folder") {
+      if (!window.confirm("Delete this folder?")) return;
+      try { const r=await api.remove("folders",{id:id,created_by:auth.getUser().id}); if(r?.error) throw r.error; toast("Folder deleted.","success"); renderPage("folders"); } catch(e){toast(e?.message||"Could not delete folder.","error");}
+      return;
+    }
+
     if (action === "delete") {
       if (!window.confirm("Delete this content? This action cannot be undone.")) return;
       try {
