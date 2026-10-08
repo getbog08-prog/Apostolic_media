@@ -1980,9 +1980,8 @@
       }
     };
 
-    // Three workers keep a multi-file upload moving without creating too much
-    // contention on mobile connections. A single large file still uses resumable chunks.
-    const workerCount = Math.min(3, files.length);
+    // Four workers keep batch uploads moving while remaining reasonable on mobile connections. A single large file still uses resumable chunks.
+    const workerCount = Math.min(4, files.length);
     await Promise.all(Array.from({ length: workerCount }, () => worker()));
 
     progress();
