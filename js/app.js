@@ -793,6 +793,17 @@
           }catch(e){toast(e?.message||"Could not update role.","error");}
           return;
         }
+        const mediaPublishButton=event.target.closest("[data-admin-media-id]");
+        if(mediaPublishButton){
+          event.preventDefault(); if(!requireLogin()) return;
+          try{
+            const result=await window.ApostolicSupabase.update("media_uploads",{is_published:mediaPublishButton.dataset.adminPublish==="true"},{id:mediaPublishButton.dataset.adminMediaId});
+            if(result?.error) throw result.error;
+            toast("Media moderation updated.","success"); renderPage("admin");
+          }catch(e){toast(e?.message||"Could not moderate media.","error");}
+          return;
+        }
+
         const publishButton=event.target.closest("[data-admin-post-id]");
         if(publishButton){
           event.preventDefault();
@@ -3307,34 +3318,23 @@
     try {
       const profileResult=await api.select("profiles","*",{eq:{id:user.id}});
       const profile=profileResult?.data?.[0]||{};
-      const role=profile.role||"user";
-      if(!["admin","super_admin"].includes(role)){
-        container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+renderCard("🔒","Admin Access","Administrator permission is required to manage the platform.")+'</section>');
+      if(!["admin","super_admin"].includes(profile.role||"user")){
+        container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+renderCard("🔒","Admin Access","Administrator permission is required.")+'</section>');
         return;
       }
-      const users=await api.select("profiles","*",{order:{column:"created_at",ascending:false},limit:200});
-      const posts=await api.select("community_posts","*",{order:{column:"created_at",ascending:false},limit:100});
-      const media=await api.select("media_uploads","*",{order:{column:"created_at",ascending:false},limit:100});
-      const userRows=users?.data||[], postRows=posts?.data||[], mediaRows=media?.data||[];
-      const stats='<section class="content-grid">'+
-        renderCard("👥","Users",String(userRows.length))+
-        renderCard("💬","Community Posts",String(postRows.length))+
-        renderCard("📁","Uploaded Media",String(mediaRows.length))+
-        '</section>';
-      const userCards=userRows.map(function(p){
-        const actions=p.id===user.id?"":"<button type=\"button\" class=\"btn\" data-admin-role-id=\""+escapeHTML(p.id)+"\">Change Role</button>";
-        return renderCard("👤",p.full_name||p.username||"User",String(p.role||"user"),actions);
-      }).join("");
-      const postCards=postRows.map(function(p){
-        const toggle=p.is_published?"Unpublish":"Publish";
-        return renderCard("💬",p.title||"Community Post",p.content||"",'<button type="button" class="btn" data-admin-post-id="'+escapeHTML(p.id)+'" data-admin-publish="'+String(!p.is_published)+'">'+toggle+'</button>');
-      }).join("");
-      container.insertAdjacentHTML("beforeend",stats+
-        '<section class="content-grid">'+
-        (userCards||renderCard("👥","No Users",""))+
-        '</section><section class="content-grid">'+
-        (postCards||renderCard("💬","No Posts",""))+
-        '</section>');
+      const [users,posts,media,downloads,likes]=await Promise.all([
+        api.select("profiles","*",{order:{column:"created_at",ascending:false},limit:200}),
+        api.select("community_posts","*",{order:{column:"created_at",ascending:false},limit:100}),
+        api.select("media_uploads","*",{order:{column:"created_at",ascending:false},limit:100}),
+        api.select("downloads","*",{order:{column:"created_at",ascending:false},limit:200}),
+        api.select("likes","*",{order:{column:"created_at",ascending:false},limit:200})
+      ]);
+      const userRows=users?.data||[],postRows=posts?.data||[],mediaRows=media?.data||[];
+      const stats='<section class="content-grid">'+renderCard("👥","Users",String(userRows.length))+renderCard("💬","Community Posts",String(postRows.length))+renderCard("📁","Uploaded Media",String(mediaRows.length))+renderCard("⇩","Downloads",String((downloads?.data||[]).length))+renderCard("❤️","Likes",String((likes?.data||[]).length))+'</section>';
+      const userCards=userRows.map(p=>renderCard("👤",p.full_name||"User",String(p.role||"user"),p.id===user.id?"":"<button type=\"button\" class=\"btn\" data-admin-role-id=\""+escapeHTML(p.id)+"\">Change Role</button>")).join("");
+      const postCards=postRows.map(p=>renderCard("💬",p.title||"Community Post",p.content||"",'<button type="button" class="btn" data-admin-post-id="'+escapeHTML(p.id)+'" data-admin-publish="'+String(!p.is_published)+'">'+(p.is_published?"Unpublish":"Publish")+'</button>')).join("");
+      const mediaCards=mediaRows.map(m=>renderCard("📁",m.title||m.file_name||"Media",m.description||"",'<button type="button" class="btn" data-admin-media-id="'+escapeHTML(m.id)+'" data-admin-publish="'+String(!m.is_published)+'">'+(m.is_published?"Unpublish":"Publish")+'</button>')).join("");
+      container.insertAdjacentHTML("beforeend",stats+'<section class="content-grid">'+(userCards||renderCard("👥","No Users",""))+'</section><section class="content-grid">'+(postCards||renderCard("💬","No Posts",""))+'</section><section class="content-grid">'+(mediaCards||renderCard("📁","No Media",""))+'</section>');
     } catch(e){console.error("Admin dashboard failed:",e);toast("Could not load admin dashboard.","error");}
   }
 
