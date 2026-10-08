@@ -902,6 +902,28 @@
           return;
         }
 
+        const localEditForm = event.target.closest("[data-local-edit-form]");
+        if (localEditForm) {
+          event.preventDefault();
+          const items = storage.get("apostolic_created_items", []);
+          const index = items.findIndex(function (item) {
+            return String(item.id) === String(localEditForm.dataset.editId) &&
+              String(item.type) === String(localEditForm.dataset.editType);
+          });
+          if (index < 0) {
+            toast("Local content was not found.", "error");
+            return;
+          }
+          const data = new FormData(localEditForm);
+          items[index].title = String(data.get("title") || "").trim();
+          items[index].description = String(data.get("description") || "").trim();
+          storage.set("apostolic_created_items", items);
+          closeDynamicModal(localEditForm.closest(".apostolic-modal"));
+          toast("Content updated successfully.", "success");
+          renderPage(window.location.hash.substring(1) || "home");
+          return;
+        }
+
         const mediaEditForm = event.target.closest("[data-media-edit-form]");
         if (mediaEditForm) {
           event.preventDefault();
@@ -970,6 +992,32 @@
       toast("Please sign in first.", "error");
       return;
     }
+    if (action === "edit-local" || action === "delete-local") {
+      const items = storage.get("apostolic_created_items", []);
+      const index = items.findIndex(function (item) {
+        return String(item.id) === String(id) && String(item.type) === String(type);
+      });
+      if (index < 0) {
+        toast("Local content was not found.", "error");
+        return;
+      }
+      if (action === "delete-local") {
+        if (!window.confirm("Delete this content? This action cannot be undone.")) return;
+        items.splice(index, 1);
+        storage.set("apostolic_created_items", items);
+        toast("Content deleted successfully.", "success");
+        renderPage(window.location.hash.substring(1) || "home");
+        return;
+      }
+      const item = items[index];
+      createModal("Edit Content",
+        '<form class="dynamic-form" data-local-edit-form data-edit-id="' + escapeHTML(item.id) + '" data-edit-type="' + escapeHTML(item.type) + '">' +
+        '<div class="form-group"><label>Title</label><input name="title" type="text" value="' + escapeHTML(item.title || '') + '" required></div>' +
+        '<div class="form-group"><label>Description</label><textarea name="description" rows="5">' + escapeHTML(item.description || '') + '</textarea></div>' +
+        '<button type="submit" class="btn primary">Save Changes</button></form>');
+      return;
+    }
+
     if (!api || !api.isConfigured()) {
       toast("Supabase is not configured.", "error");
       return;
@@ -1400,6 +1448,7 @@
             title,
             description,
             type,
+            user_id: window.ApostolicAuth?.getUser?.()?.id || null,
             file_name: file.name,
             file_path: path,
             file_url: fileUrl,
@@ -1527,6 +1576,7 @@
             title,
             description,
             type,
+            user_id: window.ApostolicAuth?.getUser?.()?.id || null,
             file_name: "",
             file_path: "",
             file_url: "",
@@ -2864,7 +2914,7 @@
       const openAction = item.file_url
         ? `<a class="btn" href="${escapeHTML(item.file_url)}" target="_blank" rel="noopener">Open File</a>`
         : "";
-      const action = openAction + contentActionButtons("media_upload", item.id);
+      const action = openAction + contentActionButtons("media_upload", item.id, item.user_id || null);
 
       cards.push(renderCard(
         item.file_name ? "📎" : "📝",
