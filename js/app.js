@@ -821,6 +821,21 @@
     document.addEventListener(
       "submit",
       async function (event) {
+        const folderForm = event.target.closest("[data-folder-form]");
+        if (folderForm) {
+          event.preventDefault();
+          if (!requireLogin()) return;
+          const data=new FormData(folderForm), api=window.ApostolicSupabase, user=currentUser();
+          try {
+            const result=await api.insert("folders",{name:String(data.get("name")||"").trim(),description:String(data.get("description")||"").trim(),created_by:user.id});
+            if(result?.error) throw result.error;
+            closeDynamicModal(folderForm.closest(".apostolic-modal"));
+            toast("Folder created successfully.","success");
+            renderPage("folders");
+          } catch(e){toast(e?.message||"Could not create folder.","error");}
+          return;
+        }
+
         const communityForm = event.target.closest("[data-community-form]");
 
         if (communityForm) {
@@ -3060,6 +3075,44 @@
     creator: ["document", "teaching", "sermon", "song", "video", "lyric", "bible", "course"]
   };
 
+  function showFolderForm() {
+    return createModal("Create Folder",
+      '<form class="dynamic-form" data-folder-form>' +
+      '<div class="form-group"><label>Folder name</label><input name="name" required></div>' +
+      '<div class="form-group"><label>Description</label><textarea name="description" rows="4"></textarea></div>' +
+      '<button type="submit" class="btn primary">Create Folder</button></form>');
+  }
+
+  async function loadFoldersPage() {
+    const container=$(".page-container"), api=window.ApostolicSupabase;
+    if(!container || !api || !api.isConfigured()) return;
+    try {
+      const result=await api.select("folders","*",{order:{column:"created_at",ascending:false},limit:100});
+      const rows=result?.data||[];
+      const cards=rows.map(function(row){
+        return renderCard("📁",row.name||"Folder",row.description||"Christian resource folder.",
+          contentActionButtons("folder",row.id,row.created_by));
+      }).join("");
+      container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+
+        (cards||renderCard("📁","No Folders Yet","Create your first resource folder."))+'</section>');
+    } catch(e){console.error("Folders load failed:",e);}
+  }
+
+  async function loadPlaylistsPage() {
+    const container=$(".page-container"), api=window.ApostolicSupabase, user=currentUser();
+    if(!container || !api || !api.isConfigured() || !user) return;
+    try {
+      const result=await api.select("playlists","*",{eq:{user_id:user.id},order:{column:"created_at",ascending:false},limit:100});
+      const rows=result?.data||[];
+      const cards=rows.map(function(row){
+        return renderCard("🎵",row.name||"Playlist",row.description||"Your Christian playlist.",
+          '<button type="button" class="btn" data-content-action="delete-playlist" data-content-id="'+escapeHTML(row.id)+'">Delete</button>');
+      }).join("");
+      container.insertAdjacentHTML("beforeend",'<section class="content-grid">'+
+        (cards||renderCard("🎵","No Playlists Yet","Create your first playlist."))+'</section>');
+    } catch(e){console.error("Playlists load failed:",e);}
+  }
+
   async function loadCreatorDashboard() {
     const container = $(".page-container");
     const user = currentUser();
@@ -3282,6 +3335,8 @@
     if (cleanRoute === "qa") loadQA();
     if (cleanRoute === "creator") loadCreatorDashboard();
     if (cleanRoute === "downloads") loadDownloadsPage();
+    if (cleanRoute === "folders") loadFoldersPage();
+    if (cleanRoute === "playlists") loadPlaylistsPage();
 
     /*
       Always bring the newly selected page
