@@ -1879,7 +1879,7 @@
         const up=await api.uploadFile(bucket,path,file,{upsert:false});
         if(up?.error) throw up.error;
         const url=api.getPublicUrl(bucket,path); if(!url) throw new Error("Could not create the file URL.");
-        const base=title||file.name.replace(/\\.[^.]+$/,"");
+        const base=title||file.name.replace(/\.[^.]+$/,"");
         const itemTitle=files.length>1?base+" "+(done+failed+1):base;
         const db=await api.insert("media_uploads",{title:itemTitle,description,type,user_id:user.id,file_name:file.name,file_path:path,file_url:url,file_size:file.size,file_type:file.type||null});
         if(db?.error) throw db.error;
