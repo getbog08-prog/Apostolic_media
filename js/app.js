@@ -1392,6 +1392,13 @@
     const bookmarks = storage.get("apostolic_bible_bookmarks",[]);
     const modal = createModal("Bible Reader", `
       <div class="bible-reader-shell" data-bible-reader>
+        <div class="bible-offline-guide">
+          <div class="bible-offline-guide-icon">📖</div>
+          <div>
+            <strong>Offline መጽሐፍ ቅዱስ</strong>
+            <p>ኢንተርኔት እያለ <b>⬇️ Offline</b> ቁልፍን ተጫን። ማውረዱ ከተጠናቀቀ በኋላ ያለ ኢንተርኔት ሁሉንም 66 መጻሕፍት በዚህ App ውስጥ ማንበብ ትችላለህ።</p>
+          </div>
+        </div>
         <div class="bible-reader-toolbar">
           <select class="bible-select" data-bible-version aria-label="Bible version">
             <option value="kjv">King James Version (English)</option>
