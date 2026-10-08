@@ -451,3 +451,12 @@
 .creator-tools-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media(max-width:700px){.creator-tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:460px){.creator-tools{padding:14px}.creator-tools-grid{grid-template-columns:1fr}.creator-tools .btn{width:100%}}
+
+.teaching-post-editor textarea{min-height:300px;resize:vertical;line-height:1.7;font-size:15px}
+.form-help{display:block;margin-top:6px;opacity:.7;font-size:12px}
+.feed-post-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+.in-app-media-document{padding:10px 0}
+.document-file-meta{margin:12px 0;padding:10px 12px;border-radius:10px;background:rgba(100,100,120,.08);font-size:13px;overflow-wrap:anywhere}
+.document-download-btn{display:inline-flex;align-items:center;justify-content:center;width:100%;margin-top:6px}
+.document-open-note{font-size:12px!important;opacity:.7}
+@media(max-width:520px){.teaching-post-editor textarea{min-height:240px;font-size:14px}}
