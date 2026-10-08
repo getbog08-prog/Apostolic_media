@@ -3567,7 +3567,9 @@
     uploaded.forEach(function (item) {
       const title = item.title || item.file_name || "Untitled";
       const description = item.description || (item.file_name ? "Uploaded media file." : "Saved media content.");
-      window.__apostolicMediaById = window.__apostolicMediaById || {};\n      window.__apostolicMediaById[String(item.id)] = item;\n      const openAction = item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : "";
+      window.__apostolicMediaById = window.__apostolicMediaById || {};
+      window.__apostolicMediaById[String(item.id)] = item;
+      const openAction = item.file_url ? '<button type="button" class="btn" data-open-media="' + escapeHTML(item.id) + '">Open in app</button>' : "";
       let specialAction = "";
       if (route === "songs" && item.file_url) specialAction = '<button type="button" class="btn primary" data-media-play="' + escapeHTML(item.id) + '">▶ Play</button>';
       if (route === "videos" && item.file_url) specialAction = '<button type="button" class="btn primary" data-media-short="' + escapeHTML(item.id) + '">▶ Watch</button>';
