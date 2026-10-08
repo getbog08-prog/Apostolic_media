@@ -519,17 +519,22 @@
             />
           </div>
 
-          <div class="form-group">
+          <div class="form-group teaching-post-editor">
             <label for="createDescription">
-              Description
+              Teaching / Post
             </label>
 
             <textarea
               id="createDescription"
               name="description"
-              rows="5"
-              placeholder="Write a description..."
+              rows="14"
+              maxlength="50000"
+              placeholder="Write or paste your teaching here... You can write a long message just like a Facebook post."
             ></textarea>
+
+            <small class="form-help">
+              You can write or paste a long teaching, with multiple paragraphs.
+            </small>
           </div>
 
           <div class="form-group">
@@ -1580,7 +1585,8 @@
     } else if (isPdf) {
       viewer = '<iframe class="in-app-media-pdf" title="' + escapeHTML(item.title || "PDF document") + '" src="' + escapeHTML(url) + '#toolbar=1&navpanes=0" loading="lazy"></iframe>';
     } else {
-      viewer = '<div class="in-app-media-document"><div class="card-icon">📄</div><h3>' + escapeHTML(item.title || item.file_name || "Document") + '</h3><p>This file format may not preview in every browser. Try the in-app preview below, or save a copy to your device.</p><iframe class="in-app-media-pdf" title="' + escapeHTML(item.title || "Document preview") + '" src="' + escapeHTML(url) + '" loading="lazy"></iframe><a class="btn primary" href="' + escapeHTML(url) + '" download>Download file</a></div>';
+      const safeName = String(item.file_name || item.title || "document").replace(/[^a-zA-Z0-9._-]/g, "_");
+      viewer = '<div class="in-app-media-document"><div class="card-icon">📄</div><h3>' + escapeHTML(item.title || item.file_name || "Document") + '</h3><p>This document format is best opened with a reader on your device.</p><div class="document-file-meta">📎 ' + escapeHTML(item.file_name || safeName) + '</div><a class="btn primary document-download-btn" href="' + escapeHTML(url) + '" download="' + escapeHTML(safeName) + '">⬇️ Download &amp; Open with device</a><p class="document-open-note">After downloading, choose the reader app you want from your device's “Open with” options.</p></div>';
     }
 
     createModal(item.title || item.file_name || "Read content",
@@ -3017,7 +3023,7 @@
       const open=item.file_url?'<button type="button" class="btn" data-open-media="'+escapeHTML(item.id)+'">Open in app</button>':"";
       actions=special+open+renderEngagementActions("media_upload",item.id,item.file_url||"",item.type)+contentActionButtons("media_upload",item.id,item.user_id||null);
     }
-    return '<article class="social-feed-item"><header class="feed-author">'+avatar+'<div><strong>'+escapeHTML(name)+'</strong><span>'+(item.created_at?new Date(item.created_at).toLocaleDateString():"Apostolic Media")+'</span></div></header><div class="feed-body"><div class="feed-type">'+escapeHTML(options.label||item.type||"Christian Content")+'</div><h3>'+escapeHTML(title)+'</h3>'+(description?'<p>'+escapeHTML(description)+'</p>':"")+media+'</div><div class="feed-actions">'+actions+'</div></article>';
+    return '<article class="social-feed-item"><header class="feed-author">'+avatar+'<div><strong>'+escapeHTML(name)+'</strong><span>'+(item.created_at?new Date(item.created_at).toLocaleDateString():"Apostolic Media")+'</span></div></header><div class="feed-body"><div class="feed-type">'+escapeHTML(options.label||item.type||"Christian Content")+'</div><h3>'+escapeHTML(title)+'</h3>'+(description?'<p class="feed-post-text">'+escapeHTML(description)+'</p>':"")+media+'</div><div class="feed-actions">'+actions+'</div></article>';
   }
 
   async function loadMediaForPage(route) {
