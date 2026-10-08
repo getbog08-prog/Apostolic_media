@@ -576,11 +576,13 @@
     title,
     type
   ) {
+    const isTeaching = type === "teaching";
+    const accept = isTeaching ? ".pdf,.doc,.docx,.txt,.rtf,.odt,.ppt,.pptx,.xls,.xlsx,.csv,.epub" : "";
     const modal = createModal(title, `
       <form class="dynamic-form" data-upload-form="${escapeHTML(type)}">
         <div class="form-group"><label>Title (optional for batch)</label><input name="title" type="text" placeholder="Enter a title"></div>
-        <div class="form-group"><label>Select files (up to 12)</label><input id="uploadFile" name="file" type="file" multiple required><small>You can select up to 12 files at once.</small></div>
-        <div class="form-group"><label>Description</label><textarea name="description" rows="4" placeholder="Write a description..."></textarea></div>
+        <div class="form-group"><label>Select files (up to 12)</label><input id="uploadFile" name="file" type="file" multiple required ${accept ? 'accept="' + accept + '"' : ""}><small>You can select up to 12 files at once.${isTeaching ? " PDF, DOC, DOCX, TXT, RTF, ODT, PPT, PPTX, XLS, XLSX, CSV or EPUB are supported." : ""}</small></div>
+        <div class="form-group"><label>Description (optional)</label><textarea name="description" rows="4" placeholder="Write a short description..."></textarea></div>
         <div class="upload-status" hidden role="status" aria-live="polite"></div>
         <button type="button" class="btn primary" data-upload-submit>Upload</button>
       </form>`);
