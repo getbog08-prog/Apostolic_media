@@ -658,10 +658,10 @@ create policy "Users can read profiles"
 on public.profiles for select
 using (true);
 
-create policy "Users can update own profile"
+create policy "Users and admins can update profiles"
 on public.profiles for update
-using (auth.uid() = id)
-with check (auth.uid() = id);
+using (auth.uid() = id or private.is_admin())
+with check (auth.uid() = id or private.is_admin());
 
 -- ============================================================
 -- PLAYLIST POLICIES
@@ -706,13 +706,14 @@ create policy "Users can create community posts"
 on public.community_posts for insert
 with check (auth.uid() = user_id);
 
-create policy "Users can update own community posts"
+create policy "Users and admins can update community posts"
 on public.community_posts for update
-using (auth.uid() = user_id);
+using (auth.uid() = user_id or private.is_admin())
+with check (auth.uid() = user_id or private.is_admin());
 
-create policy "Users can delete own community posts"
+create policy "Users and admins can delete community posts"
 on public.community_posts for delete
-using (auth.uid() = user_id);
+using (auth.uid() = user_id or private.is_admin());
 
 create policy "Users can read comments"
 on public.comments for select
