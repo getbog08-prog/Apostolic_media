@@ -50,14 +50,17 @@ Then open `http://localhost:8080`.
 
 ## Supabase
 
-1. Create a Supabase project.
-2. Open SQL Editor.
-3. Run `supabase/schema.sql`.
-4. Copy your project URL and public publishable/anon key into `js/config.js`.
-5. Apply `supabase/profile_role_guard.sql` to an existing project, or use the updated `supabase/schema.sql` for a fresh setup.
-6. Keep secret/service-role keys out of the browser and out of GitHub.
+For a **new project**:
 
-`js/supabase.js` automatically creates the client only when both public values are configured.
+1. Create a Supabase project and run `supabase/schema.sql` in SQL Editor.
+2. Run `supabase/secure_media_storage.sql` to configure the public media bucket, upload limit, MIME allowlist, and owner-folder upload policy.
+3. Run `supabase/guard_media_publication.sql` to restrict publishing to admins.
+4. Copy the project URL and public publishable/anon key into `js/config.js`.
+5. Never put a service-role/secret key in browser code or GitHub.
+
+For the **existing connected project**, the matching schema/security migrations were applied during this hardening pass. SQL files under `supabase/` document the profile-role guard, schema alignment, storage restrictions, media publication guard, and consolidated RLS policies for repeatable setup and review.
+
+`js/supabase.js` creates the client only when the URL and public key are configured. Authentication fails closed if Supabase Auth is unavailable; it does not create fake local users.
 
 ## Important production boundaries
 
@@ -65,7 +68,7 @@ The current project intentionally provides safe UI/database foundations for feat
 
 ## Architecture
 
-`index.html` is the app shell. Feature behavior is split into JavaScript modules. Styling is separated into base, theme and responsive files. Supabase is an optional data layer until credentials are configured.
+`index.html` is the app shell. Feature behavior is split into JavaScript modules. Styling is separated into base, theme and responsive files. Supabase is configured through `js/config.js`; full production readiness still depends on browser/device verification and external services.
 
 ## Next production work
 
