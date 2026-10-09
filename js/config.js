@@ -13,7 +13,7 @@
     // -------------------------------------------------------
     APP_NAME: "የኢየሱስ ልጆች Apostolic Media",
     APP_SHORT_NAME: "Apostolic Media",
-    APP_VERSION: "1.3.0",
+    APP_VERSION: "1.3.1",
 
     TAGLINE:
       "Wherever you are, join the same Apostolic Christian community.",
