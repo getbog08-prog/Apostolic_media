@@ -13,6 +13,7 @@ This checklist distinguishes changes already committed/applied from release gate
 - [x] Added a database constraint requiring each comment to target exactly one community post or media item, and scoped comment visibility to content the viewer can access.
 - [x] Changed new media uploads and community posts to start unpublished and added database triggers that reserve publication changes for admins.
 - [x] Added a one-time first-admin bootstrap SQL script; it is intentionally not run until the project owner identifies the trusted account.
+- [x] Added and applied a restrictive comments-insert policy so users can comment only on published content, their own unpublished content, or content visible to an administrator.
 - [x] Applied the profile-role guard to the connected Supabase project and included it in the fresh-install schema.
 - [x] Restricted media uploads to each authenticated user's own Storage folder.
 - [x] Set the public media bucket to a 250 MiB upload limit and an explicit list of image/audio/video/PDF MIME types.
