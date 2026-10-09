@@ -11,7 +11,7 @@ This checklist distinguishes changes already committed/applied from release gate
 - [x] Added a database trigger to block users from assigning themselves privileged roles or verification status.
 - [x] Added the profile and community columns used by the UI, plus a primary `media_uploads` table and media-comment support in the fresh-install schema.
 - [x] Added a database constraint requiring each comment to target exactly one community post or media item, and scoped comment visibility to content the viewer can access.
-- [x] Changed new uploads to start unpublished and added a database trigger that reserves publication changes for admins.
+- [x] Changed new media uploads and community posts to start unpublished and added database triggers that reserve publication changes for admins.
 - [x] Added a one-time first-admin bootstrap SQL script; it is intentionally not run until the project owner identifies the trusted account.
 - [x] Applied the profile-role guard to the connected Supabase project and included it in the fresh-install schema.
 - [x] Restricted media uploads to each authenticated user's own Storage folder.
