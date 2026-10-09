@@ -1,1 +1,17 @@
-{"name":"የኢየሱስ ልጆች Apostolic Media","short_name":"Apostolic Media","description":"A modern Apostolic Christian digital platform","start_url":"./","display":"standalone","background_color":"#080c18","theme_color":"#0b1020","icons":[{"src":"assets/icon.png","sizes":"128x128","type":"image/png","purpose":"any maskable"}]}
+{
+  "name": "የኢየሱስ ልጆች Apostolic Media",
+  "short_name": "Apostolic Media",
+  "description": "A modern Apostolic Christian digital platform",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#080c18",
+  "theme_color": "#0b1020",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
