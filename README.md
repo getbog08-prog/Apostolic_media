@@ -53,8 +53,9 @@ Then open `http://localhost:8080`.
 1. Create a Supabase project.
 2. Open SQL Editor.
 3. Run `supabase/schema.sql`.
-4. Copy your project URL and public anon key into `js/config.js`.
-5. Keep secret/service-role keys out of the browser and out of GitHub.
+4. Copy your project URL and public publishable/anon key into `js/config.js`.
+5. Apply `supabase/profile_role_guard.sql` to an existing project, or use the updated `supabase/schema.sql` for a fresh setup.
+6. Keep secret/service-role keys out of the browser and out of GitHub.
 
 `js/supabase.js` automatically creates the client only when both public values are configured.
 
