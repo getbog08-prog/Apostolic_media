@@ -1939,7 +1939,7 @@
 
     const uploadOne = async (file, index) => {
       const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_");
-      const path = type + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "-" + safe;
+      const path = user.id + "/" + type + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "-" + safe;
       const onProgress = (loaded, total) => {
         progressMap[index] = Math.min(total, loaded);
         progress();
