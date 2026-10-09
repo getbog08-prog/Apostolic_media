@@ -1,26 +1,34 @@
 -- Lock media uploads to a user's own folder and cap public media uploads.
 -- The bucket remains public for playback through public media URLs.
 
-update storage.buckets
-set file_size_limit = 262144000,
-    allowed_mime_types = array[
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif',
-      'audio/mpeg',
-      'audio/mp4',
-      'audio/ogg',
-      'audio/wav',
-      'audio/webm',
-      'audio/aac',
-      'audio/flac',
-      'video/mp4',
-      'video/webm',
-      'video/ogg',
-      'application/pdf'
-    ]
-where id = 'Apostolic_Media';
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'Apostolic_Media',
+  'Apostolic_Media',
+  true,
+  262144000,
+  array[
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'audio/mpeg',
+    'audio/mp4',
+    'audio/ogg',
+    'audio/wav',
+    'audio/webm',
+    'audio/aac',
+    'audio/flac',
+    'video/mp4',
+    'video/webm',
+    'video/ogg',
+    'application/pdf'
+  ]
+)
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists "Authenticated can upload to Apostolic Media" on storage.objects;
 create policy "Authenticated can upload to Apostolic Media"
