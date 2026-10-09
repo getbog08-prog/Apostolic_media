@@ -4,12 +4,13 @@
    without serving stale JS/CSS/HTML.
    ========================================================= */
 
-const CACHE = "apostolic-media-v30";
+const CACHE = "apostolic-media-v31";
 
 const CORE = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./assets/icon.svg",
   "./css/style.css",
   "./css/themes.css",
   "./css/responsive.css",
