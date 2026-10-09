@@ -7,6 +7,7 @@ drop policy if exists "Users can update own posts" on public.community_posts;
 drop policy if exists "Users can update own media uploads" on public.media_uploads;
 drop policy if exists "Users can update own profile" on public.profiles;
 drop policy if exists "Admins can update profiles" on public.profiles;
+drop policy if exists "Users and admins can update profiles" on public.profiles;
 
 create policy "Users and admins can update profiles"
 on public.profiles
