@@ -60,8 +60,8 @@ as $
   );
 $;
 
-grant usage on schema private to authenticated;
-grant execute on function private.is_admin() to authenticated;
+grant usage on schema private to anon, authenticated;
+grant execute on function private.is_admin() to anon, authenticated;
 
 create or replace function private.guard_profile_privileged_fields()
 returns trigger
@@ -97,6 +97,32 @@ drop trigger if exists guard_profile_privileged_fields on public.profiles;
 create trigger guard_profile_privileged_fields
 before insert or update on public.profiles
 for each row execute function private.guard_profile_privileged_fields();
+
+-- ============================================================
+-- MEDIA UPLOADS (primary user-uploaded media library)
+-- ============================================================
+
+create table if not exists public.media_uploads (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  type text not null,
+  file_name text not null,
+  file_path text not null,
+  file_url text,
+  file_size bigint check (file_size is null or file_size >= 0),
+  file_type text,
+  created_at timestamptz not null default now(),
+  user_id uuid references auth.users(id) on delete set null,
+  is_published boolean not null default false
+);
+
+create index if not exists idx_media_uploads_user_id
+  on public.media_uploads(user_id);
+create index if not exists idx_media_uploads_published
+  on public.media_uploads(is_published);
+create index if not exists idx_media_uploads_created_at
+  on public.media_uploads(created_at desc);
 
 -- ============================================================
 -- MINISTRIES
@@ -363,11 +389,14 @@ create table if not exists public.community_posts (
 
 create table if not exists public.comments (
   id uuid primary key default uuid_generate_v4(),
-  post_id uuid not null references public.community_posts(id) on delete cascade,
-  user_id uuid not null references public.profiles(id) on delete cascade,
+  post_id uuid references public.community_posts(id) on delete cascade,
+  media_id uuid references public.media_uploads(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
   content text not null,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint comments_exactly_one_target
+    check ((post_id is not null) <> (media_id is not null))
 );
 
 -- ============================================================
@@ -570,6 +599,7 @@ for each row execute procedure public.set_updated_at();
 -- ============================================================
 
 alter table public.profiles enable row level security;
+alter table public.media_uploads enable row level security;
 alter table public.ministries enable row level security;
 alter table public.folders enable row level security;
 alter table public.artists enable row level security;
@@ -593,6 +623,31 @@ alter table public.live_rooms enable row level security;
 alter table public.questions enable row level security;
 alter table public.answers enable row level security;
 alter table public.downloads enable row level security;
+
+-- ============================================================
+-- MEDIA UPLOAD POLICIES
+-- ============================================================
+
+create policy "Public can read published media uploads"
+on public.media_uploads for select to anon, authenticated
+using (
+  is_published = true
+  or user_id = (select auth.uid())
+  or private.is_admin()
+);
+
+create policy "Authenticated can create own media uploads"
+on public.media_uploads for insert to authenticated
+with check (user_id = (select auth.uid()));
+
+create policy "Users and admins can update media uploads"
+on public.media_uploads for update to authenticated
+using (user_id = (select auth.uid()) or private.is_admin())
+with check (user_id = (select auth.uid()) or private.is_admin());
+
+create policy "Users and admins can delete media uploads"
+on public.media_uploads for delete to authenticated
+using (user_id = (select auth.uid()) or private.is_admin());
 
 -- ============================================================
 -- BASIC PUBLIC READ POLICIES
