@@ -3114,12 +3114,15 @@
           ? '<img class="admin-user-avatar" src="' + escapeHTML(p.avatar_url) + '" alt="" loading="lazy">'
           : '<span class="admin-user-avatar admin-user-avatar-fallback">' + escapeHTML((p.full_name || "U").trim().charAt(0).toUpperCase()) + '</span>';
         const role = String(p.role || "user");
+        const roleOptions = profile.role === "super_admin"
+          ? ["user", "creator", "minister", "admin"]
+          : ["user", "creator", "minister"];
         const controls = p.id === user.id
           ? '<span class="admin-self-badge">You</span>'
           : role === "super_admin" || (role === "admin" && profile.role !== "super_admin")
             ? '<span class="admin-self-badge" title="Only a super administrator can change this account role">Protected</span>'
             : '<select class="admin-role-select" data-admin-role-id="' + escapeHTML(p.id) + '" aria-label="Change role for ' + escapeHTML(p.full_name || "User") + '">' +
-                ["user","creator","minister","admin"].map(r => '<option value="' + r + '"' + (role === r ? " selected" : "") + '>' + r + '</option>').join("") +
+                roleOptions.map(r => '<option value="' + r + '"' + (role === r ? " selected" : "") + '>' + r + '</option>').join("") +
               '</select>';
         return '<article class="admin-list-item"><div class="admin-list-main">' + avatar + '<div><strong>' + escapeHTML(p.full_name || "User") + '</strong><small>' + escapeHTML(role) + '</small></div></div><div class="admin-list-action">' + controls + '</div></article>';
       }).join("");
