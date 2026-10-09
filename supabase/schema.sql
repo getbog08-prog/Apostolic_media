@@ -834,6 +834,11 @@ create policy "Users can read community posts"
 on public.community_posts for select
 using (is_published = true or auth.uid() = user_id);
 
+-- Admin dashboard must be able to review unpublished submissions.
+create policy "Admins can read all community posts"
+on public.community_posts for select to authenticated
+using (private.is_admin());
+
 create policy "Users can create community posts"
 on public.community_posts for insert
 with check (auth.uid() = user_id);
@@ -984,6 +989,10 @@ create policy "Users can manage own downloads"
 on public.downloads for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
+
+create policy "Admins can read all downloads"
+on public.downloads for select to authenticated
+using (private.is_admin());
 
 -- ============================================================
 -- END OF SCHEMA
