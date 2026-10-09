@@ -532,18 +532,36 @@
 
   function initialize() {
     const result = init();
+    window.supabaseClient = result || null;
 
-    window.supabaseClient =
-      result || null;
+    // If the primary CDN did not load, try the official package on
+    // an alternate CDN, then initialize the client again.
+    if (!window.supabaseClient && isConfigured() &&
+        (!window.supabase || typeof window.supabase.createClient !== "function")) {
+      const fallback = document.createElement("script");
+      fallback.src = "https://unpkg.com/@supabase/supabase-js@2";
+      fallback.async = true;
+      fallback.onload = function () {
+        const retry = init();
+        window.supabaseClient = retry || null;
+        if (window.supabaseClient) {
+          window.dispatchEvent(new CustomEvent("supabaseReady", {
+            detail: { client: window.supabaseClient }
+          }));
+          console.info("Supabase initialized using fallback CDN.");
+        } else {
+          console.error("Supabase client could not initialize after fallback CDN loaded.");
+        }
+      };
+      fallback.onerror = function () {
+        console.error("Supabase SDK failed to load from both CDNs. Check network access or CDN restrictions.");
+      };
+      document.head.appendChild(fallback);
+    }
   }
 
-  if (
-    document.readyState === "loading"
-  ) {
-    document.addEventListener(
-      "DOMContentLoaded",
-      initialize
-    );
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialize, { once: true });
   } else {
     initialize();
   }
