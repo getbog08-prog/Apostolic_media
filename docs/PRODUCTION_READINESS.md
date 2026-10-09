@@ -9,6 +9,7 @@ This checklist distinguishes changes already committed/applied from release gate
 - [x] Removed fake local sign-up/sign-in identities. Authentication now requires a real Supabase Auth session.
 - [x] Prevented browser-stored user data and editable user metadata from granting privileged UI roles.
 - [x] Added a database trigger to block users from assigning themselves privileged roles or verification status.
+- [x] Added a one-time first-admin bootstrap SQL script; it is intentionally not run until the project owner identifies the trusted account.
 - [x] Applied the profile-role guard to the connected Supabase project and included it in the fresh-install schema.
 - [x] Restricted media uploads to each authenticated user's own Storage folder.
 - [x] Set the public media bucket to a 250 MiB upload limit and an explicit list of image/audio/video/PDF MIME types.
@@ -19,7 +20,8 @@ This checklist distinguishes changes already committed/applied from release gate
 ## Remaining release gates
 
 - [ ] Enable leaked-password protection in Supabase Auth. The project advisor still reports this setting disabled: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
-- [ ] Review every public-table RLS policy and all Storage policies against the intended product roles; confirm no redundant permissive policies unintentionally broaden access.
+- [ ] Review every public-table RLS policy and all Storage policies against the intended product roles; the Supabase performance advisor now reports no warning-level duplicate permissive policies.
+- [ ] Run `supabase/bootstrap_first_admin.sql` after replacing its placeholder with the email of the trusted administrator account. The connected project currently has no admin/super_admin profile, so new uploads will remain unpublished until this is done.
 - [ ] Confirm the public bucket is appropriate for all content. Anything uploaded there is publicly retrievable by URL; use a private bucket and signed URLs for restricted content.
 - [ ] Run the GitHub Actions validation workflow and fix any failures.
 - [ ] Test registration, email confirmation, sign-in/out, password reset, profile editing, upload/delete, media playback, and offline/PWA installation in real browsers and on Android.
