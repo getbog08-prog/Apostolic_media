@@ -54,9 +54,10 @@ For a **new project**:
 
 1. Create a Supabase project and run `supabase/schema.sql` in SQL Editor.
 2. Run `supabase/secure_media_storage.sql` to configure the public media bucket, upload limit, MIME allowlist, and owner-folder upload policy.
-3. Run `supabase/guard_media_publication.sql` to restrict publishing to admins.
-4. Copy the project URL and public publishable/anon key into `js/config.js`.
-5. Never put a service-role/secret key in browser code or GitHub.
+3. Create your first account, then edit the email placeholder and run `supabase/bootstrap_first_admin.sql` in SQL Editor to grant `super_admin` to that account. This is required before any account can approve new media.
+4. Run `supabase/guard_media_publication.sql` to restrict publishing to admins.
+5. Copy the project URL and public publishable/anon key into `js/config.js`.
+6. Never put a service-role/secret key in browser code or GitHub.
 
 For the **existing connected project**, the matching schema/security migrations were applied during this hardening pass. SQL files under `supabase/` document the profile-role guard, schema alignment, storage restrictions, media publication guard, and consolidated RLS policies for repeatable setup and review.
 
