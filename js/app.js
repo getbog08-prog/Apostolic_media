@@ -1695,6 +1695,12 @@
   ) {
     switch (action) {
 
+      case "theme-light": theme.set("light"); toast("Light theme enabled.", "success"); break;
+      case "theme-dark": theme.set("dark"); toast("Dark theme enabled.", "success"); break;
+      case "theme-system": theme.set("system"); toast("System theme enabled.", "success"); break;
+      case "language-en": language.set("en"); toast("Language preference saved.", "success"); break;
+      case "language-am": language.set("am"); toast("የቋንቋ ምርጫ ተቀምጧል።", "success"); break;
+      case "language-om": language.set("om"); toast("Language preference saved.", "success"); break;
       case "read-bible": openBibleReader(); break;
       case "open-music":
         if (window.__apostolicSongs && window.__apostolicSongs.length) {
@@ -2867,6 +2873,20 @@
       `
     },
 
+    live: {
+      title: "Live",
+      content: `<section class="page-hero"><div><h1>Live</h1><p>Live broadcasts will appear here when a stream is available.</p></div></section><section class="admin-empty-state"><div class="admin-empty-icon">🔴</div><h3>No live broadcast right now</h3><p>There is no active live stream configured at the moment.</p><a class="btn primary" href="#videos">Browse Videos</a></section>`
+    },
+
+    settings: {
+      title: "Settings",
+      content: `<section class="page-hero"><div><h1>Settings</h1><p>Personalize your Apostolic Media experience.</p></div></section><section class="content-grid"><article class="card"><div class="card-icon">🎨</div><h3>Appearance</h3><p>Choose your preferred theme.</p><div class="card-actions"><button class="btn" data-page-action="theme-light">Light</button><button class="btn" data-page-action="theme-dark">Dark</button><button class="btn" data-page-action="theme-system">System</button></div></article><article class="card"><div class="card-icon">🌐</div><h3>Language preference</h3><p>Save your language preference on this device.</p><div class="card-actions"><button class="btn" data-page-action="language-en">English</button><button class="btn" data-page-action="language-am">አማርኛ</button><button class="btn" data-page-action="language-om">Afaan Oromoo</button></div></article><article class="card"><div class="card-icon">👤</div><h3>Account</h3><p>Manage your profile and session.</p><div class="card-actions"><a class="btn" href="#profile">Open Profile</a><button class="btn" data-page-action="sign-out">Sign Out</button></div></article></section>`
+    },
+
+    wallet: {
+      title: "Wallet",
+      content: `<section class="page-hero"><div><h1>Wallet</h1><p>Payments are not enabled yet.</p></div></section><section class="admin-empty-state"><div class="admin-empty-icon">💳</div><h3>Wallet is not active</h3><p>No payments are collected here. This page requires a secure payment provider before it can be enabled.</p><a class="btn" href="#home">Back to Home</a></section>`
+    },
     /* -------------------------------------------------------
        ABOUT
        ------------------------------------------------------- */
