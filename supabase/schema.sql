@@ -97,8 +97,11 @@ begin
       end if;
 
       if actor_role <> 'super_admin'
-         and (old.role = 'super_admin' or new.role = 'super_admin') then
-        raise exception 'Only a super administrator can change a super-administrator role'
+         and (
+           old.role in ('admin', 'super_admin')
+           or new.role in ('admin', 'super_admin')
+         ) then
+        raise exception 'Only a super administrator can grant or change administrator roles'
           using errcode = '42501';
       end if;
 
