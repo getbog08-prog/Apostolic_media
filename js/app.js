@@ -903,12 +903,13 @@
                 user_id: auth.getUser().id,
                 title: String(data.get("title") || "").trim(),
                 content: String(data.get("content") || "").trim(),
-                is_published: true
+                // New community posts enter moderation; only admins can publish them.
+                is_published: false
               });
             }
             if (result && result.error) throw result.error;
             closeDynamicModal(communityForm.closest(".apostolic-modal"));
-            toast(editId ? "Your post was updated." : "Your community post was published.", "success");
+            toast(editId ? "Your post was updated." : "Your post was submitted for admin review.", "success");
             renderPage("community");
           } catch (error) {
             console.error("Community post save failed:", error);
