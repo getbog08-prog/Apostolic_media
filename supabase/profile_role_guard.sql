@@ -21,8 +21,8 @@ as $$
   );
 $$;
 
-grant usage on schema private to authenticated;
-grant execute on function private.is_admin() to authenticated;
+grant usage on schema private to anon, authenticated;
+grant execute on function private.is_admin() to anon, authenticated;
 
 create or replace function private.guard_profile_privileged_fields()
 returns trigger
