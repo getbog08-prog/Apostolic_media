@@ -46,14 +46,15 @@
        ----------------------------------------------------- */
 
     async init() {
-      const savedUser = storage.get(AUTH_KEY);
-
-      if (savedUser) {
-        this.user = savedUser;
-      }
+      // Never trust a browser-stored user as an authenticated session.
+      // The Supabase Auth session is the only source of truth.
+      this.user = null;
+      this.session = null;
+      this.profile = null;
+      storage.remove(AUTH_KEY);
 
       /*
-       * If Supabase is configured, use Supabase Auth.
+       * Restore identity only from a valid Supabase Auth session.
        */
       if (
         window.supabaseClient &&
@@ -154,33 +155,9 @@
         return data;
       }
 
-      /*
-       * Temporary local development fallback.
-       * Replace with Supabase Auth in production.
-       */
-      const user = {
-        id:
-          "local-" +
-          Date.now(),
-        email,
-        user_metadata: metadata,
-        role: "User"
-      };
-
-      this.user = user;
-      this.session = null;
-
-      storage.set(
-        AUTH_KEY,
-        user
+      throw new Error(
+        "Authentication service is unavailable. Please try again when Supabase Auth is connected."
       );
-
-      this.updateUI();
-
-      return {
-        user,
-        session: null
-      };
     },
 
     /* -----------------------------------------------------
@@ -231,31 +208,9 @@
         return data;
       }
 
-      /*
-       * Local development fallback.
-       */
-      const user = {
-        id:
-          "local-" +
-          Date.now(),
-        email,
-        role: "User"
-      };
-
-      this.user = user;
-      this.session = null;
-
-      storage.set(
-        AUTH_KEY,
-        user
+      throw new Error(
+        "Authentication service is unavailable. Please try again when Supabase Auth is connected."
       );
-
-      this.updateUI();
-
-      return {
-        user,
-        session: null
-      };
     },
 
     /* -----------------------------------------------------
@@ -329,11 +284,9 @@
         return data;
       }
 
-      return {
-        success: true,
-        message:
-          "Password reset is available after Supabase is configured."
-      };
+      throw new Error(
+        "Password reset is unavailable because Supabase Auth is not connected."
+      );
     },
 
     /* -----------------------------------------------------
