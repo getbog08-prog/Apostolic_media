@@ -71,15 +71,14 @@ The current project intentionally provides safe UI/database foundations for feat
 
 `index.html` is the app shell. Feature behavior is split into JavaScript modules. Styling is separated into base, theme and responsive files. Supabase is configured through `js/config.js`; full production readiness still depends on browser/device verification and external services.
 
-## Next production work
+## Remaining production release gates
 
-- Connect real content tables and storage buckets
-- Add authenticated creator/admin guards
-- Add real upload processing and media transcoding
-- Add real Bible content licensed for redistribution
-- Add streaming/WebRTC infrastructure
-- Add push notifications
-- Add verified payment-provider integration
-- Add server-side moderation/copyright workflows
-- Add automated browser/device testing
-- Configure custom domain + HTTPS + production monitoring
+- Run the GitHub Actions validation workflow and complete real browser/device tests
+- Bootstrap the first trusted administrator using `supabase/bootstrap_first_admin.sql`
+- Enable leaked-password protection in Supabase Auth
+- Add licensed Bible content and verify rights for songs, lyrics, audio and video
+- Add production upload processing/transcoding for large media
+- Configure live streaming/WebRTC and push notifications with real providers
+- Integrate CBE/Telebirr with server-side payment verification
+- Finish server-side moderation/copyright workflows
+- Configure a custom domain, HTTPS, monitoring, backups and recovery testing
