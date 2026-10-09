@@ -355,12 +355,9 @@
         return "Guest";
       }
 
-      return (
-        this.profile?.role ||
-        this.user.user_metadata?.role ||
-        this.user.role ||
-        "user"
-      );
+      // Role claims from browser storage or editable user metadata are
+      // untrusted. Only the database profile may grant a privileged UI role.
+      return this.profile?.role || "user";
     },
 
     /* -----------------------------------------------------
