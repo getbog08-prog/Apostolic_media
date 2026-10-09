@@ -1422,41 +1422,37 @@
     function bibleBookSlug(name){
       return String(name||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
     }
+        const AMHARIC_BIBLE_FILES = ["01_ኦሪት ዘፍጥረት.json","02_ኦሪት ዘጸአት.json","03_ኦሪት ዘሌዋውያን.json","04_ኦሪት ዘኍልቍ.json","05_ኦሪት ዘዳግም.json","06_መጽሐፈ ኢያሱ ወልደ ነዌ.json","07_መጽሐፈ መሣፍንት.json","08_መጽሐፈ ሩት.json","09_መጽሐፈ ሳሙኤል ቀዳማዊ.json","10_መጽሐፈ ሳሙኤል ካል.json","11_መጽሐፈ ነገሥት ቀዳማዊ።.json","12_መጽሐፈ ነገሥት ካልዕ።.json","13_መጽሐፈ ዜና መዋዕል ቀዳማዊ።.json","14_መጽሐፈ ዜና መዋዕል ካልዕ።.json","15_መጽሐፈ ዕዝራ።.json","16_መጽሐፈ ነህምያ።.json","17_መጽሐፈ አስቴር።.json","18_መጽሐፈ ኢዮብ።.json","19_መዝሙረ ዳዊት.json","20_መጽሐፈ ምሳሌ.json","21_መጽሐፈ መክብብ.json","22_መኃልየ መኃልይ ዘሰሎሞን.json","23_ትንቢተ ኢሳይያስ.json","24_ትንቢተ ኤርምያስ.json","25_ሰቆቃው ኤርምያስ.json","26_ትንቢተ ሕዝቅኤል.json","27_ትንቢተ ዳንኤል.json","28_ትንቢተ ሆሴዕ.json","29_ትንቢተ ኢዮኤል.json","30_ትንቢተ አሞጽ.json","31_ትንቢተ አብድዩ.json","32_ትንቢተ ዮናስ.json","33_ትንቢተ ሚክያስ.json","34_ትንቢተ ናሆም.json","35_ትንቢተ ዕንባቆም.json","36_ትንቢተ ሶፎንያስ.json","37_ትንቢተ ሐጌ.json","38_ትንቢተ ዘካርያስ.json","39_ትንቢተ ሚልክያ.json","40_የማቴዎስ ወንጌል.json","41_የማርቆስ ወንጌል.json","42_የሉቃስ ወንጌል.json","43_የዮሐንስ ወንጌል.json","44_የሐዋርያት ሥራ.json","45_ወደ ሮሜ ሰዎች.json","46_1ኛ ወደ ቆሮንቶስ ሰዎች.json","47_2ኛ ወደ ቆሮንቶስ ሰዎች.json","48_ወደ ገላትያ ሰዎች.json","49_ወደ ኤፌሶን ሰዎች.json","50_ወደ ፊልጵስዩስ ሰዎች.json","51_ወደ ቆላስይስ ሰዎች.json","52_1ኛ ወደ ተሰሎንቄ ሰዎች.json","53_2ኛ ወደ ተሰሎንቄ ሰዎች.json","54_1ኛ ወደ ጢሞቴዎስ.json","55_2ኛ ወደ ጢሞቴዎስ.json","56_ወደ ቲቶ.json","57_ወደ ፊልሞና.json","58_ወደ ዕብራውያን.json","59_የያዕቆብ መልእክት.json","60_1ኛ የጴጥሮስ መልእክት.json","61_2ኛ የጴጥሮስ መልእክት.json","62_1ኛ የዮሐንስ መልእክት.json","63_2ኛ የዮሐንስ መልእክት.json","64_3ኛ የዮሐንስ መልእክት.json","65_የይሁዳ መልእክት.json","66_የዮሐንስ ራእይ.json"];
     function bibleSourceUrl(v,b,c){
       const index=books.findIndex(function(item){return item[1]===b;});
-      const number=String(index+1).padStart(2,"0");
-      const slug=bibleBookSlug(books[index]?.[0]||b);
+      if(index<0) throw new Error("Bible book not found");
       if(v==="kjv"){
+        const slug=bibleBookSlug(books[index][0]);
         return "https://raw.githubusercontent.com/nolanbaxter/kjv-bible/main/"+slug+".json";
       }
-      const folder=index<39?"old-testament":"new-testament";
-      return "https://raw.githubusercontent.com/biniama/ethiopic-bible-data/main/data/"+folder+"/"+number+"-"+slug+".json";
+      return "https://raw.githubusercontent.com/magna25/amharic-bible-json/main/individual_books/"+encodeURIComponent(AMHARIC_BIBLE_FILES[index]);
     }
     function chapterDataFromJson(v,json,c){
+      let chapter=null;
       if(v==="kjv"){
-        const chapter=json&&json.chapters&&json.chapters[String(c)];
+        chapter=json&&json.chapters&&json.chapters[String(c)];
         if(!chapter) return [];
         return Object.keys(chapter).map(function(verseNum){
           return {verseNum:verseNum,verse:String(chapter[verseNum]??"")};
-        }).filter(function(item){return item.verse!=="";});
+        }).filter(function(item){return item.verse.trim()!=="";});
       }
-      let chapter=null;
       if(Array.isArray(json?.chapters)){
-        chapter=json.chapters.find(function(item){
-          return Number(item.chapter??item.number)===Number(c);
-        });
+        chapter=json.chapters.find(function(item){return Number(item?.chapter??item?.number)===Number(c);});
       }else if(json?.chapters && typeof json.chapters==="object"){
         chapter=json.chapters[String(c)];
       }else if(json && json[String(c)]){
         chapter=json[String(c)];
       }
-      const verses=Array.isArray(chapter) ? chapter : (chapter&&Array.isArray(chapter.verses) ? chapter.verses : []);
+      const verses=Array.isArray(chapter)?chapter:(Array.isArray(chapter?.verses)?chapter.verses:[]);
       return verses.map(function(item,index){
-        const rawText=item?.text;
-        const textValue=typeof rawText==="string"
-          ? rawText
-          : String(rawText?.am??rawText?.en??rawText?.gez??item?.am??item?.text_am??item?.content??"");
-        return {verseNum:item?.verse??item?.verseNum??item?.number??(index+1),verse:textValue};
+        const rawText=typeof item==="string"?item:(item?.text??item?.content??item?.am??item?.text_am??"");
+        const textValue=typeof rawText==="string"?rawText:String(rawText?.am??rawText?.en??rawText?.gez??"");
+        return {verseNum:typeof item==="object"?(item?.verse??item?.verseNum??item?.number??(index+1)):(index+1),verse:textValue};
       }).filter(function(item){return item.verse.trim()!=="";});
     }
     async function downloadBibleOffline(){
@@ -1494,7 +1490,7 @@
         offlineButton.disabled=false;
       }
     }
-    function cacheKey(v,b,c){return "apostolic_bible_chapter_"+v+"_"+b+"_"+c;}
+    function cacheKey(v,b,c){return "apostolic_bible_chapter_v2_"+v+"_"+b+"_"+c;}
     async function fetchChapter(v,b,c){
       const key=cacheKey(v,b,c), cached=storage.get(key,null);
       if(cached&&Array.isArray(cached.data)) return cached;
@@ -1734,6 +1730,10 @@
         if (window.ApostolicAuth?.signOut) {
           window.ApostolicAuth.signOut().then(function(){ toast("Signed out successfully.","success"); renderPage("home"); });
         }
+        break;
+
+      case "create-bible":
+        requireCreatorAuth(function () { showCreateForm("Create Bible Study","bible"); });
         break;
 
       case "create-teaching":
