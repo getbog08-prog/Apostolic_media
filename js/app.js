@@ -10,7 +10,7 @@
     name: "የኢየሱስ ልጆች Apostolic Media",
     version: "1.3.0",
     defaultTheme: "system",
-    defaultLanguage: "en"
+    defaultLanguage: "am"
   };
 
   const $ = (selector, parent = document) =>
