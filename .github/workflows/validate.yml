@@ -1,0 +1,55 @@
+name: Validate Apostolic Media
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          set -e
+          for file in js/*.js sw.js; do
+            echo "Checking $file"
+            node --check "$file"
+          done
+      - name: Validate manifest and required files
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+          if (!manifest.name || !manifest.start_url || !Array.isArray(manifest.icons) || !manifest.icons.length) {
+            throw new Error('manifest.json is missing required PWA fields');
+          }
+          for (const icon of manifest.icons) {
+            const file = path.resolve(icon.src);
+            if (!fs.existsSync(file)) throw new Error('Missing PWA icon: ' + icon.src);
+          }
+          for (const file of ['index.html', 'css/style.css', 'css/themes.css', 'css/responsive.css', 'js/app.js', 'js/config.js', 'js/auth.js', 'js/supabase.js', 'js/router.js', 'js/data.js', 'js/ui.js', 'assets/icon.svg']) {
+            if (!fs.existsSync(file)) throw new Error('Missing required app file: ' + file);
+          }
+          const config = fs.readFileSync('js/config.js', 'utf8');
+          const app = fs.readFileSync('js/app.js', 'utf8');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const version = config.match(/APP_VERSION:\s*"([^"]+)"/)?.[1];
+          const appVersion = app.match(/version:\s*"([^"]+)"/)?.[1];
+          if (version !== appVersion) throw new Error('App version mismatch between config.js and app.js');
+          if (!config.includes('DEFAULT_LANGUAGE: "am"') || !app.includes('defaultLanguage: "am"') || !html.includes('<html lang="am">')) {
+            throw new Error('Default language mismatch; expected Amharic (am)');
+          }
+          console.log('Manifest, required files, app version, and language checks passed.');
+          NODE
