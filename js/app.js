@@ -3115,9 +3115,11 @@
         const role = String(p.role || "user");
         const controls = p.id === user.id
           ? '<span class="admin-self-badge">You</span>'
-          : '<select class="admin-role-select" data-admin-role-id="' + escapeHTML(p.id) + '" aria-label="Change role for ' + escapeHTML(p.full_name || "User") + '">' +
-              ["user","creator","minister","admin"].map(r => '<option value="' + r + '"' + (role === r ? " selected" : "") + '>' + r + '</option>').join("") +
-            '</select>';
+          : role === "super_admin" || (role === "admin" && profile.role !== "super_admin")
+            ? '<span class="admin-self-badge" title="Only a super administrator can change this account role">Protected</span>'
+            : '<select class="admin-role-select" data-admin-role-id="' + escapeHTML(p.id) + '" aria-label="Change role for ' + escapeHTML(p.full_name || "User") + '">' +
+                ["user","creator","minister","admin"].map(r => '<option value="' + r + '"' + (role === r ? " selected" : "") + '>' + r + '</option>').join("") +
+              '</select>';
         return '<article class="admin-list-item"><div class="admin-list-main">' + avatar + '<div><strong>' + escapeHTML(p.full_name || "User") + '</strong><small>' + escapeHTML(role) + '</small></div></div><div class="admin-list-action">' + controls + '</div></article>';
       }).join("");
 
