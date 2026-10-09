@@ -139,18 +139,20 @@
           throw error;
         }
 
-        if (data?.user) {
-          this.user = data.user;
-          this.session = data.session || null;
+        if (data?.session?.user) {
+          this.user = data.session.user;
+          this.session = data.session;
           await this.syncProfile();
-
-          storage.set(
-            AUTH_KEY,
-            this.user
-          );
-
-          this.updateUI();
+        } else {
+          // Email-confirmation flows may return a user without a session.
+          // Do not treat that user as signed in until a valid session exists.
+          this.user = null;
+          this.session = null;
+          this.profile = null;
+          storage.remove(AUTH_KEY);
         }
+
+        this.updateUI();
 
         return data;
       }
