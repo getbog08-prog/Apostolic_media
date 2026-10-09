@@ -124,6 +124,32 @@ create index if not exists idx_media_uploads_published
 create index if not exists idx_media_uploads_created_at
   on public.media_uploads(created_at desc);
 
+create or replace function private.guard_media_upload_publication()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  if auth.uid() is not null and not private.is_admin() then
+    if tg_op = 'INSERT' and new.is_published is distinct from false then
+      raise exception 'Only an administrator can publish media'
+        using errcode = '42501';
+    elsif tg_op = 'UPDATE' and new.is_published is distinct from old.is_published then
+      raise exception 'Only an administrator can change media publication status'
+        using errcode = '42501';
+    end if;
+  end if;
+  return new;
+end;
+$;
+
+revoke all on function private.guard_media_upload_publication() from public, anon, authenticated;
+drop trigger if exists guard_media_upload_publication on public.media_uploads;
+create trigger guard_media_upload_publication
+before insert or update on public.media_uploads
+for each row execute function private.guard_media_upload_publication();
+
 -- ============================================================
 -- MINISTRIES
 -- ============================================================
