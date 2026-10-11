@@ -691,6 +691,67 @@
      ========================================================= */
 
   function initPageActionDelegation() {
+    // Process dynamically-created authentication forms on submit, not on click.
+    // A click-only handler allowed the browser's default form submission to
+    // reload the page while the asynchronous Supabase request was still running.
+    document.addEventListener("submit", async function (event) {
+      const authForm = event.target.closest("[data-auth-form]");
+      if (!authForm) return;
+
+      event.preventDefault();
+      if (authForm.dataset.authSubmitting === "true") return;
+      authForm.dataset.authSubmitting = "true";
+
+      const submitButton = authForm.querySelector('button[type="submit"]');
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.setAttribute("aria-busy", "true");
+      }
+
+      const auth = window.ApostolicAuth;
+      if (!auth) {
+        toast("Authentication is not available. Please refresh and try again.", "error");
+        authForm.dataset.authSubmitting = "false";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.removeAttribute("aria-busy");
+        }
+        return;
+      }
+
+      const formData = new FormData(authForm);
+      const email = String(formData.get("email") || "").trim();
+      const password = String(formData.get("password") || "");
+      const name = String(formData.get("name") || "").trim();
+
+      try {
+        if (authForm.dataset.authForm === "signup") {
+          const result = await auth.signUp(email, password, { full_name: name, role: "user" });
+          if (!result?.session) {
+            toast("Account request received. Check your email to confirm your account before signing in.", "success");
+            closeDynamicModal(authForm.closest(".apostolic-modal"));
+            return;
+          }
+          toast("Account created successfully.", "success");
+        } else {
+          await auth.signIn(email, password);
+          toast("Signed in successfully.", "success");
+        }
+
+        closeDynamicModal(authForm.closest(".apostolic-modal"));
+        renderPage(window.location.hash.substring(1) || "home");
+      } catch (error) {
+        console.error("Authentication failed:", error);
+        toast(error && error.message ? error.message : "Authentication failed. Check your details and try again.", "error");
+      } finally {
+        authForm.dataset.authSubmitting = "false";
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.removeAttribute("aria-busy");
+        }
+      }
+    });
+
     document.addEventListener(
       "click",
       async function (event) {
@@ -914,36 +975,6 @@
           } catch (error) {
             console.error("Community post save failed:", error);
             toast(error && error.message ? error.message : "Could not save post.", "error");
-          }
-          return;
-        }
-
-        const authForm = event.target.closest("[data-auth-form]");
-
-        if (authForm) {
-          event.preventDefault();
-          const auth = window.ApostolicAuth;
-          if (!auth) {
-            toast("Authentication is not available.", "error");
-            return;
-          }
-          const formData = new FormData(authForm);
-          const email = String(formData.get("email") || "").trim();
-          const password = String(formData.get("password") || "");
-          const name = String(formData.get("name") || "").trim();
-          try {
-            if (authForm.dataset.authForm === "signup") {
-              await auth.signUp(email, password, { full_name: name, role: "user" });
-              toast("Account created successfully.", "success");
-            } else {
-              await auth.signIn(email, password);
-              toast("Signed in successfully.", "success");
-            }
-            closeDynamicModal(authForm.closest(".apostolic-modal"));
-            renderPage(window.location.hash.substring(1) || "home");
-          } catch (error) {
-            console.error("Authentication failed:", error);
-            toast(error && error.message ? error.message : "Authentication failed.", "error");
           }
           return;
         }
