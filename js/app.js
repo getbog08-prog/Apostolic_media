@@ -755,6 +755,17 @@
     document.addEventListener(
       "click",
       async function (event) {
+        const adminAuthSwitch = event.target.closest("[data-admin-auth-switch]");
+        if (adminAuthSwitch) {
+          event.preventDefault();
+          window.__apostolicAdminAuthMode = adminAuthSwitch.dataset.adminAuthSwitch === "signup" ? "signup" : "login";
+          const panel = adminAuthSwitch.closest(".page-container");
+          if (panel && isCurrentRoute("admin") && !currentUser()) {
+            renderAdminAuthPanel(panel, window.__apostolicAdminAuthMode);
+          }
+          return;
+        }
+
         const actionElement =
           event.target.closest(
             "[data-page-action]"
@@ -3072,6 +3083,30 @@
     } catch(e){console.error("Events load failed:",e);}
   }
 
+  function renderAdminAuthPanel(container, mode = "login", notice = "") {
+    if (!container) return;
+    const isSignup = mode === "signup";
+    const nameField = isSignup
+      ? '<label class="admin-auth-field"><span>Full name</span><input name="name" type="text" autocomplete="name" required maxlength="120"></label>'
+      : "";
+    container.innerHTML =
+      '<section class="admin-auth-layout">' +
+        '<div class="admin-auth-intro"><span class="admin-hero-kicker">APOSTOLIC MEDIA · SECURE AREA</span><h2>Administrator portal</h2><p>Sign in with an existing administrator account to manage members, review community posts, and publish media.</p><ul><li>Member and role management</li><li>Community moderation</li><li>Media publishing controls</li></ul></div>' +
+        '<div class="admin-auth-card">' +
+          '<div class="admin-auth-heading"><span class="admin-auth-icon">🔐</span><div><h3>' + (isSignup ? "Create an account" : "Admin sign in") + '</h3><p>' + (isSignup ? "Registration creates a standard member account." : "Use your registered email and password.") + '</p></div></div>' +
+          (notice ? '<p class="admin-auth-notice" role="status">' + escapeHTML(notice) + '</p>' : '') +
+          '<form class="admin-auth-form dynamic-form" data-auth-form="' + (isSignup ? "signup" : "login") + '">' +
+            nameField +
+            '<label class="admin-auth-field"><span>Email address</span><input name="email" type="email" autocomplete="email" required></label>' +
+            '<label class="admin-auth-field"><span>Password</span><input name="password" type="password" autocomplete="' + (isSignup ? "new-password" : "current-password") + '" minlength="6" required></label>' +
+            '<button type="submit" class="btn primary admin-auth-submit">' + (isSignup ? "Create account" : "Sign in securely") + '</button>' +
+          '</form>' +
+          '<p class="admin-auth-switch">' + (isSignup ? 'Already registered? <button type="button" data-admin-auth-switch="login">Sign in</button>' : 'Need an account? <button type="button" data-admin-auth-switch="signup">Create account</button>') + '</p>' +
+          '<p class="admin-auth-footnote">Creating an account does not grant administrator privileges. Access is limited to accounts whose role has been assigned by an authorized administrator.</p>' +
+        '</div>' +
+      '</section>';
+  }
+
   async function loadAdminDashboard() {
     const container = $(".page-container");
     const api = window.ApostolicSupabase;
@@ -3080,9 +3115,7 @@
     if (!container) return;
 
     if (!user) {
-      container.insertAdjacentHTML("beforeend",
-        '<section class="admin-empty-state"><div class="admin-empty-icon">🔐</div><h3>Admin Sign In Required</h3><p>Sign in with an administrator account to manage users, posts and uploaded media.</p><button type="button" class="btn primary" data-page-action="sign-in">Sign In</button></section>'
-      );
+      renderAdminAuthPanel(container, window.__apostolicAdminAuthMode || "login");
       return;
     }
 
@@ -3100,7 +3133,7 @@
       const profile = profileResult?.data?.[0] || {};
       if (!["admin", "super_admin"].includes(profile.role || "user")) {
         container.insertAdjacentHTML("beforeend",
-          '<section class="admin-empty-state"><div class="admin-empty-icon">🔒</div><h3>Admin Access</h3><p>Administrator permission is required to use this section.</p></section>'
+          '<section class="admin-empty-state admin-access-denied"><div class="admin-empty-icon">🔒</div><h3>Administrator access not assigned</h3><p>You are signed in, but this account has the <strong>' + escapeHTML(profile.role || "user") + '</strong> role. For security, account creation never grants admin privileges automatically. An existing super administrator must assign the admin role.</p><button type="button" class="btn" data-page-action="sign-out">Sign out</button><button type="button" class="btn primary" data-page-action="admin-refresh">Check again</button></section>'
         );
         return;
       }
