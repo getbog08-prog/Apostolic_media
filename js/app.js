@@ -3580,6 +3580,14 @@
 
     initErrorHandling();
 
+    // auth.js restores the Supabase session asynchronously after DOMContentLoaded.
+    // Re-render the admin route once that session/profile check has completed;
+    // otherwise the page can remain stuck on the signed-out form.
+    window.addEventListener("apostolic:authready", function () {
+      const route = window.location.hash ? window.location.hash.substring(1) : "home";
+      if (route === "admin") renderPage("admin");
+    });
+
     initRouter();
 
     initMiniPlayer();
