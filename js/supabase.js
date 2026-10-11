@@ -539,7 +539,7 @@
     if (!window.supabaseClient && isConfigured() &&
         (!window.supabase || typeof window.supabase.createClient !== "function")) {
       const fallback = document.createElement("script");
-      fallback.src = "https://unpkg.com/@supabase/supabase-js@2";
+      fallback.src = "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js";
       fallback.async = true;
       fallback.onload = function () {
         const retry = init();
