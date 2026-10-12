@@ -9,6 +9,29 @@
 
   const AUTH_KEY = "apostolic_auth_user";
 
+  // Wait briefly for the Supabase SDK/CDN fallback to finish initializing.
+  function waitForSupabaseClient(timeoutMs = 10000) {
+    if (window.supabaseClient?.auth) return Promise.resolve(window.supabaseClient);
+
+    return new Promise((resolve) => {
+      let finished = false;
+      const finish = (client) => {
+        if (finished) return;
+        finished = true;
+        clearInterval(poll);
+        clearTimeout(timeout);
+        window.removeEventListener("supabaseReady", onReady);
+        resolve(client || null);
+      };
+      const onReady = (event) => finish(event?.detail?.client || window.supabaseClient);
+      window.addEventListener("supabaseReady", onReady);
+      const poll = setInterval(() => {
+        if (window.supabaseClient?.auth) finish(window.supabaseClient);
+      }, 150);
+      const timeout = setTimeout(() => finish(window.supabaseClient?.auth ? window.supabaseClient : null), timeoutMs);
+    });
+  }
+
   const storage = {
     get(key, fallback = null) {
       try {
@@ -118,16 +141,16 @@
         );
       }
 
+      const supabaseClient = await waitForSupabaseClient();
       if (
-        window.supabaseClient &&
-        typeof window.supabaseClient.auth?.signUp ===
-          "function"
+        supabaseClient &&
+        typeof supabaseClient.auth?.signUp === "function"
       ) {
         const {
           data,
           error
         } =
-          await window.supabaseClient.auth.signUp({
+          await supabaseClient.auth.signUp({
             email,
             password,
             options: {
@@ -176,16 +199,16 @@
         );
       }
 
+      const supabaseClient = await waitForSupabaseClient();
       if (
-        window.supabaseClient &&
-        typeof window.supabaseClient.auth?.signInWithPassword ===
-          "function"
+        supabaseClient &&
+        typeof supabaseClient.auth?.signInWithPassword === "function"
       ) {
         const {
           data,
           error
         } =
-          await window.supabaseClient.auth.signInWithPassword(
+          await supabaseClient.auth.signInWithPassword(
             {
               email,
               password
