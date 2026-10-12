@@ -9,26 +9,66 @@
 
   const AUTH_KEY = "apostolic_auth_user";
 
-  // Wait briefly for the Supabase SDK/CDN fallback to finish initializing.
-  function waitForSupabaseClient(timeoutMs = 10000) {
-    if (window.supabaseClient?.auth) return Promise.resolve(window.supabaseClient);
+  // Recover if the SDK became available after the wrapper's first init attempt.
+  function waitForSupabaseClient(timeoutMs = 15000) {
+    const currentClient = () =>
+      window.supabaseClient?.auth
+        ? window.supabaseClient
+        : window.ApostolicSupabase?.getClient?.() || null;
+
+    const readyClient = currentClient();
+    if (readyClient?.auth) {
+      window.supabaseClient = readyClient;
+      return Promise.resolve(readyClient);
+    }
 
     return new Promise((resolve) => {
       let finished = false;
+      let poll;
+      let timeout;
+
       const finish = (client) => {
         if (finished) return;
         finished = true;
-        clearInterval(poll);
-        clearTimeout(timeout);
+        if (poll) clearInterval(poll);
+        if (timeout) clearTimeout(timeout);
         window.removeEventListener("supabaseReady", onReady);
-        resolve(client || null);
+        const usableClient = client?.auth ? client : currentClient();
+        if (usableClient?.auth) window.supabaseClient = usableClient;
+        resolve(usableClient?.auth ? usableClient : null);
       };
-      const onReady = (event) => finish(event?.detail?.client || window.supabaseClient);
+
+      const onReady = (event) => {
+        finish(event?.detail?.client || currentClient());
+      };
+
       window.addEventListener("supabaseReady", onReady);
-      const poll = setInterval(() => {
-        if (window.supabaseClient?.auth) finish(window.supabaseClient);
-      }, 150);
-      const timeout = setTimeout(() => finish(window.supabaseClient?.auth ? window.supabaseClient : null), timeoutMs);
+
+      poll = setInterval(() => {
+        let candidate = currentClient();
+
+        // Retry initialization when the SDK global has appeared late.
+        if (!candidate?.auth && window.ApostolicSupabase?.init) {
+          candidate = window.ApostolicSupabase.init();
+        }
+
+        if (candidate?.auth) finish(candidate);
+      }, 250);
+
+      timeout = setTimeout(() => {
+        const candidate = currentClient();
+        finish(candidate?.auth ? candidate : null);
+        if (!window.supabaseClient?.auth) {
+          console.error(
+            "Supabase Auth unavailable after waiting. SDK global:",
+            Boolean(window.supabase),
+            "wrapper:",
+            Boolean(window.ApostolicSupabase),
+            "config:",
+            Boolean(window.ApostolicConfig?.SUPABASE?.URL && window.ApostolicConfig?.SUPABASE?.ANON_KEY)
+          );
+        }
+      }, timeoutMs);
     });
   }
 
