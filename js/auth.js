@@ -119,9 +119,10 @@
       /*
        * Restore identity only from a valid Supabase Auth session.
        */
+      const supabaseClient = await waitForSupabaseClient();
       if (
-        window.supabaseClient &&
-        typeof window.supabaseClient.auth?.getSession ===
+        supabaseClient &&
+        typeof supabaseClient.auth?.getSession ===
           "function"
       ) {
         try {
@@ -129,7 +130,7 @@
             data,
             error
           } =
-            await window.supabaseClient.auth.getSession();
+            await supabaseClient.auth.getSession();
 
           if (!error && data?.session) {
             this.session = data.session;
@@ -194,7 +195,9 @@
             email,
             password,
             options: {
-              data: metadata
+              data: metadata,
+              // Return confirmation links to this GitHub Pages app, not localhost.
+              emailRedirectTo: new URL("./", window.location.href).href
             }
           });
 
@@ -339,7 +342,10 @@
         } =
           await window.supabaseClient.auth
             .resetPasswordForEmail(
-              email
+              email,
+              {
+                redirectTo: new URL("./", window.location.href).href
+              }
             );
 
         if (error) {
